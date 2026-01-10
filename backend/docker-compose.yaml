@@ -1,37 +1,191 @@
-name: Medion backend
+name: medion
 
-services:
-  medion-database:
-    image: postgres:17
-    container_name: medion-database
-    environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: root
-      POSTGRES_DB: medion
-    ports:
-      - "5432:5432"
-    restart: always
-    volumes:
-      - medion-db-data:/var/lib/postgresql/data
-
-  localstack:
-    image: localstack/localstack:latest
-    container_name: medion-localstack
-    ports:
-      - "4566:4566"
-      - "4510-4559:4510-4559"
-    environment:
-      - DEBUG=1
-      - PERSISTENCE=1
-      - SERVICES=s3,sqs,ses,logs,cloudwatch
-      - LOCALSTACK_HOST=localhost
-      - AWS_DEFAULT_REGION=ap-southeast-1
-      - S3_SKIP_SIGNATURE_VALIDATION=0
-    volumes:
-      - "../.aws/volume:/var/lib/localstack"
-      - "/var/run/docker.sock:/var/run/docker.sock"
-      - "../.aws/init:/etc/localstack/init/ready.d"
+networks:
+  medion:
+    driver: bridge
 
 volumes:
-  medion-db-data:
-  localstack-data:
+  sale-db-data:
+  approval-db-data:
+  payroll-db-data:
+  inventory-db-data:
+  manufacture-db-data:
+  identity-db-data:
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks: [medion]
+
+  sale-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sale
+    ports:
+      - "5433:5432"
+    volumes:
+      - sale-db-data:/var/lib/postgresql/data
+    networks: [medion]
+
+  approval-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: approval
+    ports:
+      - "5434:5432"
+    volumes:
+      - approval-db-data:/var/lib/postgresql/data
+    networks: [medion]
+
+  payroll-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: payroll
+    ports:
+      - "5435:5432"
+    volumes:
+      - payroll-db-data:/var/lib/postgresql/data
+    networks: [medion]
+
+  inventory-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: inventory
+    ports:
+      - "5436:5432"
+    volumes:
+      - inventory-db-data:/var/lib/postgresql/data
+    networks: [medion]
+
+  manufacture-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: manufacture
+    ports:
+      - "5437:5432"
+    volumes:
+      - manufacture-db-data:/var/lib/postgresql/data
+    networks: [medion]
+
+  identity-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: identity
+    ports:
+      - "5438:5432"
+    volumes:
+      - identity-db-data:/var/lib/postgresql/data
+    networks: [medion]
+
+  gateway:
+    build:
+      context: ./Gateway
+    container_name: gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+    depends_on:
+      - sale.api
+      - approval.api
+      - payroll.api
+      - inventory.api
+      - manufacture.api
+      - identity.api
+    networks: [medion]
+
+  sale.api:
+    build:
+      context: ./Services/Sale/API
+    container_name: sale.api
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__Postgres=Host=sale-db;Port=5432;Username=postgres;Password=postgres;Database=sale
+      - ConnectionStrings__RabbitMq=amqp://guest:guest@rabbitmq:5672
+    ports:
+      - "5101:8080"
+    depends_on:
+      - sale-db
+      - rabbitmq
+    networks: [medion]
+
+  approval.api:
+    build:
+      context: ./Services/Approval/API
+    container_name: approval.api
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+    ports:
+      - "5102:8080"
+    depends_on:
+      - approval-db
+      - rabbitmq
+    networks: [medion]
+
+  payroll.api:
+    build:
+      context: ./Services/Payroll/API
+    container_name: payroll.api
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+    ports:
+      - "5103:8080"
+    depends_on:
+      - payroll-db
+      - rabbitmq
+    networks: [medion]
+
+  inventory.api:
+    build:
+      context: ./Services/Inventory/API
+    container_name: inventory.api
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+    ports:
+      - "5104:8080"
+    depends_on:
+      - inventory-db
+      - rabbitmq
+    networks: [medion]
+
+  manufacture.api:
+    build:
+      context: ./Services/Manufacture/API
+    container_name: manufacture.api
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+    ports:
+      - "5105:8080"
+    depends_on:
+      - manufacture-db
+      - rabbitmq
+    networks: [medion]
+
+  identity.api:
+    build:
+      context: ./Services/Identity/API
+    container_name: identity.api
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+    ports:
+      - "5106:8080"
+    depends_on:
+      - identity-db
+      - rabbitmq
+    networks: [medion]
