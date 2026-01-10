@@ -40,4 +40,4 @@ cd Medion
 - Backend:
 - DevOps:
 
-## Contributing — How to report issues and submit PRs.
+## Contributing — How to report issues and submit PRs
