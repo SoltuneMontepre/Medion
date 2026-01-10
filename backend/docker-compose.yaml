@@ -1,0 +1,37 @@
+name: Medion backend
+
+services:
+  medion-database:
+    image: postgres:17
+    container_name: medion-database
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: medion
+    ports:
+      - "5432:5432"
+    restart: always
+    volumes:
+      - medion-db-data:/var/lib/postgresql/data
+
+  localstack:
+    image: localstack/localstack:latest
+    container_name: medion-localstack
+    ports:
+      - "4566:4566"
+      - "4510-4559:4510-4559"
+    environment:
+      - DEBUG=1
+      - PERSISTENCE=1
+      - SERVICES=s3,sqs,ses,logs,cloudwatch
+      - LOCALSTACK_HOST=localhost
+      - AWS_DEFAULT_REGION=ap-southeast-1
+      - S3_SKIP_SIGNATURE_VALIDATION=0
+    volumes:
+      - "../.aws/volume:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "../.aws/init:/etc/localstack/init/ready.d"
+
+volumes:
+  medion-db-data:
+  localstack-data:
