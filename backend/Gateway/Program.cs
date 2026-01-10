@@ -59,10 +59,8 @@ foreach (var (serviceName, label) in services)
     {
         try
         {
-            // Dùng client đã có Service Discovery
             var client = httpFactory.CreateClient("AspireClient");
 
-            // Aspire sẽ tự hiểu "http://sale-api" là service nào và port bao nhiêu
             var response = await client.GetAsync($"http://{serviceName}/swagger/v1/swagger.json");
 
             if (response.IsSuccessStatusCode)
