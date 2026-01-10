@@ -5,4 +5,19 @@
         <UserSecretsId>1c51aa04-f02a-4dcd-9bff-d2a67a705496</UserSecretsId>
     </PropertyGroup>
 
+    <ItemGroup>
+        <PackageReference Include="Aspire.Hosting.PostgreSQL"/>
+        <PackageReference Include="Aspire.Hosting.RabbitMQ"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Gateway/YarpGateway.csproj"/>
+        <ProjectReference Include="../Services/Sale/API/Sale.API.csproj"/>
+        <ProjectReference Include="../Services/Approval/API/Approval.API.csproj"/>
+        <ProjectReference Include="../Services/Payroll/API/Payroll.API.csproj"/>
+        <ProjectReference Include="../Services/Inventory/API/Inventory.API.csproj"/>
+        <ProjectReference Include="../Services/Manufacture/API/Manufacture.API.csproj"/>
+        <ProjectReference Include="../Services/Identity/API/Identity.API.csproj"/>
+    </ItemGroup>
+
 </Project>

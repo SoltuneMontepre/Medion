@@ -7,6 +7,8 @@
 
   <ItemGroup Label="Aspire">
     <PackageVersion Include="Aspire.AppHost.Sdk" Version="13.1.0" />
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.1.0" />
+    <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="13.1.0" />
   </ItemGroup>
 
   <ItemGroup Label="Microsoft Extensions">
@@ -25,6 +27,7 @@
   <ItemGroup Label="gRPC">
     <PackageVersion Include="Grpc.AspNetCore" Version="2.71.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Grpc.JsonTranscoding" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Grpc.Swagger" Version="0.9.1" />
     <PackageVersion Include="Google.Api.CommonProtos" Version="2.17.0" />
     <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.71.0" />
   </ItemGroup>
@@ -47,6 +50,7 @@
 
   <ItemGroup Label="Gateway">
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.1.0" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="7.2.0" />
   </ItemGroup>
 
 </Project>

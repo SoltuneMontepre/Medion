@@ -4,6 +4,10 @@
         <LangVersion>preview</LangVersion>
     </PropertyGroup>
     <ItemGroup>
+        <ProjectReference Include="../ServiceDefaults/ServiceDefaults.csproj"/>
+    </ItemGroup>
+    <ItemGroup>
         <PackageReference Include="Yarp.ReverseProxy"/>
+        <PackageReference Include="Swashbuckle.AspNetCore"/>
     </ItemGroup>
 </Project>

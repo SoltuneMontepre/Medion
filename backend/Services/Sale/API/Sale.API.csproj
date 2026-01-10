@@ -23,6 +23,7 @@
         <PackageReference Include="Npgsql"/>
         <PackageReference Include="MassTransit"/>
         <PackageReference Include="MassTransit.RabbitMQ"/>
+        <PackageReference Include="Swashbuckle.AspNetCore"/>
     </ItemGroup>
 
     <ItemGroup>

@@ -7,4 +7,9 @@
         <ProjectReference Include="../Application/Payroll.Application.csproj"/>
         <ProjectReference Include="../Infrastructure/Payroll.Infrastructure.csproj"/>
     </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Grpc.AspNetCore"/>
+        <PackageReference Include="Microsoft.AspNetCore.Grpc.JsonTranscoding"/>
+        <PackageReference Include="Swashbuckle.AspNetCore"/>
+    </ItemGroup>
 </Project>

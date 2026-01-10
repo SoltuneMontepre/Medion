@@ -17,6 +17,9 @@ var rabbitmq = builder.Configuration.GetConnectionString("RabbitMq")
 // Services
 builder.Services.AddGrpc(o => { o.EnableDetailedErrors = true; }).AddJsonTranscoding();
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 builder.Services.AddGrpcReflection();
 
 builder.Services.AddDbContext<SaleDbContext>(opt =>
@@ -31,6 +34,8 @@ builder.Services.AddMassTransit(x =>
 });
 
 var app = builder.Build();
+
+app.UseSwagger();
 
 // Migrate DB (best effort)
 try
@@ -56,4 +61,4 @@ app.MapGet("/", () => new
     http = "/api/sale/*"
 });
 
-app.Run();
+await app.RunAsync();

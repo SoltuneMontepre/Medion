@@ -95,3 +95,4 @@ env.local
 
 volume
 backend/AppHost/appsettings.json
+.vscode
