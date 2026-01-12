@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Sale.API.Grpc;
 using Sale.Application.Abstractions;
 using Sale.Infrastructure.Data;
+using SharedStorage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,9 @@ builder.Services.AddDbContext<SaleDbContext>(opt =>
     opt.UseNpgsql(postgres));
 
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+
+// Add S3 Storage
+builder.Services.AddS3Storage(builder.Configuration);
 
 builder.Services.AddMassTransit(x =>
 {
