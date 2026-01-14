@@ -1,29 +1,57 @@
 <Solution>
-    <Project Path="AppHost/AppHost.csproj"/>
-    <Project Path="ServiceDefaults/ServiceDefaults.csproj"/>
-    <Project Path="Gateway/YarpGateway.csproj"/>
-    <Project Path="Services/Approval/API/Approval.API.csproj"/>
-    <Project Path="Services/Approval/Application/Approval.Application.csproj"/>
-    <Project Path="Services/Approval/Domain/Approval.Domain.csproj"/>
-    <Project Path="Services/Approval/Infrastructure/Approval.Infrastructure.csproj"/>
-    <Project Path="Services/Identity/API/Identity.API.csproj"/>
-    <Project Path="Services/Identity/Application/Identity.Application.csproj"/>
-    <Project Path="Services/Identity/Domain/Identity.Domain.csproj"/>
-    <Project Path="Services/Identity/Infrastructure/Identity.Infrastructure.csproj"/>
-    <Project Path="Services/Inventory/API/Inventory.API.csproj"/>
-    <Project Path="Services/Inventory/Application/Inventory.Application.csproj"/>
-    <Project Path="Services/Inventory/Domain/Inventory.Domain.csproj"/>
-    <Project Path="Services/Inventory/Infrastructure/Inventory.Infrastructure.csproj"/>
-    <Project Path="Services/Manufacture/API/Manufacture.API.csproj"/>
-    <Project Path="Services/Manufacture/Application/Manufacture.Application.csproj"/>
-    <Project Path="Services/Manufacture/Domain/Manufacture.Domain.csproj"/>
-    <Project Path="Services/Manufacture/Infrastructure/Manufacture.Infrastructure.csproj"/>
-    <Project Path="Services/Payroll/API/Payroll.API.csproj"/>
-    <Project Path="Services/Payroll/Application/Payroll.Application.csproj"/>
-    <Project Path="Services/Payroll/Domain/Payroll.Domain.csproj"/>
-    <Project Path="Services/Payroll/Infrastructure/Payroll.Infrastructure.csproj"/>
-    <Project Path="Services/Sale/API/Sale.API.csproj"/>
-    <Project Path="Services/Sale/Application/Sale.Application.csproj"/>
-    <Project Path="Services/Sale/Domain/Sale.Domain.csproj"/>
-    <Project Path="Services/Sale/Infrastructure/Sale.Infrastructure.csproj"/>
+    <Folder Name="/Protos/" />
+    <Folder Name="/Protos/Approval/" />
+    <Folder Name="/Protos/Identity/" />
+    <Folder Name="/Protos/Inventory/" />
+    <Folder Name="/Protos/Manufacture/" />
+    <Folder Name="/Protos/Payroll/" />
+    <Folder Name="/Protos/Sale/">
+        <File Path="Protos\sale\sale.proto" />
+    </Folder>
+    <Folder Name="/Services/" />
+    <Folder Name="/Services/Approval/">
+        <Project Path="Services/Approval/API/Approval.API.csproj" />
+        <Project Path="Services/Approval/Application/Approval.Application.csproj" />
+        <Project Path="Services/Approval/Domain/Approval.Domain.csproj" />
+        <Project Path="Services/Approval/Infrastructure/Approval.Infrastructure.csproj" />
+    </Folder>
+    <Folder Name="/Services/Identity/">
+        <Project Path="Services/Identity/API/Identity.API.csproj" />
+        <Project Path="Services/Identity/Application/Identity.Application.csproj" />
+        <Project Path="Services/Identity/Domain/Identity.Domain.csproj" />
+        <Project Path="Services/Identity/Infrastructure/Identity.Infrastructure.csproj" />
+    </Folder>
+    <Folder Name="/Services/Inventory/">
+        <Project Path="Services/Inventory/API/Inventory.API.csproj" />
+        <Project Path="Services/Inventory/Application/Inventory.Application.csproj" />
+        <Project Path="Services/Inventory/Domain/Inventory.Domain.csproj" />
+        <Project Path="Services/Inventory/Infrastructure/Inventory.Infrastructure.csproj" />
+    </Folder>
+    <Folder Name="/Services/Manufacture/">
+        <Project Path="Services/Manufacture/API/Manufacture.API.csproj" />
+        <Project Path="Services/Manufacture/Application/Manufacture.Application.csproj" />
+        <Project Path="Services/Manufacture/Domain/Manufacture.Domain.csproj" />
+        <Project Path="Services/Manufacture/Infrastructure/Manufacture.Infrastructure.csproj" />
+    </Folder>
+    <Folder Name="/Services/Payroll/">
+        <Project Path="Services/Payroll/API/Payroll.API.csproj" />
+        <Project Path="Services/Payroll/Application/Payroll.Application.csproj" />
+        <Project Path="Services/Payroll/Domain/Payroll.Domain.csproj" />
+        <Project Path="Services/Payroll/Infrastructure/Payroll.Infrastructure.csproj" />
+    </Folder>
+    <Folder Name="/Services/Sale/">
+        <Project Path="Services/Sale/API/Sale.API.csproj" />
+        <Project Path="Services/Sale/Application/Sale.Application.csproj" />
+        <Project Path="Services/Sale/Domain/Sale.Domain.csproj" />
+        <Project Path="Services/Sale/Infrastructure/Sale.Infrastructure.csproj" />
+    </Folder>
+    <Folder Name="/SolutionItems/">
+        <File Path=".editorconfig" />
+        <File Path=".env.example" />
+        <File Path="Directory.Build.props" />
+        <File Path="Directory.Packages.props" />
+    </Folder>
+    <Project Path="AppHost/AppHost.csproj" />
+    <Project Path="ServiceDefaults/ServiceDefaults.csproj" />
+    <Project Path="Gateway/YarpGateway.csproj" />
 </Solution>
