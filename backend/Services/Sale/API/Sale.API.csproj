@@ -28,7 +28,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Protobuf Include="$(GrpcProtoRoot)/sale/v1/sale.proto" GrpcServices="Server" AdditionalImportDirs="$(PkgGoogle_Api_CommonProtos)\content\protos"/>
+        <Protobuf Include="$(GrpcProtoRoot)/sale/sale.proto" GrpcServices="Server" AdditionalImportDirs="$(PkgGoogle_Api_CommonProtos)\content\protos"/>
     </ItemGroup>
 
 </Project>
