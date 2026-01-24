@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package sale.v1;
+package sale;
 
 option csharp_namespace = "Services.Sale.Contracts";
 
