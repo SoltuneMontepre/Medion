@@ -61,7 +61,7 @@ app.MapGrpcReflectionService();
 app.MapGet("/", () => new
 {
     name = "Sale.API",
-    grpc = "/sale.v1.Sale/",
+    grpc = "/sale.Sale/",
     http = "/api/sale/*"
 });
 
