@@ -11,25 +11,25 @@ message GetOrderRequest {
 }
 
 message CreateOrderRequest {
-  string customerId = 1;
-  repeated OrderItem items = 2;
+  string             customerId = 1;
+  repeated OrderItem items      = 2;
 }
 
 message OrderItem {
-  string sku = 1;
-  int32 quantity = 2;
+  string sku       = 1;
+  int32  quantity  = 2;
   double unitPrice = 3;
 }
 
 message Money {
   string currency = 1;
-  double amount = 2;
+  double amount   = 2;
 }
 
 message OrderReply {
-  string id = 1;
+  string id     = 1;
   string status = 2;
-  Money total = 3;
+  Money  total  = 3;
 }
 
 service Sale {
