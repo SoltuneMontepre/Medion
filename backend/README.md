@@ -19,11 +19,9 @@ Tài liệu này giúp dev mới hiểu nhanh kiến trúc và cách chạy dự
 
 1) `dotnet restore` ở thư mục backend.
 2) Khởi chạy bằng Aspire: `dotnet run --project AppHost/AppHost.csproj`.
-
-- AppHost sẽ spin up Postgres + RabbitMQ, rồi chạy từng service và Gateway.
-
+   - AppHost sẽ spin up Postgres + RabbitMQ, rồi chạy từng service và Gateway.
 3) Gateway mặc định lắng nghe (qua Aspire) và expose swagger tại `http://localhost:<gateway-port>/swagger`.
-2) Dừng bằng Ctrl+C.
+4) Dừng bằng Ctrl+C.
 
 ## Chạy một service riêng lẻ
 
