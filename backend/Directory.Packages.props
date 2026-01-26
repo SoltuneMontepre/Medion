@@ -54,8 +54,9 @@
     </ItemGroup>
 
     <ItemGroup Label="Gateway">
-        <PackageVersion Include="Yarp.ReverseProxy" Version="2.1.0" />
+        <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
         <PackageVersion Include="Swashbuckle.AspNetCore" Version="7.2.0" />
+        <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.1.0" />
     </ItemGroup>
 
     <ItemGroup Label="AWS">

@@ -9,5 +9,6 @@
     <ItemGroup>
         <PackageReference Include="Yarp.ReverseProxy"/>
         <PackageReference Include="Swashbuckle.AspNetCore"/>
+        <PackageReference Include="Microsoft.Extensions.ServiceDiscovery.Yarp"/>
     </ItemGroup>
 </Project>
