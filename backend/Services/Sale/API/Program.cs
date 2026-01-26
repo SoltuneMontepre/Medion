@@ -65,4 +65,5 @@ app.MapGet("/", () => new
     http = "/api/sale/*"
 });
 
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy", service = "Sale.API", timestamp = DateTime.UtcNow }));
 await app.RunAsync();
