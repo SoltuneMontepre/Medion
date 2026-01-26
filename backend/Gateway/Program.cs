@@ -18,7 +18,8 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddReverseProxy()
-    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
+    .AddServiceDiscoveryDestinationResolver();
 
 var app = builder.Build();
 
