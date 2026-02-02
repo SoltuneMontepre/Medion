@@ -9,7 +9,13 @@
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Grpc.AspNetCore"/>
+        <PackageReference Include="Grpc.Tools" PrivateAssets="All"/>
         <PackageReference Include="Microsoft.AspNetCore.Grpc.JsonTranscoding"/>
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore"/>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer"/>
         <PackageReference Include="Swashbuckle.AspNetCore"/>
+    </ItemGroup>
+    <ItemGroup>
+        <Protobuf Include="../../../Protos/identity.proto" GrpcServices="Server"/>
     </ItemGroup>
 </Project>
