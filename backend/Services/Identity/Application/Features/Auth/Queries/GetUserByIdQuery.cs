@@ -6,12 +6,7 @@ namespace Identity.Application.Features.Auth.Queries;
 /// <summary>
 ///     Query to get user by ID
 /// </summary>
-public class GetUserByIdQuery : IRequest<UserDto>
+public class GetUserByIdQuery(Guid userId) : IRequest<UserDto>
 {
-    public GetUserByIdQuery(Guid userId)
-    {
-        UserId = userId;
-    }
-
-    public Guid UserId { get; set; }
+  public Guid UserId { get; set; } = userId;
 }

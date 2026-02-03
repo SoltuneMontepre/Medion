@@ -9,16 +9,8 @@ namespace Identity.API.Services;
 ///     gRPC service for token verification
 ///     Allows other services to verify tokens and get user information
 /// </summary>
-public class TokenVerificationService : TokenVerification.TokenVerificationBase
+public class TokenVerificationService(IMediator mediator, ILogger<TokenVerificationService> logger) : TokenVerification.TokenVerificationBase
 {
-    private readonly ILogger<TokenVerificationService> _logger;
-    private readonly IMediator _mediator;
-
-    public TokenVerificationService(IMediator mediator, ILogger<TokenVerificationService> logger)
-    {
-        _mediator = mediator;
-        _logger = logger;
-    }
 
     /// <summary>
     ///     Verify a JWT token and return user information
@@ -28,7 +20,7 @@ public class TokenVerificationService : TokenVerification.TokenVerificationBase
         try
         {
             var query = new VerifyTokenQuery { Token = request.Token };
-            var result = await _mediator.Send(query, context.CancellationToken);
+            var result = await mediator.Send(query, context.CancellationToken);
 
             if (!result.IsValid)
                 return new VerifyTokenResponse
@@ -51,7 +43,7 @@ public class TokenVerificationService : TokenVerification.TokenVerificationBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error verifying token");
+            logger.LogError(ex, "Error verifying token");
             return new VerifyTokenResponse
             {
                 IsValid = false

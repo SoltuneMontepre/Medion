@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -10,6 +11,7 @@ using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Exceptions;
 using Serilog.Formatting.Compact;
+using ServiceDefaults.ExceptionHandling;
 
 namespace ServiceDefaults;
 
@@ -24,6 +26,8 @@ public static class Extensions
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         builder.AddSerilog();
+
+        builder.AddDefaultExceptionHandler();
 
         builder.ConfigureOpenTelemetry();
 
@@ -155,5 +159,20 @@ public static class Extensions
         });
 
         return builder;
+    }
+
+    public static TBuilder AddDefaultExceptionHandler<TBuilder>(this TBuilder builder)
+        where TBuilder : IHostApplicationBuilder
+    {
+        builder.Services.AddProblemDetails();
+        builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+        return builder;
+    }
+
+    public static WebApplication UseDefaultExceptionHandler(this WebApplication app)
+    {
+        app.UseExceptionHandler();
+        return app;
     }
 }

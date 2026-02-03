@@ -9,12 +9,9 @@ namespace Identity.Infrastructure.Persistence;
 ///     Entity Framework DbContext for Identity Service
 ///     Manages all entities and their relationships
 /// </summary>
-public class IdentityDbContext : IdentityDbContext<User, Role, Guid>
+public class IdentityDbContext(DbContextOptions<IdentityDbContext> options) : IdentityDbContext<User, Role, Guid>(options)
 {
-    public IdentityDbContext(DbContextOptions<IdentityDbContext> options) : base(options)
-    {
-    }
-    public new DbSet<UserRole> UserRoles { get; set; } = null!;
+  public new DbSet<UserRole> UserRoles { get; set; } = null!;
     public new DbSet<UserClaim> UserClaims { get; set; } = null!;
     public new DbSet<RoleClaim> RoleClaims { get; set; } = null!;
 

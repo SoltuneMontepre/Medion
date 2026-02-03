@@ -1,7 +1,10 @@
+using FluentValidation;
+using Identity.Application.Common.Behaviors;
 using Identity.Application.Common.Mappings;
 using Identity.Application.Features.Auth.Commands;
 using Mapster;
 using MapsterMapper;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Identity.Application;
@@ -13,8 +16,15 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        // Register MediatR
-        services.AddMediatR(cfg => { cfg.RegisterServicesFromAssembly(typeof(RegisterUserCommand).Assembly); });
+        // Register FluentValidation
+        services.AddValidatorsFromAssembly(typeof(RegisterUserCommand).Assembly);
+
+        // Register MediatR with Validation Pipeline Behavior
+        services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssembly(typeof(RegisterUserCommand).Assembly);
+            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+        });
 
         // Register Mapster
         var typeAdapterConfig = new TypeAdapterConfig();

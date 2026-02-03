@@ -60,6 +60,9 @@ builder.Services.AddReverseProxy()
 
 var app = builder.Build();
 
+// Use global exception handling
+app.UseDefaultExceptionHandler();
+
 app.MapDefaultEndpoints();
 
 // Enable CORS

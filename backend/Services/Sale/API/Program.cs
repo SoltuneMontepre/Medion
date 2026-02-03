@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Sale.API.Grpc;
 using Sale.Application.Abstractions;
 using Sale.Infrastructure.Data;
+using ServiceDefaults;
 using SharedStorage;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -70,6 +71,9 @@ builder.Services.AddMassTransit(x =>
 });
 
 var app = builder.Build();
+
+// Use global exception handling
+app.UseDefaultExceptionHandler();
 
 app.UseSwagger();
 

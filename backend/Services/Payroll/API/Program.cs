@@ -1,4 +1,8 @@
+using ServiceDefaults;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults();
 
 builder.Services.AddGrpc().AddJsonTranscoding();
 
@@ -38,6 +42,9 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+// Use global exception handling
+app.UseDefaultExceptionHandler();
 
 app.UseSwagger();
 

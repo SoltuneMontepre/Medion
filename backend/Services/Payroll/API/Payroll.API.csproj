@@ -6,6 +6,7 @@
     <ItemGroup>
         <ProjectReference Include="../Application/Payroll.Application.csproj"/>
         <ProjectReference Include="../Infrastructure/Payroll.Infrastructure.csproj"/>
+        <ProjectReference Include="../../../ServiceDefaults/ServiceDefaults.csproj"/>
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Grpc.AspNetCore"/>

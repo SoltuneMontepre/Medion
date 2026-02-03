@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -177,6 +178,9 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Use global exception handling
+app.UseDefaultExceptionHandler();
 
 // Middleware pipeline
 if (app.Environment.IsDevelopment())

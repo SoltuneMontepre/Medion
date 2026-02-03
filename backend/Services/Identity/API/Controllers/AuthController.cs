@@ -13,16 +13,8 @@ namespace Identity.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController : ControllerBase
+public class AuthController(IMediator mediator, ILogger<AuthController> logger) : ControllerBase
 {
-    private readonly ILogger<AuthController> _logger;
-    private readonly IMediator _mediator;
-
-    public AuthController(IMediator mediator, ILogger<AuthController> logger)
-    {
-        _mediator = mediator;
-        _logger = logger;
-    }
 
     /// <summary>
     ///     Register a new user
@@ -35,12 +27,12 @@ public class AuthController : ControllerBase
         try
         {
             var command = new RegisterUserCommand(request);
-            var result = await _mediator.Send(command, cancellationToken);
+            var result = await mediator.Send(command, cancellationToken);
             return CreatedAtAction(nameof(GetUser), new { userId = result.Id }, result);
         }
         catch (InvalidOperationException ex)
         {
-            _logger.LogWarning($"Registration failed: {ex.Message}");
+            logger.LogWarning($"Registration failed: {ex.Message}");
             return BadRequest(new { error = ex.Message });
         }
     }
@@ -56,12 +48,12 @@ public class AuthController : ControllerBase
         try
         {
             var command = new LoginCommand(request);
-            var result = await _mediator.Send(command, cancellationToken);
+            var result = await mediator.Send(command, cancellationToken);
             return Ok(result);
         }
         catch (UnauthorizedAccessException ex)
         {
-            _logger.LogWarning($"Login failed: {ex.Message}");
+            logger.LogWarning($"Login failed: {ex.Message}");
             return Unauthorized(new { error = ex.Message });
         }
     }
@@ -78,12 +70,12 @@ public class AuthController : ControllerBase
         try
         {
             var query = new GetUserByIdQuery(userId);
-            var result = await _mediator.Send(query, cancellationToken);
+            var result = await mediator.Send(query, cancellationToken);
             return Ok(result);
         }
         catch (KeyNotFoundException ex)
         {
-            _logger.LogWarning($"User not found: {ex.Message}");
+            logger.LogWarning($"User not found: {ex.Message}");
             return NotFound(new { error = ex.Message });
         }
     }
@@ -97,7 +89,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> VerifyToken([FromBody] string token, CancellationToken cancellationToken)
     {
         var query = new VerifyTokenQuery { Token = token };
-        var result = await _mediator.Send(query, cancellationToken);
+        var result = await mediator.Send(query, cancellationToken);
         return Ok(result);
     }
 }
