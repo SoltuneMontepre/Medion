@@ -5,7 +5,6 @@
 */tmp
 */out-tsc
 */bazel-out
-
 */dist
 
 # Node
@@ -96,3 +95,4 @@ env.local
 volume
 backend/AppHost/appsettings.json
 .vscode
+backend/Gateway/logs/
