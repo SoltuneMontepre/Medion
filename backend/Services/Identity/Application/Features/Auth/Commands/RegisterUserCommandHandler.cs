@@ -4,6 +4,7 @@ using Identity.Domain.Repositories;
 using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using ServiceDefaults.ApiResponses;
 
 namespace Identity.Application.Features.Auth.Commands;
 
@@ -16,9 +17,9 @@ public class RegisterUserCommandHandler
     IUserRepository userRepository,
     IPasswordHasher<User> passwordHasher
 )
-    : IRequestHandler<RegisterUserCommand, UserDto>
+    : IRequestHandler<RegisterUserCommand, ApiResult<UserDto>>
 {
-    public async Task<UserDto> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
+    public async Task<ApiResult<UserDto>> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
         // Check if email already exists
         if (await userRepository.ExistsByEmailAsync(request.Email, cancellationToken))
@@ -47,6 +48,7 @@ public class RegisterUserCommandHandler
         await userRepository.AddAsync(user, cancellationToken);
 
         // Map to DTO and return
-        return user.Adapt<UserDto>();
+        var userDto = user.Adapt<UserDto>();
+        return ApiResult<UserDto>.Created(userDto, "User registered successfully");
     }
 }

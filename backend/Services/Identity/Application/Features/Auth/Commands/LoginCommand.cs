@@ -1,12 +1,13 @@
 using Identity.Application.Common.DTOs;
 using MediatR;
+using ServiceDefaults.ApiResponses;
 
 namespace Identity.Application.Features.Auth.Commands;
 
 /// <summary>
 ///     Command for user login
 /// </summary>
-public class LoginCommand : IRequest<AuthTokenDto>
+public class LoginCommand : IRequest<ApiResult<AuthTokenDto>>
 {
     public LoginCommand()
     {

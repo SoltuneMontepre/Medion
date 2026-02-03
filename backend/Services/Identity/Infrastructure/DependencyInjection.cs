@@ -36,6 +36,12 @@ public static class DependencyInjection
         services.AddSingleton(jwtSettings);
         services.AddScoped<ITokenService, JwtTokenService>();
 
+        // Register Memory Cache
+        services.AddMemoryCache();
+        
+        // Register Token Blacklist Service
+        services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
+
         return services;
     }
 }

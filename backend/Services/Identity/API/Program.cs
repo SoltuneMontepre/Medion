@@ -1,4 +1,5 @@
 using System.Text;
+using Identity.API.Filters;
 using Identity.API.Services;
 using Identity.Application;
 using Identity.Application.Common.Abstractions;
@@ -96,7 +97,11 @@ builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddGrpc().AddJsonTranscoding();
 
 // Controllers (optional REST endpoints)
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    // Add global filter to check token blacklist
+    options.Filters.Add<CheckTokenBlacklistFilter>();
+});
 
 // API documentation
 builder.Services.AddEndpointsApiExplorer();

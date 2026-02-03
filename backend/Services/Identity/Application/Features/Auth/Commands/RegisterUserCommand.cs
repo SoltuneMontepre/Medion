@@ -1,12 +1,13 @@
 using Identity.Application.Common.DTOs;
 using MediatR;
+using ServiceDefaults.ApiResponses;
 
 namespace Identity.Application.Features.Auth.Commands;
 
 /// <summary>
 ///     Command to register a new user
 /// </summary>
-public class RegisterUserCommand : IRequest<UserDto>
+public class RegisterUserCommand : IRequest<ApiResult<UserDto>>
 {
     public RegisterUserCommand()
     {

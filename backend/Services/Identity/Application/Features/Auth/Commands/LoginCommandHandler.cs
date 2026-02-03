@@ -5,6 +5,7 @@ using Identity.Domain.Repositories;
 using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using ServiceDefaults.ApiResponses;
 
 namespace Identity.Application.Features.Auth.Commands;
 
@@ -17,9 +18,9 @@ public class LoginCommandHandler
     IUserRepository userRepository,
     IPasswordHasher<User> passwordHasher,
     ITokenService tokenService
-) : IRequestHandler<LoginCommand, AuthTokenDto>
+) : IRequestHandler<LoginCommand, ApiResult<AuthTokenDto>>
 {
-    public async Task<AuthTokenDto> Handle(LoginCommand request, CancellationToken cancellationToken)
+    public async Task<ApiResult<AuthTokenDto>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         // Find user by email or username
         var user = (await userRepository.GetByEmailAsync(request.UserNameOrEmail, cancellationToken)
@@ -46,14 +47,20 @@ public class LoginCommandHandler
         user.UnlockAccount();
         await userRepository.UpdateAsync(user, cancellationToken);
 
-        // Generate JWT token
-        var token = await tokenService.GenerateTokenAsync(user, cancellationToken);
+        // Generate JWT access token
+        var accessToken = await tokenService.GenerateTokenAsync(user, cancellationToken);
 
-        return new AuthTokenDto
+        // Generate refresh token
+        var refreshToken = await tokenService.GenerateRefreshTokenAsync(user.Id, cancellationToken);
+
+        var authTokenDto = new AuthTokenDto
         {
-            AccessToken = token,
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
             ExpiresIn = 3600,
             User = user.Adapt<UserDto>()
         };
+
+        return ApiResult<AuthTokenDto>.Success(authTokenDto, "Login successful");
     }
 }

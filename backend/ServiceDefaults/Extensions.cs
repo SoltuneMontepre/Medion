@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
@@ -164,15 +166,28 @@ public static class Extensions
     public static TBuilder AddDefaultExceptionHandler<TBuilder>(this TBuilder builder)
         where TBuilder : IHostApplicationBuilder
     {
-        builder.Services.AddProblemDetails();
+        // Add ProblemDetails service with custom configuration
+        builder.Services.AddProblemDetails(options =>
+        {
+            options.CustomizeProblemDetails = context =>
+            {
+                context.ProblemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
+            };
+        });
+
+        // Register exception handlers
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+        builder.Services.AddExceptionHandler<FallbackExceptionHandler>();
 
         return builder;
     }
 
     public static WebApplication UseDefaultExceptionHandler(this WebApplication app)
     {
-        app.UseExceptionHandler();
+        // In .NET 10, the exception handler middleware is automatically added when:
+        // 1. AddProblemDetails() is called
+        // 2. AddExceptionHandler<T>() implementations are registered
+        // No need to explicitly call UseExceptionHandler()
         return app;
     }
 }
