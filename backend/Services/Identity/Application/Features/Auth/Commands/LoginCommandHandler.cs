@@ -18,9 +18,9 @@ public class LoginCommandHandler
     IUserRepository userRepository,
     IPasswordHasher<User> passwordHasher,
     ITokenService tokenService
-) : IRequestHandler<LoginCommand, ApiResult<AuthTokenDto>>
+) : IRequestHandler<LoginCommand, ApiResult<LoginResult>>
 {
-    public async Task<ApiResult<AuthTokenDto>> Handle(LoginCommand request, CancellationToken cancellationToken)
+    public async Task<ApiResult<LoginResult>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         // Find user by email or username
         var user = (await userRepository.GetByEmailAsync(request.UserNameOrEmail, cancellationToken)
@@ -56,10 +56,14 @@ public class LoginCommandHandler
         var authTokenDto = new AuthTokenDto
         {
             AccessToken = accessToken,
-            RefreshToken = refreshToken,
-            ExpiresIn = 3600,
+            ExpiresIn = 3600
         };
 
-        return ApiResult<AuthTokenDto>.Success(authTokenDto, "Login successful");
+        var loginResult = new LoginResult
+        {
+            AuthToken = authTokenDto,
+            RefreshToken = refreshToken
+        };
+        return ApiResult<LoginResult>.Success(loginResult, "Login successful");
     }
 }

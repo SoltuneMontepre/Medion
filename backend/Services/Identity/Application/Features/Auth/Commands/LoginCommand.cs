@@ -7,7 +7,7 @@ namespace Identity.Application.Features.Auth.Commands;
 /// <summary>
 ///     Command for user login
 /// </summary>
-public class LoginCommand : IRequest<ApiResult<AuthTokenDto>>
+public class LoginCommand : IRequest<ApiResult<LoginResult>>
 {
     public LoginCommand()
     {

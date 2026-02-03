@@ -47,30 +47,28 @@ public class AuthController(IMediator mediator, ITokenBlacklistService tokenBlac
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResult<AuthTokenDto>))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Login([FromBody] LoginDto request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Login([FromBody] LoginDto loginDto, CancellationToken cancellationToken)
     {
-        var command = new LoginCommand(request);
+        var command = new LoginCommand(loginDto);
         var result = await mediator.Send(command, cancellationToken);
 
-        // Set refresh token in HttpOnly cookie
-        if (result.IsSuccess && result.Data?.RefreshToken != null)
+        if (result.IsSuccess && result.Data != null)
         {
-            var cookieOptions = new CookieOptions
+            // Set refresh token in HttpOnly cookie
+            Response.Cookies.Append("refreshToken", result.Data.RefreshToken, new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true, // HTTPS only
+                Secure = true,
                 SameSite = SameSiteMode.Strict,
                 Path = "/api/auth/refresh",
-                Expires = DateTimeOffset.UtcNow.AddDays(7) // Refresh token valid for 7 days
-            };
+                Expires = DateTime.UtcNow.AddDays(7)
+            });
 
-            Response.Cookies.Append("refreshToken", result.Data.RefreshToken, cookieOptions);
-
-            // Remove refresh token from response body for security
-            result.Data.RefreshToken = null;
+            // Return only AuthToken DTO in response (without refreshToken)
+            return ApiResponse(ApiResult<AuthTokenDto>.Success(result.Data.AuthToken, result.Message));
         }
 
-        return ApiResponse(result);
+        return ApiResponse(ApiResult<AuthTokenDto>.Failure(result.Message, result.StatusCode, result.Errors));
     }
 
     /// <summary>
@@ -87,18 +85,13 @@ public class AuthController(IMediator mediator, ITokenBlacklistService tokenBlac
         var userName = User.FindFirst(ClaimTypes.Name)?.Value;
         var firstName = User.FindFirst("FirstName")?.Value;
         var lastName = User.FindFirst("LastName")?.Value;
-        var emailConfirmed = bool.Parse(User.FindFirst("EmailConfirmed")?.Value ?? "false");
+        var emailConfirmed = bool.Parse(User.FindFirst(ClaimTypes.Email + "Confirmed")?.Value ?? "false");
         var phoneNumberConfirmed = bool.Parse(User.FindFirst("PhoneNumberConfirmed")?.Value ?? "false");
         var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
 
-        if (string.IsNullOrEmpty(userId))
-        {
-            return Unauthorized<UserDto>("User not authenticated");
-        }
-
         var userDto = new UserDto
         {
-            Id = Guid.Parse(userId),
+            Id = Guid.Parse(userId!),
             Email = email!,
             UserName = userName!,
             FirstName = firstName!,
