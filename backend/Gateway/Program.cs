@@ -27,6 +27,31 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description = "Unified API gateway for all Medion microservices"
     });
+
+    // JWT Bearer authentication
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        Description = "Enter the JWT token without 'Bearer ' prefix. Example: eyJhbGc..."
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
 });
 
 builder.Services.AddReverseProxy()

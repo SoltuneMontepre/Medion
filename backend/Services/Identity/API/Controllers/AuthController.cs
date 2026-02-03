@@ -2,6 +2,7 @@ using Identity.Application.Common.DTOs;
 using Identity.Application.Features.Auth.Commands;
 using Identity.Application.Features.Auth.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.API.Controllers;
@@ -68,6 +69,7 @@ public class AuthController : ControllerBase
     /// <summary>
     ///     Get current user information
     /// </summary>
+    [Authorize]
     [HttpGet("user/{userId}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserDto))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
