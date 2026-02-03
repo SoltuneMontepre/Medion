@@ -9,5 +9,4 @@ public class AuthTokenDto
     public string? RefreshToken { get; set; }
     public string TokenType { get; set; } = "Bearer";
     public int ExpiresIn { get; set; }
-    public UserDto User { get; set; } = null!;
 }

@@ -58,7 +58,6 @@ public class LoginCommandHandler
             AccessToken = accessToken,
             RefreshToken = refreshToken,
             ExpiresIn = 3600,
-            User = user.Adapt<UserDto>()
         };
 
         return ApiResult<AuthTokenDto>.Success(authTokenDto, "Login successful");

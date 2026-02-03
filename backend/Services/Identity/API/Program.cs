@@ -93,6 +93,15 @@ builder.Services.AddScoped<TokenVerificationService>();
 // Add password hasher for manual user creation
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
+// Add Memory Cache for token blacklist
+builder.Services.AddMemoryCache();
+
+// Register Token Blacklist Service
+builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
+
+// Register CheckTokenBlacklistFilter in DI
+builder.Services.AddScoped<CheckTokenBlacklistFilter>();
+
 // gRPC services
 builder.Services.AddGrpc().AddJsonTranscoding();
 
