@@ -30,7 +30,7 @@ public class AuthController(IMediator mediator, ITokenBlacklistService tokenBlac
     {
         var command = new RegisterUserCommand(request);
         var result = await mediator.Send(command, cancellationToken);
-        
+
         if (result.IsSuccess && result.Data != null)
         {
             return Created(nameof(GetUser), new { userId = result.Data.Id }, result.Data, "User registered successfully");
@@ -184,19 +184,19 @@ public class AuthController(IMediator mediator, ITokenBlacklistService tokenBlac
     {
         // Get access token from Authorization header
         var authHeader = Request.Headers["Authorization"].FirstOrDefault();
-        
+
         if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
         {
             var token = authHeader.Substring("Bearer ".Length).Trim();
-            
+
             // Parse token to get expiration date
             var tokenHandler = new JwtSecurityTokenHandler();
-            
+
             try
             {
                 var jwtToken = tokenHandler.ReadJwtToken(token);
                 var expiryDate = jwtToken.ValidTo;
-                
+
                 // Add token to blacklist
                 await tokenBlacklistService.AddToBlacklistAsync(token, expiryDate);
             }

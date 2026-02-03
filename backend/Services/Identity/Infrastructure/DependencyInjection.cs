@@ -38,7 +38,7 @@ public static class DependencyInjection
 
         // Register Memory Cache
         services.AddMemoryCache();
-        
+
         // Register Token Blacklist Service
         services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
 
