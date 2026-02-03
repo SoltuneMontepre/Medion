@@ -27,7 +27,7 @@ public class LoginCommandHandler
                    ?? throw new UnauthorizedAccessException("Invalid credentials.");
 
         // Verify password
-        var result = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
+        var result = passwordHasher.VerifyHashedPassword(user, user.PasswordHash!, request.Password);
         if (result == PasswordVerificationResult.Failed)
         {
             user.IncrementFailedLoginAttempt();

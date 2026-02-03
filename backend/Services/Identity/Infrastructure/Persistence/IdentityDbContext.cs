@@ -14,9 +14,9 @@ public class IdentityDbContext : IdentityDbContext<User, Role, Guid>
     public IdentityDbContext(DbContextOptions<IdentityDbContext> options) : base(options)
     {
     }
-    public DbSet<UserRole> UserRoles { get; set; } = null!;
-    public DbSet<UserClaim> UserClaims { get; set; } = null!;
-    public DbSet<RoleClaim> RoleClaims { get; set; } = null!;
+    public new DbSet<UserRole> UserRoles { get; set; } = null!;
+    public new DbSet<UserClaim> UserClaims { get; set; } = null!;
+    public new DbSet<RoleClaim> RoleClaims { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

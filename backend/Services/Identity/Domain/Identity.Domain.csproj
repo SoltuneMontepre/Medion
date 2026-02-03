@@ -5,6 +5,5 @@
     </PropertyGroup>
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App"/>
-        <PackageReference Include="Microsoft.Extensions.Identity.Core"/>
     </ItemGroup>
 </Project>

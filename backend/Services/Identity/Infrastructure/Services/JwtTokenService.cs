@@ -26,8 +26,8 @@ public class JwtTokenService(JwtSettings jwtSettings, IRoleRepository roleReposi
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Email, user.Email),
-            new(ClaimTypes.Name, user.UserName),
+            new(ClaimTypes.Email, user.Email!),
+            new(ClaimTypes.Name, user.UserName!),
             new("FirstName", user.FirstName),
             new("LastName", user.LastName),
             new("EmailConfirmed", user.EmailConfirmed.ToString()),
@@ -37,11 +37,11 @@ public class JwtTokenService(JwtSettings jwtSettings, IRoleRepository roleReposi
         // Add role claims
         foreach (var role in roles)
         {
-            claims.Add(new Claim(ClaimTypes.Role, role.Name));
+            claims.Add(new Claim(ClaimTypes.Role, role.Name!));
 
             // Add permissions from role claims
             foreach (var claim in role.Claims.Where(c => c.ClaimType == "permission"))
-                claims.Add(new Claim("permission", claim.ClaimValue));
+                claims.Add(new Claim("permission", claim.ClaimValue!));
         }
 
         var tokenDescriptor = new SecurityTokenDescriptor

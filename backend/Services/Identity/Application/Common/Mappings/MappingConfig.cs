@@ -16,6 +16,7 @@ public class MappingConfig : IRegister
             .Map(dest => dest.Roles, src => src.Roles.Select(ur => ur.Role!.Name).ToList());
 
         // RegisterUserDto -> User
+#pragma warning disable CS8603 // Possible null reference return - Mapster's Ignore() method signature issue
         config.NewConfig<RegisterUserDto, User>()
             .Ignore(dest => dest.Id)
             .Ignore(dest => dest.CreatedAt)
@@ -30,14 +31,15 @@ public class MappingConfig : IRegister
             .Ignore(dest => dest.PasswordHash)
             .Ignore(dest => dest.Claims)
             .Ignore(dest => dest.Roles);
+#pragma warning restore CS8603
 
         // Role -> RoleDto
         config.NewConfig<Role, RoleDto>();
 
         // UserClaim mapping
         config.NewConfig<UserClaim, ClaimDto>()
-            .Map(dest => dest.Type, src => src.ClaimType)
-            .Map(dest => dest.Value, src => src.ClaimValue);
+            .Map(dest => dest.Type, src => src.ClaimType!)
+            .Map(dest => dest.Value, src => src.ClaimValue!);
 
         // RoleClaim mapping
         config.NewConfig<RoleClaim, ClaimDto>()

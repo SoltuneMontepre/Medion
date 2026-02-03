@@ -7,6 +7,9 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using Serilog;
+using Serilog.Exceptions;
+using Serilog.Formatting.Compact;
 
 namespace ServiceDefaults;
 
@@ -20,6 +23,8 @@ public static class Extensions
 
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
+        builder.AddSerilog();
+
         builder.ConfigureOpenTelemetry();
 
         builder.AddDefaultHealthChecks();
@@ -123,5 +128,32 @@ public static class Extensions
         }
 
         return app;
+    }
+
+    public static TBuilder AddSerilog<TBuilder>(this TBuilder builder)
+        where TBuilder : IHostApplicationBuilder
+    {
+        builder.Services.AddSerilog((services, loggerConfiguration) =>
+        {
+            loggerConfiguration
+                .ReadFrom.Configuration(builder.Configuration)
+                .ReadFrom.Services(services)
+                .Enrich.FromLogContext()
+                .Enrich.WithEnvironmentName()
+                .Enrich.WithMachineName()
+                .Enrich.WithThreadId()
+                .Enrich.WithExceptionDetails()
+                .Enrich.WithProperty("Application", builder.Environment.ApplicationName)
+                .WriteTo.Console(new CompactJsonFormatter());
+
+            // Add Seq sink if endpoint is configured
+            var seqUrl = builder.Configuration["Serilog:SeqServerUrl"];
+            if (!string.IsNullOrEmpty(seqUrl))
+            {
+                loggerConfiguration.WriteTo.Seq(seqUrl);
+            }
+        });
+
+        return builder;
     }
 }
