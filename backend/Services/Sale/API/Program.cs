@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Sale.API.Grpc;
 using Sale.Application.Abstractions;
 using Sale.Infrastructure.Data;
+using ServiceDefaults;
 using SharedStorage;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,7 +20,39 @@ var rabbitmq = builder.Configuration.GetConnectionString("RabbitMq")
 builder.Services.AddGrpc(o => { o.EnableDetailedErrors = true; }).AddJsonTranscoding();
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "Sale API",
+        Version = "v1"
+    });
+
+    // JWT Bearer authentication
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        Description = "Enter the JWT token without 'Bearer ' prefix. Example: eyJhbGc..."
+    });
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 builder.Services.AddGrpcReflection();
 
@@ -38,6 +71,9 @@ builder.Services.AddMassTransit(x =>
 });
 
 var app = builder.Build();
+
+// Use global exception handling
+app.UseDefaultExceptionHandler();
 
 app.UseSwagger();
 

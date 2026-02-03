@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
@@ -7,6 +10,10 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using Serilog;
+using Serilog.Exceptions;
+using Serilog.Formatting.Compact;
+using ServiceDefaults.ExceptionHandling;
 
 namespace ServiceDefaults;
 
@@ -20,6 +27,10 @@ public static class Extensions
 
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
+        builder.AddSerilog();
+
+        builder.AddDefaultExceptionHandler();
+
         builder.ConfigureOpenTelemetry();
 
         builder.AddDefaultHealthChecks();
@@ -122,6 +133,61 @@ public static class Extensions
             });
         }
 
+        return app;
+    }
+
+    public static TBuilder AddSerilog<TBuilder>(this TBuilder builder)
+        where TBuilder : IHostApplicationBuilder
+    {
+        builder.Services.AddSerilog((services, loggerConfiguration) =>
+        {
+            loggerConfiguration
+                .ReadFrom.Configuration(builder.Configuration)
+                .ReadFrom.Services(services)
+                .Enrich.FromLogContext()
+                .Enrich.WithEnvironmentName()
+                .Enrich.WithMachineName()
+                .Enrich.WithThreadId()
+                .Enrich.WithExceptionDetails()
+                .Enrich.WithProperty("Application", builder.Environment.ApplicationName)
+                .WriteTo.Console(new CompactJsonFormatter());
+
+            // Add Seq sink if endpoint is configured
+            var seqUrl = builder.Configuration["Serilog:SeqServerUrl"];
+            if (!string.IsNullOrEmpty(seqUrl))
+            {
+                loggerConfiguration.WriteTo.Seq(seqUrl);
+            }
+        });
+
+        return builder;
+    }
+
+    public static TBuilder AddDefaultExceptionHandler<TBuilder>(this TBuilder builder)
+        where TBuilder : IHostApplicationBuilder
+    {
+        // Add ProblemDetails service with custom configuration
+        builder.Services.AddProblemDetails(options =>
+        {
+            options.CustomizeProblemDetails = context =>
+            {
+                context.ProblemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
+            };
+        });
+
+        // Register exception handlers
+        builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+        builder.Services.AddExceptionHandler<FallbackExceptionHandler>();
+
+        return builder;
+    }
+
+    public static WebApplication UseDefaultExceptionHandler(this WebApplication app)
+    {
+        // In .NET 10, the exception handler middleware is automatically added when:
+        // 1. AddProblemDetails() is called
+        // 2. AddExceptionHandler<T>() implementations are registered
+        // No need to explicitly call UseExceptionHandler()
         return app;
     }
 }

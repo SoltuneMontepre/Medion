@@ -1,48 +1,36 @@
 syntax = "proto3";
 
-package sale;
-
 option csharp_namespace = "Services.Sale.Contracts";
 
-import "google/api/annotations.proto";
+package services.sale.contracts;
+
+service Sale {
+  rpc GetOrder (GetOrderRequest) returns (OrderReply);
+  rpc CreateOrder (CreateOrderRequest) returns (OrderReply);
+}
 
 message GetOrderRequest {
   string id = 1;
 }
 
 message CreateOrderRequest {
-  string             customerId = 1;
-  repeated OrderItem items      = 2;
+  string customer_id = 1;
+  repeated OrderItem items = 2;
+}
+
+message OrderReply {
+  string id = 1;
+  string status = 2;
+  Money total = 3;
 }
 
 message OrderItem {
-  string sku       = 1;
-  int32  quantity  = 2;
-  double unitPrice = 3;
+  string sku = 1;
+  int32 quantity = 2;
+  double unit_price = 3;
 }
 
 message Money {
   string currency = 1;
-  double amount   = 2;
-}
-
-message OrderReply {
-  string id     = 1;
-  string status = 2;
-  Money  total  = 3;
-}
-
-service Sale {
-  rpc GetOrder (GetOrderRequest) returns (OrderReply) {
-    option (google.api.http) = {
-      get: "/api/sale/orders/{id}"
-    };
-  }
-
-  rpc CreateOrder (CreateOrderRequest) returns (OrderReply) {
-    option (google.api.http) = {
-      post: "/api/sale/orders"
-      body: "*"
-    };
-  }
+  double amount = 2;
 }

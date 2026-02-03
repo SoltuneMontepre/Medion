@@ -1,0 +1,64 @@
+[tools]
+dotnet = "10"
+
+[tasks.dev]
+description = "Chạy Aspire AppHost (orchestrate tất cả services)"
+run = "dotnet run --project AppHost/AppHost.csproj"
+
+[tasks.watch]
+description = "Chạy Aspire AppHost ở chế độ watch"
+run = "dotnet watch run --project AppHost/AppHost.csproj"
+
+[tasks.build]
+description = "Build toàn bộ solution (Release)"
+run = "dotnet build Backend.slnx -c Release"
+
+[tasks.build-debug]
+description = "Build toàn bộ solution (Debug)"
+run = "dotnet build Backend.slnx"
+
+[tasks.restore]
+description = "Restore NuGet packages"
+run = "dotnet restore Backend.slnx"
+
+[tasks.clean]
+description = "Clean solution"
+run = "dotnet clean Backend.slnx"
+
+# Database migrations cho từng service
+[tasks.db-update-sale]
+description = "Update database migration cho Sale service"
+run = "dotnet ef database update --project Services/Sale/Infrastructure/Sale.Infrastructure.csproj --startup-project Services/Sale/API/Sale.API.csproj"
+
+[tasks.db-update-identity]
+description = "Update database migration cho Identity service"
+run = "dotnet ef database update --project Services/Identity/Infrastructure/Identity.Infrastructure.csproj --startup-project Services/Identity/API/Identity.API.csproj"
+
+[tasks.db-update-inventory]
+description = "Update database migration cho Inventory service"
+run = "dotnet ef database update --project Services/Inventory/Infrastructure/Inventory.Infrastructure.csproj --startup-project Services/Inventory/API/Inventory.API.csproj"
+
+[tasks.db-update-approval]
+description = "Update database migration cho Approval service"
+run = "dotnet ef database update --project Services/Approval/Infrastructure/Approval.Infrastructure.csproj --startup-project Services/Approval/API/Approval.API.csproj"
+
+[tasks.db-update-payroll]
+description = "Update database migration cho Payroll service"
+run = "dotnet ef database update --project Services/Payroll/Infrastructure/Payroll.Infrastructure.csproj --startup-project Services/Payroll/API/Payroll.API.csproj"
+
+[tasks.db-update-manufacture]
+description = "Update database migration cho Manufacture service"
+run = "dotnet ef database update --project Services/Manufacture/Infrastructure/Manufacture.Infrastructure.csproj --startup-project Services/Manufacture/API/Manufacture.API.csproj"
+
+# Docker
+[tasks.docker-up]
+description = "Chạy docker-compose"
+run = "docker compose up -d"
+
+[tasks.docker-down]
+description = "Dừng docker-compose"
+run = "docker compose down"
+
+[tasks.docker-build]
+description = "Build Docker images"
+run = "docker compose build"

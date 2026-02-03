@@ -11,6 +11,7 @@
         <ProjectReference Include="../Application/Sale.Application.csproj"/>
         <ProjectReference Include="../Infrastructure/Sale.Infrastructure.csproj"/>
         <ProjectReference Include="../../SharedStorage/SharedStorage.csproj"/>
+        <ProjectReference Include="../../../ServiceDefaults/ServiceDefaults.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
