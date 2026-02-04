@@ -1,42 +1,33 @@
-using FluentValidation;
-using MediatR;
-
 namespace Identity.Application.Common.Behaviors;
 
 /// <summary>
 ///     MediatR Pipeline Behavior for automatic request validation
 ///     Validates all requests before they reach the handler
 /// </summary>
-public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+public class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TRequest>> validators)
+    : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
-  private readonly IEnumerable<IValidator<TRequest>> _validators;
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next,
+        CancellationToken cancellationToken)
+    {
+        if (!validators.Any())
+            return await next();
 
-  public ValidationBehavior(IEnumerable<IValidator<TRequest>> validators)
-  {
-    _validators = validators;
-  }
+        var context = new ValidationContext<TRequest>(request);
 
-  public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next,
-      CancellationToken cancellationToken)
-  {
-    if (!_validators.Any())
-      return await next();
+        var validationResults = await Task.WhenAll(
+            validators.Select(v => v.ValidateAsync(context, cancellationToken))
+        );
 
-    var context = new ValidationContext<TRequest>(request);
+        var failures = validationResults
+            .Where(result => !result.IsValid)
+            .SelectMany(result => result.Errors)
+            .ToList();
 
-    var validationResults = await Task.WhenAll(
-        _validators.Select(v => v.ValidateAsync(context, cancellationToken))
-    );
+        if (failures.Count != 0)
+            throw new ValidationException(failures);
 
-    var failures = validationResults
-        .Where(result => !result.IsValid)
-        .SelectMany(result => result.Errors)
-        .ToList();
-
-    if (failures.Any())
-      throw new ValidationException(failures);
-
-    return await next();
-  }
+        return await next();
+    }
 }

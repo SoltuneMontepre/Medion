@@ -1,15 +1,14 @@
 using Identity.Domain.Entities;
 using Identity.Domain.Repositories;
-using Microsoft.EntityFrameworkCore;
 
-namespace Identity.Infrastructure.Persistence;
+namespace Identity.Infrastructure.Persistence.Repositories;
 
 /// <summary>
 ///     Repository implementation for User entity
 /// </summary>
 public class UserRepository(IdentityDbContext dbContext) : IUserRepository
 {
-  public async Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await dbContext.Users
             .Include(u => u.Roles)

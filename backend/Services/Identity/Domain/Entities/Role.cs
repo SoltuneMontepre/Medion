@@ -6,12 +6,17 @@ namespace Identity.Domain.Entities;
 /// <summary>
 ///     Represents a role in the system
 /// </summary>
-public class Role : IdentityRole<Guid>, IAuditable, ISoftDelete
+public sealed class Role : IdentityRole<Guid>, IAuditable, ISoftDelete
 {
     public Role()
     {
         Id = Guid.CreateVersion7();
     }
+
+    public string? Description { get; set; }
+
+    public ICollection<UserRole> UserRoles { get; set; } = [];
+    public ICollection<RoleClaim> Claims { get; set; } = [];
 
     // IAuditable members
     public DateTime CreatedAt { get; set; }
@@ -23,10 +28,6 @@ public class Role : IdentityRole<Guid>, IAuditable, ISoftDelete
     public bool IsDeleted { get; set; }
     public DateTime? DeletedAt { get; set; }
     public Guid? DeletedBy { get; set; }
-    public string? Description { get; set; }
-
-    public ICollection<UserRole> UserRoles { get; set; } = [];
-    public ICollection<RoleClaim> Claims { get; set; } = [];
 
     public static Role Create(string name, string? description = null)
     {

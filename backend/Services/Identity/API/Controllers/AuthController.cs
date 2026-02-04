@@ -1,12 +1,7 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using Identity.Application.Common.Abstractions;
 using Identity.Application.Common.DTOs;
 using Identity.Application.Features.Auth.Commands;
 using Identity.Application.Features.Auth.Queries;
-using MediatR;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using ServiceDefaults.ApiResponses;
 
 namespace Identity.API.Controllers;
@@ -19,7 +14,6 @@ namespace Identity.API.Controllers;
 [Route("api/[controller]")]
 public class AuthController(IMediator mediator, ITokenBlacklistService tokenBlacklistService) : ApiControllerBase
 {
-
     /// <summary>
     ///     Register a new user
     /// </summary>
@@ -32,9 +26,8 @@ public class AuthController(IMediator mediator, ITokenBlacklistService tokenBlac
         var result = await mediator.Send(command, cancellationToken);
 
         if (result.IsSuccess && result.Data != null)
-        {
-            return Created(nameof(GetUser), new { userId = result.Data.Id }, result.Data, "User registered successfully");
-        }
+            return Created(nameof(GetUser), new { userId = result.Data.Id }, result.Data,
+                "User registered successfully");
 
         return BadRequest<UserDto>("Registration failed");
     }
@@ -52,23 +45,21 @@ public class AuthController(IMediator mediator, ITokenBlacklistService tokenBlac
         var command = new LoginCommand(loginDto);
         var result = await mediator.Send(command, cancellationToken);
 
-        if (result.IsSuccess && result.Data != null)
+        if (!result.IsSuccess || result.Data == null)
+            if (result.Message != null)
+                return ApiResponse(ApiResult<AuthTokenDto>.Failure(result.Message, result.StatusCode, result.Errors));
+        // Set refresh token in HttpOnly cookie
+        Response.Cookies.Append("refreshToken", result.Data?.RefreshToken!, new CookieOptions
         {
-            // Set refresh token in HttpOnly cookie
-            Response.Cookies.Append("refreshToken", result.Data.RefreshToken, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Path = "/api/auth/refresh",
-                Expires = DateTime.UtcNow.AddDays(7)
-            });
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Path = "/api/auth/refresh",
+            Expires = DateTime.UtcNow.AddDays(7)
+        });
 
-            // Return only AuthToken DTO in response (without refreshToken)
-            return ApiResponse(ApiResult<AuthTokenDto>.Success(result.Data.AuthToken, result.Message));
-        }
-
-        return ApiResponse(ApiResult<AuthTokenDto>.Failure(result.Message, result.StatusCode, result.Errors));
+        // Return only AuthToken DTO in response (without refreshToken)
+        return ApiResponse(ApiResult<AuthTokenDto>.Success(result.Data!.AuthToken, result.Message));
     }
 
     /// <summary>
@@ -141,9 +132,7 @@ public class AuthController(IMediator mediator, ITokenBlacklistService tokenBlac
     {
         // Get refresh token from cookie
         if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
-        {
             return Unauthorized<AuthTokenDto>("Refresh token not found");
-        }
 
         var command = new RefreshTokenCommand { RefreshToken = refreshToken };
         var result = await mediator.Send(command, cancellationToken);
@@ -176,11 +165,11 @@ public class AuthController(IMediator mediator, ITokenBlacklistService tokenBlac
     public async Task<IActionResult> Logout()
     {
         // Get access token from Authorization header
-        var authHeader = Request.Headers["Authorization"].FirstOrDefault();
+        var authHeader = Request.Headers.Authorization.FirstOrDefault();
 
         if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
         {
-            var token = authHeader.Substring("Bearer ".Length).Trim();
+            var token = authHeader["Bearer ".Length..].Trim();
 
             // Parse token to get expiration date
             var tokenHandler = new JwtSecurityTokenHandler();

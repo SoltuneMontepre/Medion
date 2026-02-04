@@ -4,12 +4,7 @@ namespace Identity.Domain.Entities;
 
 public abstract class BaseEntity : IAuditable, ISoftDelete
 {
-    protected BaseEntity()
-    {
-        Id = Guid.CreateVersion7();
-    }
-
-    public Guid Id { get; protected set; }
+    public Guid Id { get; protected set; } = Guid.CreateVersion7();
 
     // IAuditable members
     public DateTime CreatedAt { get; set; }

@@ -1,8 +1,7 @@
 using Identity.Domain.Entities;
 using Identity.Domain.Repositories;
-using Microsoft.EntityFrameworkCore;
 
-namespace Identity.Infrastructure.Persistence;
+namespace Identity.Infrastructure.Persistence.Repositories;
 
 /// <summary>
 ///     Repository implementation for Role entity

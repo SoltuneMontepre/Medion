@@ -2,9 +2,6 @@ using Identity.Application.Common.Abstractions;
 using Identity.Application.Common.DTOs;
 using Identity.Domain.Entities;
 using Identity.Domain.Repositories;
-using Mapster;
-using MediatR;
-using Microsoft.AspNetCore.Identity;
 using ServiceDefaults.ApiResponses;
 
 namespace Identity.Application.Features.Auth.Commands;
@@ -13,8 +10,7 @@ namespace Identity.Application.Features.Auth.Commands;
 ///     Handler for LoginCommand
 ///     Authenticates user and returns JWT token
 /// </summary>
-public class LoginCommandHandler
-(
+public class LoginCommandHandler(
     IUserRepository userRepository,
     IPasswordHasher<User> passwordHasher,
     ITokenService tokenService
@@ -24,7 +20,7 @@ public class LoginCommandHandler
     {
         // Find user by email or username
         var user = (await userRepository.GetByEmailAsync(request.UserNameOrEmail, cancellationToken)
-                   ?? await userRepository.GetByUserNameAsync(request.UserNameOrEmail, cancellationToken))
+                    ?? await userRepository.GetByUserNameAsync(request.UserNameOrEmail, cancellationToken))
                    ?? throw new UnauthorizedAccessException("Invalid credentials.");
 
         // Verify password

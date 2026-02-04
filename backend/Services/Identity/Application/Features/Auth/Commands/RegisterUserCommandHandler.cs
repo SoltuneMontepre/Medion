@@ -1,9 +1,6 @@
 using Identity.Application.Common.DTOs;
 using Identity.Domain.Entities;
 using Identity.Domain.Repositories;
-using Mapster;
-using MediatR;
-using Microsoft.AspNetCore.Identity;
 using ServiceDefaults.ApiResponses;
 
 namespace Identity.Application.Features.Auth.Commands;
@@ -12,8 +9,7 @@ namespace Identity.Application.Features.Auth.Commands;
 ///     Handler for RegisterUserCommand
 ///     Validates registration data and creates new user
 /// </summary>
-public class RegisterUserCommandHandler
-(
+public class RegisterUserCommandHandler(
     IUserRepository userRepository,
     IPasswordHasher<User> passwordHasher
 )

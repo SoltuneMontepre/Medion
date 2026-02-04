@@ -1,5 +1,4 @@
 using Identity.Application.Common.DTOs;
-using ServiceDefaults.ApiResponses;
 
 namespace Identity.Application.Features.Auth.Commands;
 
@@ -10,5 +9,5 @@ namespace Identity.Application.Features.Auth.Commands;
 public class LoginResult
 {
     public AuthTokenDto AuthToken { get; set; } = null!;
-    public string RefreshToken { get; set; } = null!;
+    public string? RefreshToken { get; set; } = null!;
 }

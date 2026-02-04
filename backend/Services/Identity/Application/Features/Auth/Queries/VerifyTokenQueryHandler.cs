@@ -1,6 +1,5 @@
 using Identity.Application.Common.Abstractions;
 using Identity.Application.Common.DTOs;
-using MediatR;
 
 namespace Identity.Application.Features.Auth.Queries;
 
@@ -10,7 +9,6 @@ namespace Identity.Application.Features.Auth.Queries;
 public class VerifyTokenQueryHandler(ITokenService tokenService)
     : IRequestHandler<VerifyTokenQuery, TokenVerificationDto>
 {
-
     public async Task<TokenVerificationDto> Handle(VerifyTokenQuery request, CancellationToken cancellationToken)
     {
         var isValid = await tokenService.ValidateTokenAsync(request.Token, cancellationToken);

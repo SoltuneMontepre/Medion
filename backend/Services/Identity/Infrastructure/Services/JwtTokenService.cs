@@ -1,11 +1,6 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 using Identity.Application.Common.Abstractions;
 using Identity.Domain.Entities;
 using Identity.Domain.Repositories;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Identity.Infrastructure.Services;
 

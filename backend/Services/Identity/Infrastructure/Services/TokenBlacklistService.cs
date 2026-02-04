@@ -1,5 +1,4 @@
 using Identity.Application.Common.Abstractions;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace Identity.Infrastructure.Services;
 
@@ -9,42 +8,42 @@ namespace Identity.Infrastructure.Services;
 /// </summary>
 public class TokenBlacklistService : ITokenBlacklistService
 {
-  private readonly IMemoryCache _cache;
-  private const string BlacklistPrefix = "blacklist_";
+    private const string BlacklistPrefix = "blacklist_";
+    private readonly IMemoryCache _cache;
 
-  public TokenBlacklistService(IMemoryCache cache)
-  {
-    _cache = cache;
-  }
-
-  public Task AddToBlacklistAsync(string token, DateTimeOffset expiryDate)
-  {
-    var cacheKey = GetCacheKey(token);
-
-    // Store token in cache with absolute expiration matching token expiry
-    var cacheOptions = new MemoryCacheEntryOptions
+    public TokenBlacklistService(IMemoryCache cache)
     {
-      AbsoluteExpiration = expiryDate,
-      Priority = CacheItemPriority.High
-    };
+        _cache = cache;
+    }
 
-    _cache.Set(cacheKey, true, cacheOptions);
+    public Task AddToBlacklistAsync(string token, DateTimeOffset expiryDate)
+    {
+        var cacheKey = GetCacheKey(token);
 
-    return Task.CompletedTask;
-  }
+        // Store token in cache with absolute expiration matching token expiry
+        var cacheOptions = new MemoryCacheEntryOptions
+        {
+            AbsoluteExpiration = expiryDate,
+            Priority = CacheItemPriority.High
+        };
 
-  public Task<bool> IsBlacklistedAsync(string token)
-  {
-    var cacheKey = GetCacheKey(token);
-    var isBlacklisted = _cache.TryGetValue(cacheKey, out _);
+        _cache.Set(cacheKey, true, cacheOptions);
 
-    return Task.FromResult(isBlacklisted);
-  }
+        return Task.CompletedTask;
+    }
 
-  private static string GetCacheKey(string token)
-  {
-    // Use a hash of the token to save memory (tokens can be long)
-    // In production, consider using a proper hash like SHA256
-    return $"{BlacklistPrefix}{token.GetHashCode()}";
-  }
+    public Task<bool> IsBlacklistedAsync(string token)
+    {
+        var cacheKey = GetCacheKey(token);
+        var isBlacklisted = _cache.TryGetValue(cacheKey, out _);
+
+        return Task.FromResult(isBlacklisted);
+    }
+
+    private static string GetCacheKey(string token)
+    {
+        // Use a hash of the token to save memory (tokens can be long)
+        // In production, consider using a proper hash like SHA256
+        return $"{BlacklistPrefix}{token.GetHashCode()}";
+    }
 }

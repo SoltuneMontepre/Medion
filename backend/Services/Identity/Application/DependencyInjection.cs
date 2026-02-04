@@ -1,11 +1,6 @@
-using FluentValidation;
 using Identity.Application.Common.Behaviors;
 using Identity.Application.Common.Mappings;
 using Identity.Application.Features.Auth.Commands;
-using Mapster;
-using MapsterMapper;
-using MediatR;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Identity.Application;
 

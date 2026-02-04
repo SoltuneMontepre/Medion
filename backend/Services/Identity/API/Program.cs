@@ -1,4 +1,3 @@
-using System.Text;
 using Identity.API.Filters;
 using Identity.API.Services;
 using Identity.Application;
@@ -6,12 +5,9 @@ using Identity.Application.Common.Abstractions;
 using Identity.Domain.Entities;
 using Identity.Domain.Repositories;
 using Identity.Infrastructure.Persistence;
+using Identity.Infrastructure.Persistence.Repositories;
 using Identity.Infrastructure.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,10 +24,8 @@ var connectionString = Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__PO
 
 // If Aspire env var not set, use config
 if (string.IsNullOrEmpty(connectionString))
-{
     connectionString = builder.Configuration.GetConnectionString("postgres")
                        ?? builder.Configuration.GetConnectionString("DefaultConnection");
-}
 
 connectionString = connectionString ?? throw new InvalidOperationException("Connection string not found.");
 
@@ -116,7 +110,7 @@ builder.Services.AddControllers(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "Identity API",
         Version = "v1",
@@ -124,23 +118,23 @@ builder.Services.AddSwaggerGen(c =>
     });
 
     // JWT Bearer authentication
-    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Type = SecuritySchemeType.Http,
         Scheme = "Bearer",
         BearerFormat = "JWT",
         Description = "Enter the JWT token without 'Bearer ' prefix. Example: eyJhbGc..."
     });
 
-    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            new OpenApiSecurityScheme
             {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                Reference = new OpenApiReference
                 {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Type = ReferenceType.SecurityScheme,
                     Id = "Bearer"
                 }
             },
@@ -155,28 +149,25 @@ builder.Services.AddCors(options =>
     var isDevelopment = builder.Environment.IsDevelopment();
 
     if (isDevelopment)
-    {
         // In development, allow any localhost origin
         options.AddDefaultPolicy(policyBuilder =>
         {
             policyBuilder
                 .WithOrigins(
                     "http://localhost",
-                    "http://localhost:5000",      // Gateway
-                    "http://localhost:4200",      // Frontend
-                    "http://localhost:5001",      // Direct Identity API
+                    "http://localhost:5000", // Gateway
+                    "http://localhost:4200", // Frontend
+                    "http://localhost:5001", // Direct Identity API
                     "https://localhost",
-                    "https://localhost:5000",     // Gateway HTTPS
-                    "https://localhost:4200",     // Frontend HTTPS
-                    "https://localhost:5001"      // Direct Identity API HTTPS
+                    "https://localhost:5000", // Gateway HTTPS
+                    "https://localhost:4200", // Frontend HTTPS
+                    "https://localhost:5001" // Direct Identity API HTTPS
                 )
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials();
         });
-    }
     else
-    {
         // Production - restrict to known origins
         options.AddDefaultPolicy(policyBuilder =>
         {
@@ -188,7 +179,6 @@ builder.Services.AddCors(options =>
                 .AllowAnyHeader()
                 .AllowCredentials();
         });
-    }
 });
 
 var app = builder.Build();
@@ -225,8 +215,7 @@ app.MapGet("/", () => new { service = "Identity.API", version = "1.0" });
 var maxRetries = 5;
 var delay = TimeSpan.FromSeconds(2);
 
-for (int i = 0; i < maxRetries; i++)
-{
+for (var i = 0; i < maxRetries; i++)
     try
     {
         using var scope = app.Services.CreateScope();
@@ -243,7 +232,8 @@ for (int i = 0; i < maxRetries; i++)
 
         if (i < maxRetries - 1)
         {
-            logger.LogWarning(ex, "Database migration failed, retrying in {Delay}ms... (attempt {Attempt}/{MaxRetries})",
+            logger.LogWarning(ex,
+                "Database migration failed, retrying in {Delay}ms... (attempt {Attempt}/{MaxRetries})",
                 delay.TotalMilliseconds, i + 1, maxRetries);
             await Task.Delay(delay);
         }
@@ -252,6 +242,5 @@ for (int i = 0; i < maxRetries; i++)
             logger.LogError(ex, "Database migration failed after {MaxRetries} attempts", maxRetries);
         }
     }
-}
 
 await app.RunAsync();

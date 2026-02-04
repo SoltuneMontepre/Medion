@@ -107,13 +107,9 @@ foreach (var (serviceName, label) in services)
 
             var response = await client.GetAsync($"http://{serviceName}/swagger/v1/swagger.json");
 
-            if (response.IsSuccessStatusCode)
-            {
-                var json = await response.Content.ReadAsStringAsync();
-                return Results.Content(json, "application/json");
-            }
-
-            return Results.StatusCode((int)response.StatusCode);
+            if (!response.IsSuccessStatusCode) return Results.StatusCode((int)response.StatusCode);
+            var json = await response.Content.ReadAsStringAsync();
+            return Results.Content(json, "application/json");
         }
         catch (Exception ex)
         {

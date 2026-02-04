@@ -7,23 +7,13 @@ namespace Identity.Domain.Entities;
 ///     User entity representing an identity in the system
 ///     Extends BaseEntity for audit trails and soft delete support
 /// </summary>
-public class User : IdentityUser<Guid>, IAuditable, ISoftDelete
+public sealed class User : IdentityUser<Guid>, IAuditable, ISoftDelete
 {
     public User()
     {
         Id = Guid.CreateVersion7();
     }
 
-    // IAuditable members
-    public DateTime CreatedAt { get; set; }
-    public DateTime? UpdatedAt { get; set; }
-    public Guid? CreatedBy { get; set; }
-    public Guid? UpdatedBy { get; set; }
-
-    // ISoftDelete members
-    public bool IsDeleted { get; set; }
-    public DateTime? DeletedAt { get; set; }
-    public Guid? DeletedBy { get; set; }
     public string FirstName { get; set; } = null!;
     public string LastName { get; set; } = null!;
     public string? ProfilePictureUrl { get; set; }
@@ -39,6 +29,17 @@ public class User : IdentityUser<Guid>, IAuditable, ISoftDelete
     ///     Navigation property for user roles
     /// </summary>
     public ICollection<UserRole> Roles { get; set; } = [];
+
+    // IAuditable members
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public Guid? CreatedBy { get; set; }
+    public Guid? UpdatedBy { get; set; }
+
+    // ISoftDelete members
+    public bool IsDeleted { get; set; }
+    public DateTime? DeletedAt { get; set; }
+    public Guid? DeletedBy { get; set; }
 
     public static User Create(string email, string userName, string firstName, string lastName)
     {
