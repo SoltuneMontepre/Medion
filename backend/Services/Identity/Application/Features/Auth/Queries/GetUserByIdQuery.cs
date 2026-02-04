@@ -1,5 +1,4 @@
 using Identity.Application.Common.DTOs;
-using MediatR;
 
 namespace Identity.Application.Features.Auth.Queries;
 
@@ -8,5 +7,5 @@ namespace Identity.Application.Features.Auth.Queries;
 /// </summary>
 public class GetUserByIdQuery(Guid userId) : IRequest<UserDto>
 {
-  public Guid UserId { get; set; } = userId;
+    public Guid UserId { get; set; } = userId;
 }

@@ -1,5 +1,4 @@
 using Identity.Application.Common.DTOs;
-using MediatR;
 using ServiceDefaults.ApiResponses;
 
 namespace Identity.Application.Features.Auth.Commands;

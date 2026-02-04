@@ -1,7 +1,5 @@
 using Identity.Domain.Abstractions;
 using Identity.Domain.Entities;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
 
 namespace Identity.Infrastructure.Persistence;
 
@@ -9,9 +7,10 @@ namespace Identity.Infrastructure.Persistence;
 ///     Entity Framework DbContext for Identity Service
 ///     Manages all entities and their relationships
 /// </summary>
-public class IdentityDbContext(DbContextOptions<IdentityDbContext> options) : IdentityDbContext<User, Role, Guid>(options)
+public class IdentityDbContext(DbContextOptions<IdentityDbContext> options)
+    : IdentityDbContext<User, Role, Guid>(options)
 {
-  public new DbSet<UserRole> UserRoles { get; set; } = null!;
+    public new DbSet<UserRole> UserRoles { get; set; } = null!;
     public new DbSet<UserClaim> UserClaims { get; set; } = null!;
     public new DbSet<RoleClaim> RoleClaims { get; set; } = null!;
 
@@ -119,9 +118,21 @@ public class IdentityDbContext(DbContextOptions<IdentityDbContext> options) : Id
         // Set audit timestamps before saving
         var entries = ChangeTracker.Entries<IAuditable>();
         foreach (var entry in entries)
-            if (entry.State == EntityState.Added)
-                entry.Entity.CreatedAt = DateTime.UtcNow;
-            else if (entry.State == EntityState.Modified) entry.Entity.UpdatedAt = DateTime.UtcNow;
+            switch (entry.State)
+            {
+                case EntityState.Added:
+                    entry.Entity.CreatedAt = DateTime.UtcNow;
+                    break;
+                case EntityState.Modified:
+                    entry.Entity.UpdatedAt = DateTime.UtcNow;
+                    break;
+                case EntityState.Detached:
+                case EntityState.Unchanged:
+                case EntityState.Deleted:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
 
         return await base.SaveChangesAsync(cancellationToken);
     }

@@ -1,6 +1,4 @@
-using Grpc.Core;
 using Identity.Application.Features.Auth.Queries;
-using MediatR;
 using Services.Identity.API.Grpc;
 
 namespace Identity.API.Services;
@@ -9,9 +7,9 @@ namespace Identity.API.Services;
 ///     gRPC service for token verification
 ///     Allows other services to verify tokens and get user information
 /// </summary>
-public class TokenVerificationService(IMediator mediator, ILogger<TokenVerificationService> logger) : TokenVerification.TokenVerificationBase
+public class TokenVerificationService(IMediator mediator, ILogger<TokenVerificationService> logger)
+    : TokenVerification.TokenVerificationBase
 {
-
     /// <summary>
     ///     Verify a JWT token and return user information
     /// </summary>

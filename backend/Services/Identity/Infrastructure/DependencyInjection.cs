@@ -1,10 +1,8 @@
 using Identity.Application.Common.Abstractions;
 using Identity.Domain.Repositories;
-using Identity.Infrastructure.Persistence;
+using Identity.Infrastructure.Persistence.Repositories;
 using Identity.Infrastructure.Services;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using IdentityDbContext = Identity.Infrastructure.Persistence.IdentityDbContext;
 
 namespace Identity.Infrastructure;
 

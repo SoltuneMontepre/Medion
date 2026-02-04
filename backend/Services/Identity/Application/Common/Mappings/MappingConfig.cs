@@ -1,6 +1,5 @@
 using Identity.Application.Common.DTOs;
 using Identity.Domain.Entities;
-using Mapster;
 
 namespace Identity.Application.Common.Mappings;
 

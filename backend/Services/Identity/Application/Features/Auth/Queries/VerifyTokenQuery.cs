@@ -1,5 +1,4 @@
 using Identity.Application.Common.DTOs;
-using MediatR;
 
 namespace Identity.Application.Features.Auth.Queries;
 

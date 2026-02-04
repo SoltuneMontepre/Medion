@@ -1,8 +1,4 @@
-using System.Net;
-using System.Text.Json;
 using FluentValidation;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 
 namespace Identity.API.Middleware;
 
@@ -10,26 +6,17 @@ namespace Identity.API.Middleware;
 ///     Global exception handling middleware
 ///     Catches and formats all exceptions into standardized API error responses (RFC 7807)
 /// </summary>
-public class GlobalExceptionMiddleware
+public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
 {
-    private readonly ILogger<GlobalExceptionMiddleware> _logger;
-    private readonly RequestDelegate _next;
-
-    public GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
-    {
-        _next = next;
-        _logger = logger;
-    }
-
     public async Task InvokeAsync(HttpContext context)
     {
         try
         {
-            await _next(context);
+            await next(context);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An unhandled exception occurred");
+            logger.LogError(ex, "An unhandled exception occurred");
             await HandleExceptionAsync(context, ex);
         }
     }
