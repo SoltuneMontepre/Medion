@@ -46,12 +46,12 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build, tag, and push docker image to Amazon ECR
-        working-directory: backend/
+        working-directory: backend/Services/Approval/API
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ secrets.PROJECT_NAME }}-approval-api
         run: |
-          docker build --provenance=false -f Services/Approval/API/Dockerfile -t $REGISTRY/$REPOSITORY:latest .
+          docker build --provenance=false -f Dockerfile -t $REGISTRY/$REPOSITORY:latest .
           docker push $REGISTRY/$REPOSITORY:latest
 
       - name: Update Lambda Function
