@@ -1,16 +1,15 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 6.0"
-    }
-  }
+provider "doppler" {
+}
 
-  backend "remote" {
-    organization = var.organization
+provider "aws" {
+  region     = var.aws_region
+  access_key = local.aws_access_key_id
+  secret_key = local.aws_secret_access_key
 
-    workspaces {
-      name = var.project_name
+  default_tags {
+    tags = {
+      Project   = local.project_name
+      ManagedBy = "Terraform"
     }
   }
 }

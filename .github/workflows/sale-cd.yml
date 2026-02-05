@@ -1,0 +1,67 @@
+name: sale-cd
+
+permissions:
+  id-token: write
+  contents: read
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/Services/Sale/**.cs"
+      - "backend/ServiceDefaults/**.cs"
+      - "backend/Services/SharedStorage/**.cs"
+      - ".github/workflows/sale-cd.yml"
+      - "backend/Services/Sale/**.csproj"
+      - "backend/ServiceDefaults/**.csproj"
+      - "backend/Services/SharedStorage/**.csproj"
+      - "backend/Services/Sale/API/Dockerfile"
+      - "backend/Protos/sale/**.proto"
+  workflow_dispatch:
+
+jobs:
+  sale-cd:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            backend/ServiceDefaults
+            backend/Services/Sale
+            backend/Services/SharedStorage
+            backend/Protos
+            backend/Directory.Build.props
+            backend/Directory.Packages.props
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v5.1.1
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ECR_ROLE_ARN }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push docker image to Amazon ECR
+        working-directory: backend/
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ secrets.PROJECT_NAME }}-sale-api
+        run: |
+          docker build --provenance=false -f Services/Sale/API/Dockerfile -t $REGISTRY/$REPOSITORY:latest .
+          docker push $REGISTRY/$REPOSITORY:latest
+
+      - name: Update Lambda Function
+        env:
+          FUNCTION_NAME: ${{ secrets.PROJECT_NAME }}-sale
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ secrets.PROJECT_NAME }}-sale-api
+        run: |
+          aws lambda update-function-code \
+            --function-name $FUNCTION_NAME \
+            --image-uri $REGISTRY/$REPOSITORY:latest
