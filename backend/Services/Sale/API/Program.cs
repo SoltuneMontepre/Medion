@@ -2,6 +2,7 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Sale.API.Grpc;
+using Sale.API.Middleware;
 using Sale.Application.Abstractions;
 using Sale.Infrastructure.Data;
 using ServiceDefaults;
@@ -27,6 +28,12 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Sale API",
         Version = "v1"
+    });
+
+    c.AddServer(new OpenApiServer
+    {
+        Url = "/api/sale",
+        Description = "Sale API"
     });
 
     // JWT Bearer authentication
@@ -77,6 +84,7 @@ var app = builder.Build();
 app.UseDefaultExceptionHandler();
 
 app.UseSwagger();
+app.UsePathPrefixRewrite("/api/sale");
 
 // Migrate DB (best effort)
 try

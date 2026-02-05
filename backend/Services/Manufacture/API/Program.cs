@@ -1,3 +1,4 @@
+using Manufacture.API.Middleware;
 using Microsoft.OpenApi.Models;
 using ServiceDefaults;
 
@@ -14,6 +15,12 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Manufacture API",
         Version = "v1"
+    });
+
+    c.AddServer(new OpenApiServer
+    {
+        Url = "/api/manufacture",
+        Description = "Manufacture API"
     });
 
     // JWT Bearer authentication
@@ -48,6 +55,7 @@ var app = builder.Build();
 app.UseDefaultExceptionHandler();
 
 app.UseSwagger();
+app.UsePathPrefixRewrite("/api/manufacture");
 
 app.MapGet("/", () => new { name = "Manufacture.API" });
 

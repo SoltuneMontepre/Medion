@@ -1,4 +1,5 @@
 using Identity.API.Filters;
+using Identity.API.Middleware;
 using Identity.API.Services;
 using Identity.Application;
 using Identity.Application.Common.Abstractions;
@@ -117,6 +118,12 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Identity and Authentication Service"
     });
 
+    c.AddServer(new OpenApiServer
+    {
+        Url = "/api/identity",
+        Description = "Identity API"
+    });
+
     // JWT Bearer authentication
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -195,6 +202,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors();
+
+// Allow gateway-style prefix when calling Identity API directly
+app.UsePathPrefixRewrite("/api/identity");
 
 app.UseAuthentication();
 app.UseAuthorization();

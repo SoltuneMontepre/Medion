@@ -11,7 +11,6 @@ namespace Identity.API.Controllers;
 ///     Handles registration, login, and token verification
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
 public class AuthController(IMediator mediator, ITokenBlacklistService tokenBlacklistService) : ApiControllerBase
 {
     /// <summary>

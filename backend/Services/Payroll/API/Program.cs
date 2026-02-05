@@ -1,4 +1,5 @@
 using Microsoft.OpenApi.Models;
+using Payroll.API.Middleware;
 using ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +15,12 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Payroll API",
         Version = "v1"
+    });
+
+    c.AddServer(new OpenApiServer
+    {
+        Url = "/api/payroll",
+        Description = "Payroll API"
     });
 
     // JWT Bearer authentication
@@ -48,6 +55,7 @@ var app = builder.Build();
 app.UseDefaultExceptionHandler();
 
 app.UseSwagger();
+app.UsePathPrefixRewrite("/api/payroll");
 
 app.MapGet("/", () => new { name = "Payroll.API" });
 
