@@ -48,10 +48,10 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build, tag, and push docker image to Amazon ECR
-        working-directory: backend/Services/Identity/API
+        working-directory: backend
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ secrets.PROJECT_NAME }}-identity-api
         run: |
-          docker build --provenance=false -f Dockerfile -t $REGISTRY/$REPOSITORY:build .
+          docker build --provenance=false -f Services/Identity/API/Dockerfile -t $REGISTRY/$REPOSITORY:build Services/Identity
           docker push $REGISTRY/$REPOSITORY:build
