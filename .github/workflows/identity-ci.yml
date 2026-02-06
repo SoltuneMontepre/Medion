@@ -53,5 +53,5 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ secrets.PROJECT_NAME }}-identity-api
         run: |
-          docker build --provenance=false -f Services/Identity/API/Dockerfile -t $REGISTRY/$REPOSITORY:build Services/Identity/API
+          docker build --provenance=false -f Services/Identity/API/Dockerfile -t $REGISTRY/$REPOSITORY:build .
           docker push $REGISTRY/$REPOSITORY:build

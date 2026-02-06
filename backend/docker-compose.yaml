@@ -112,7 +112,8 @@ services:
 
   sale.api:
     build:
-      context: ./Services/Sale/API
+      context: .
+      dockerfile: Services/Sale/API/Dockerfile
     container_name: sale.api
     environment:
       - ASPNETCORE_URLS=http://+:8080
@@ -127,7 +128,8 @@ services:
 
   approval.api:
     build:
-      context: ./Services/Approval/API
+      context: .
+      dockerfile: Services/Approval/API/Dockerfile
     container_name: approval.api
     environment:
       - ASPNETCORE_URLS=http://+:8080
@@ -140,7 +142,8 @@ services:
 
   payroll.api:
     build:
-      context: ./Services/Payroll/API
+      context: .
+      dockerfile: Services/Payroll/API/Dockerfile
     container_name: payroll.api
     environment:
       - ASPNETCORE_URLS=http://+:8080
@@ -153,7 +156,8 @@ services:
 
   inventory.api:
     build:
-      context: ./Services/Inventory/API
+      context: .
+      dockerfile: Services/Inventory/API/Dockerfile
     container_name: inventory.api
     environment:
       - ASPNETCORE_URLS=http://+:8080
@@ -166,7 +170,8 @@ services:
 
   manufacture.api:
     build:
-      context: ./Services/Manufacture/API
+      context: .
+      dockerfile: Services/Manufacture/API/Dockerfile
     container_name: manufacture.api
     environment:
       - ASPNETCORE_URLS=http://+:8080
@@ -179,7 +184,8 @@ services:
 
   identity.api:
     build:
-      context: ./Services/Identity/API
+      context: .
+      dockerfile: Services/Identity/API/Dockerfile
     container_name: identity.api
     environment:
       - ASPNETCORE_URLS=http://+:8080
