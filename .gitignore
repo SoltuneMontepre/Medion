@@ -97,3 +97,4 @@ backend/AppHost/appsettings.json
 .vscode
 backend/Gateway/logs/
 *.sln
+.env
