@@ -10,6 +10,6 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     provideRouter(routes),
     provideHttpClient(),
-    provideApi('/api'),
+    provideApi('http://localhost:5000'),
   ],
 };
