@@ -4,12 +4,17 @@ resource "aws_lambda_function" "this" {
   package_type  = "Image"
   image_uri     = "${var.ecr_repository}:latest"
 
-  memory_size   = 1024
-  timeout       = 60
+  memory_size   = 2048
+  timeout       = 120
   architectures = ["x86_64"]
 
   environment {
-    variables = var.environment_variables
+    variables = merge(
+      {
+        ASPNETCORE_URLS = "http://+:8080"
+      },
+      var.environment_variables
+    )
   }
 
   lifecycle {

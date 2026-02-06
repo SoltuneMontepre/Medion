@@ -11,7 +11,7 @@ COPY Services/Inventory/API/ ./Services/Inventory/API/
 
 WORKDIR /src/Services/Inventory/API
 RUN dotnet restore
-RUN dotnet publish -c Release -o /out /p:UseAppHost=false
+RUN dotnet publish -c Release -o /out /p:UseAppHost=false /p:PublishReadyToRun=true /p:PublishSingleFile=false
 
 FROM public.ecr.aws/lambda/dotnet:10 AS runtime
 WORKDIR /var/task

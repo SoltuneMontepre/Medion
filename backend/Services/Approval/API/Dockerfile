@@ -11,7 +11,7 @@ COPY Services/Approval/API/ ./Services/Approval/API/
 
 WORKDIR /src/Services/Approval/API
 RUN dotnet restore
-RUN dotnet publish -c Release -o /out /p:UseAppHost=false
+RUN dotnet publish -c Release -o /out /p:UseAppHost=false /p:PublishReadyToRun=true /p:PublishSingleFile=false
 
 FROM public.ecr.aws/lambda/dotnet:10 AS runtime
 WORKDIR /var/task
