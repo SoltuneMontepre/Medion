@@ -98,3 +98,4 @@ backend/AppHost/appsettings.json
 backend/Gateway/logs/
 *.sln
 .env
+**/logs/
