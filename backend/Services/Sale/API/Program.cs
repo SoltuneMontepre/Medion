@@ -80,6 +80,14 @@ builder.Services.AddMassTransit(x =>
 
 var app = builder.Build();
 
+// Auto-migrate database in Development environment
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<SaleDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
+
 // Use global exception handling
 app.UseDefaultExceptionHandler();
 

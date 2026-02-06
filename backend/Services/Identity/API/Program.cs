@@ -190,6 +190,14 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Auto-migrate database in Development environment
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
+
 // Use global exception handling
 app.UseDefaultExceptionHandler();
 
