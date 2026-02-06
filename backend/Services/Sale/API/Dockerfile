@@ -16,9 +16,6 @@ RUN dotnet restore
 RUN dotnet publish -c Release -o /out /p:UseAppHost=false
 
 FROM public.ecr.aws/lambda/dotnet:10 AS runtime
-WORKDIR /app
-EXPOSE 8080
-ENV ASPNETCORE_URLS=http://+:8080
-
+WORKDIR /var/task
 COPY --from=build /out .
-ENTRYPOINT ["dotnet", "Sale.API.dll"]
+CMD ["Sale.API"]
