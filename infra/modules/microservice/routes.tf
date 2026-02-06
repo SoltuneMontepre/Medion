@@ -30,7 +30,7 @@ resource "aws_apigatewayv2_authorizer" "jwt" {
   api_id           = var.api_gateway_id
   authorizer_type  = "JWT"
   identity_sources = ["$request.header.Authorization"]
-  name             = "jwt-authorizer"
+  name             = "${var.service_name}-jwt-authorizer"
 
   jwt_configuration {
     issuer   = var.jwt_issuer
