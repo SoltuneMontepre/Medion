@@ -12,13 +12,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-// Database configuration
-var postgres = builder.Configuration.GetConnectionString("postgres-sale")
-               ?? "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=sale";
-
 // Add Application and Infrastructure services
 builder.Services.AddApplicationServices();
-builder.Services.AddInfrastructureServices();
+builder.Services.AddInfrastructureServices(builder.Configuration);
 
 // Services
 builder.Services.AddControllers();
@@ -66,11 +62,6 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddGrpcReflection();
-
-builder.Services.AddDbContext<SaleDbContext>(opt =>
-    opt.UseNpgsql(postgres, npgsqlOptions =>
-        npgsqlOptions.MigrationsAssembly("Sale.Infrastructure")));
-
 
 // Add S3 Storage
 builder.Services.AddS3Storage(builder.Configuration);

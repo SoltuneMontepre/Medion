@@ -58,7 +58,7 @@ public class CustomerController(IMediator mediator) : ApiControllerBase
         if (result.IsSuccess && result.Data != null)
             return Created(nameof(GetById), new { id = result.Data.Id }, result.Data, result.Message);
 
-        return BadRequest<CustomerDto>("Customer creation failed");
+        return BadRequest<CustomerDto>(result.Message ?? "Customer creation failed", result.Errors);
     }
 
     /// <summary>

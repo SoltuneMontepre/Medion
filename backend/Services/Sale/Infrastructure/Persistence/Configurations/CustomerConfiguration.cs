@@ -17,6 +17,13 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.HasIndex(c => c.Code)
             .IsUnique();
 
+        builder.Property(c => c.PhoneNumber)
+            .IsRequired()
+            .HasMaxLength(20);
+
+        builder.HasIndex(c => c.PhoneNumber)
+            .IsUnique();
+
         builder.Property(c => c.FirstName)
             .IsRequired()
             .HasMaxLength(100);
@@ -28,9 +35,5 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Property(c => c.Address)
             .IsRequired()
             .HasMaxLength(500);
-
-        builder.Property(c => c.PhoneNumber)
-            .IsRequired()
-            .HasMaxLength(20);
     }
 }

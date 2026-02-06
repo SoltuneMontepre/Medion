@@ -79,6 +79,9 @@ namespace Sale.Infrastructure.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
+                    b.HasIndex("PhoneNumber")
+                        .IsUnique();
+
                     b.ToTable("Customers");
                 });
 #pragma warning restore 612, 618

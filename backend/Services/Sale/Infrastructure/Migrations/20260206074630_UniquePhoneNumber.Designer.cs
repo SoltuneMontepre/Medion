@@ -12,8 +12,8 @@ using Sale.Infrastructure.Data;
 namespace Sale.Infrastructure.Migrations
 {
     [DbContext(typeof(SaleDbContext))]
-    [Migration("20260206064905_InitCustomer")]
-    partial class InitCustomer
+    [Migration("20260206074630_UniquePhoneNumber")]
+    partial class UniquePhoneNumber
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -35,6 +35,11 @@ namespace Sale.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -73,6 +78,12 @@ namespace Sale.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("PhoneNumber")
+                        .IsUnique();
 
                     b.ToTable("Customers");
                 });
