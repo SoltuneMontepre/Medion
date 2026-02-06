@@ -9,6 +9,7 @@ namespace Sale.Domain.Entities;
 
 public sealed class Customer : BaseEntity
 {
+    public string Code { get; set; } = null!;
     public string FirstName { get; set; } = null!;
     public string LastName { get; set; } = null!;
     public string Address { get; set; } = null!;
