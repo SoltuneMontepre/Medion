@@ -1,8 +1,3 @@
-# syntax=docker/dockerfile:1.7-labs
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
-WORKDIR /app
-EXPOSE 8080
-ENV ASPNETCORE_URLS=http://+:8080
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
@@ -17,9 +12,10 @@ WORKDIR /src/Services/Approval/API
 RUN dotnet restore
 RUN dotnet publish -c Release -o /out /p:UseAppHost=false
 
-FROM base AS final
+FROM public.ecr.aws/lambda/dotnet:10.0 AS runtime
 WORKDIR /app
-# AWS Lambda Web Adapter — translates Lambda events to HTTP requests for Kestrel
-COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt/extensions/lambda-adapter
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
+
 COPY --from=build /out .
 ENTRYPOINT ["dotnet", "Approval.API.dll"]
