@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, provideExperimentalZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -7,9 +7,9 @@ import { provideApi } from '../contract/provide-api';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideBrowserGlobalErrorListeners(),
+    provideExperimentalZonelessChangeDetection(),
     provideRouter(routes),
     provideHttpClient(),
-    provideApi('http://localhost:5000') // API Gateway base URL
-  ]
+    provideApi('/api'), // Use relative path for Cloudflare Pages Functions proxy
+  ],
 };
