@@ -5,5 +5,13 @@
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="../Domain/Sale.Domain.csproj"/>
+        <ProjectReference Include="../../../ServiceDefaults/ServiceDefaults.csproj"/>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="MediatR"/>
+        <PackageReference Include="FluentValidation"/>
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions"/>
+        <PackageReference Include="Mapster"/>
+        <PackageReference Include="Mapster.DependencyInjection"/>
     </ItemGroup>
 </Project>

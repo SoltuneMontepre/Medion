@@ -13,6 +13,8 @@ using ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
+
 // Load JWT settings from configuration
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()
                   ?? throw new InvalidOperationException("JwtSettings configuration is missing");
@@ -20,15 +22,10 @@ var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSetting
 // Add services to DI container
 builder.Services.AddSingleton(jwtSettings);
 
-// Database configuration
-var connectionString = Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__POSTGRES");
-
-// If Aspire env var not set, use config
-if (string.IsNullOrEmpty(connectionString))
-    connectionString = builder.Configuration.GetConnectionString("postgres")
-                       ?? builder.Configuration.GetConnectionString("DefaultConnection");
-
-connectionString = connectionString ?? throw new InvalidOperationException("Connection string not found.");
+// Database configuration - Aspire uses resource name from AppHost.cs: "postgres-identity"
+var connectionString = builder.Configuration.GetConnectionString("postgres-identity")
+                       ?? builder.Configuration.GetConnectionString("DefaultConnection")
+                       ?? throw new InvalidOperationException("Connection string not found.");
 
 builder.Services.AddDbContext<IdentityDbContext>(options =>
     options.UseNpgsql(connectionString, npgsqlOptions =>
@@ -190,6 +187,14 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Auto-migrate database in Development environment
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
+
 // Use global exception handling
 app.UseDefaultExceptionHandler();
 
@@ -215,8 +220,8 @@ app.MapControllers();
 // gRPC endpoints
 app.MapGrpcService<TokenVerificationService>();
 
-// Health check endpoint
-app.MapGet("/health", () => new { status = "healthy", timestamp = DateTime.UtcNow });
+// Aspire health checks
+app.MapDefaultEndpoints();
 
 // Root endpoint
 app.MapGet("/", () => new { service = "Identity.API", version = "1.0" });

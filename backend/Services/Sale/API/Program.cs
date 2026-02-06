@@ -1,24 +1,23 @@
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using Sale.API.Grpc;
 using Sale.API.Middleware;
-using Sale.Application.Abstractions;
+using Sale.Application;
+using Sale.Infrastructure;
 using Sale.Infrastructure.Data;
 using ServiceDefaults;
 using SharedStorage;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Config
-var postgres = builder.Configuration.GetConnectionString("Postgres")
-               ?? Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__POSTGRES")
-               ?? "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=sale";
-var rabbitmq = builder.Configuration.GetConnectionString("RabbitMq")
-               ?? Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__RABBITMQ")
-               ?? "amqp://guest:guest@localhost:5672";
+builder.AddServiceDefaults();
+
+// Add Application and Infrastructure services
+builder.Services.AddApplicationServices();
+builder.Services.AddInfrastructureServices(builder.Configuration);
 
 // Services
+builder.Services.AddControllers();
 builder.Services.AddGrpc(o => { o.EnableDetailedErrors = true; }).AddJsonTranscoding();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -64,33 +63,63 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddGrpcReflection();
 
-builder.Services.AddDbContext<SaleDbContext>(opt =>
-    opt.UseNpgsql(postgres));
-
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-
 // Add S3 Storage
 builder.Services.AddS3Storage(builder.Configuration);
 
+// MassTransit with RabbitMQ - Aspire-aware configuration
 builder.Services.AddMassTransit(x =>
 {
     x.SetKebabCaseEndpointNameFormatter();
-    x.UsingRabbitMq((context, cfg) => { cfg.Host(new Uri(rabbitmq)); });
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        // Get connection string from configuration (injected by Aspire)
+        var configuration = context.GetService<IConfiguration>();
+        var connectionString = configuration?.GetConnectionString("rabbitmq");
+
+        if (!string.IsNullOrEmpty(connectionString))
+        {
+            // Aspire provides connection string in format: amqp://user:pass@host:port
+            var uri = new Uri(connectionString);
+            cfg.Host(uri);
+        }
+        else
+        {
+            // Local development fallback
+            cfg.Host("localhost", h =>
+            {
+                h.Username("guest");
+                h.Password("guest");
+            });
+        }
+
+        cfg.ConfigureEndpoints(context);
+    });
 });
 
 var app = builder.Build();
+
+// Auto-migrate database in Development environment
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<SaleDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
 
 // Use global exception handling
 app.UseDefaultExceptionHandler();
 
 app.UseSwagger();
 app.UsePathPrefixRewrite("/api/sale");
+app.MapDefaultEndpoints();
+
+// Map Controllers
+app.MapControllers();
 
 // NOTE: Database migrations are now handled in the CD pipeline
 // See .github/workflows/sale-cd.yml for the migration step
 
 // Endpoints
-app.MapGrpcService<SaleService>();
 app.MapGrpcReflectionService();
 
 // Health + root info
