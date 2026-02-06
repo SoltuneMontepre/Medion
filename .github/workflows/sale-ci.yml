@@ -53,5 +53,5 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ secrets.PROJECT_NAME }}-sale-api
         run: |
-          docker build --provenance=false -f Services/Sale/API/Dockerfile -t $REGISTRY/$REPOSITORY:build Services/Sale
+          docker build --provenance=false -f Services/Sale/API/Dockerfile -t $REGISTRY/$REPOSITORY:build Services/Sale/API
           docker push $REGISTRY/$REPOSITORY:build
