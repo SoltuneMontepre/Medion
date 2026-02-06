@@ -106,46 +106,51 @@ builder.Services.AddControllers(options =>
 
 // API documentation
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
+
+// Only register Swagger in Development
+if (builder.Environment.IsDevelopment())
 {
-    c.SwaggerDoc("v1", new OpenApiInfo
+    builder.Services.AddSwaggerGen(c =>
     {
-        Title = "Identity API",
-        Version = "v1",
-        Description = "Identity and Authentication Service"
-    });
-
-    c.AddServer(new OpenApiServer
-    {
-        Url = "/api/identity",
-        Description = "Identity API"
-    });
-
-    // JWT Bearer authentication
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        Description = "Enter the JWT token without 'Bearer ' prefix. Example: eyJhbGc..."
-    });
-
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
+        c.SwaggerDoc("v1", new OpenApiInfo
         {
-            new OpenApiSecurityScheme
+            Title = "Identity API",
+            Version = "v1",
+            Description = "Identity and Authentication Service"
+        });
+
+        c.AddServer(new OpenApiServer
+        {
+            Url = "/api/identity",
+            Description = "Identity API"
+        });
+
+        // JWT Bearer authentication
+        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        {
+            Name = "Authorization",
+            Type = SecuritySchemeType.Http,
+            Scheme = "Bearer",
+            BearerFormat = "JWT",
+            Description = "Enter the JWT token without 'Bearer ' prefix. Example: eyJhbGc..."
+        });
+
+        c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
             {
-                Reference = new OpenApiReference
+                new OpenApiSecurityScheme
                 {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    }
+                },
+                Array.Empty<string>()
+            }
+        });
     });
-});
+}
 
 // CORS - Allow from gateway and localhost development
 builder.Services.AddCors(options =>

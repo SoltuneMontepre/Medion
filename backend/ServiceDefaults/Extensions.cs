@@ -44,22 +44,35 @@ public static class Extensions
     public static TBuilder AddSerilog<TBuilder>(this TBuilder builder)
         where TBuilder : IHostApplicationBuilder
     {
+        var isLambda = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AWS_LAMBDA_FUNCTION_NAME"));
+        
         builder.Services.AddSerilog((services, loggerConfiguration) =>
         {
             loggerConfiguration
                 .ReadFrom.Configuration(builder.Configuration)
                 .ReadFrom.Services(services)
                 .Enrich.FromLogContext()
-                .Enrich.WithEnvironmentName()
-                .Enrich.WithMachineName()
-                .Enrich.WithThreadId()
-                .Enrich.WithExceptionDetails()
-                .Enrich.WithProperty("Application", builder.Environment.ApplicationName)
-                .WriteTo.Console(new CompactJsonFormatter());
+                .Enrich.WithProperty("Application", builder.Environment.ApplicationName);
 
-            // Add Seq sink if endpoint is configured
-            var seqUrl = builder.Configuration["Serilog:SeqServerUrl"];
-            if (!string.IsNullOrEmpty(seqUrl)) loggerConfiguration.WriteTo.Seq(seqUrl);
+            if (isLambda)
+            {
+                // Minimal enrichment for Lambda - CloudWatch already adds context
+                loggerConfiguration.WriteTo.Console(new CompactJsonFormatter());
+            }
+            else
+            {
+                // Full enrichment for non-Lambda environments
+                loggerConfiguration
+                    .Enrich.WithEnvironmentName()
+                    .Enrich.WithMachineName()
+                    .Enrich.WithThreadId()
+                    .Enrich.WithExceptionDetails()
+                    .WriteTo.Console(new CompactJsonFormatter());
+
+                // Add Seq sink if endpoint is configured
+                var seqUrl = builder.Configuration["Serilog:SeqServerUrl"];
+                if (!string.IsNullOrEmpty(seqUrl)) loggerConfiguration.WriteTo.Seq(seqUrl);
+            }
         });
 
         return builder;
@@ -97,24 +110,41 @@ public static class Extensions
     {
         public TBuilder AddServiceDefaults()
         {
+            // Skip expensive initialization in AWS Lambda 
+            var isLambda = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AWS_LAMBDA_FUNCTION_NAME"));
+            
             builder.AddSerilog();
 
             builder.AddDefaultExceptionHandler();
 
-            builder.ConfigureOpenTelemetry();
+            if (!isLambda)
+            {
+                builder.ConfigureOpenTelemetry();
+
+                builder.Services.AddServiceDiscovery();
+
+                builder.Services.ConfigureHttpClientDefaults(http =>
+                {
+                    // Turn on resilience by default
+                    http.AddStandardResilienceHandler();
+
+                    // Turn on service discovery by default
+                    http.AddServiceDiscovery();
+                });
+            }
+            else
+            {
+                // Lightweight HTTP client config for Lambda
+                builder.Services.ConfigureHttpClientDefaults(http =>
+                {
+                    http.ConfigureHttpClient(client =>
+                    {
+                        client.Timeout = TimeSpan.FromSeconds(30);
+                    });
+                });
+            }
 
             builder.AddDefaultHealthChecks();
-
-            builder.Services.AddServiceDiscovery();
-
-            builder.Services.ConfigureHttpClientDefaults(http =>
-            {
-                // Turn on resilience by default
-                http.AddStandardResilienceHandler();
-
-                // Turn on service discovery by default
-                http.AddServiceDiscovery();
-            });
 
             // Uncomment the following to restrict the allowed schemes for service discovery.
             // builder.Services.Configure<ServiceDiscoveryOptions>(options =>
