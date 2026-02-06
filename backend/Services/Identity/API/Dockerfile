@@ -8,6 +8,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY Directory.Build.props ./
 COPY Directory.Packages.props ./
+COPY Protos ./Protos
 COPY ServiceDefaults/ ./ServiceDefaults/
 COPY Services/Identity/Domain/ ./Services/Identity/Domain/
 COPY Services/Identity/Application/ ./Services/Identity/Application/
