@@ -221,36 +221,7 @@ app.MapGet("/health", () => new { status = "healthy", timestamp = DateTime.UtcNo
 // Root endpoint
 app.MapGet("/", () => new { service = "Identity.API", version = "1.0" });
 
-// Database migrations with retry (best effort on startup)
-var maxRetries = 5;
-var delay = TimeSpan.FromSeconds(2);
-
-for (var i = 0; i < maxRetries; i++)
-    try
-    {
-        using var scope = app.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        logger.LogInformation("Starting database migration (attempt {Attempt}/{MaxRetries})...", i + 1, maxRetries);
-        await db.Database.MigrateAsync();
-        logger.LogInformation("Database migration completed successfully");
-        break;
-    }
-    catch (Exception ex)
-    {
-        var logger = app.Services.CreateScope().ServiceProvider.GetRequiredService<ILogger<Program>>();
-
-        if (i < maxRetries - 1)
-        {
-            logger.LogWarning(ex,
-                "Database migration failed, retrying in {Delay}ms... (attempt {Attempt}/{MaxRetries})",
-                delay.TotalMilliseconds, i + 1, maxRetries);
-            await Task.Delay(delay);
-        }
-        else
-        {
-            logger.LogError(ex, "Database migration failed after {MaxRetries} attempts", maxRetries);
-        }
-    }
+// NOTE: Database migrations are now handled in the CD pipeline
+// See .github/workflows/identity-cd.yml for the migration step
 
 await app.RunAsync();

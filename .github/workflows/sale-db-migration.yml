@@ -1,0 +1,50 @@
+name: sale-db-migration
+
+permissions:
+  id-token: write
+  contents: read
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/Services/Sale/Infrastructure/Data/**"
+      - "backend/Services/Sale/Domain/Entities/**"
+      - "backend/Services/Sale/Infrastructure/Migrations/**"
+  workflow_dispatch:
+
+jobs:
+  migrate-sale-db:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            backend/ServiceDefaults
+            backend/Services/Sale
+            backend/Directory.Build.props
+            backend/Directory.Packages.props
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Install EF Core tools
+        run: dotnet tool install --global dotnet-ef
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v5.1.1
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ECR_ROLE_ARN }}
+
+      - name: Run Database Migrations
+        working-directory: backend/Services/Sale/API
+        env:
+          CONNECTIONSTRINGS__POSTGRES: ${{ secrets.SALE_DB_URL }}
+        run: dotnet ef database update --configuration Release

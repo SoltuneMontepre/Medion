@@ -86,17 +86,8 @@ app.UseDefaultExceptionHandler();
 app.UseSwagger();
 app.UsePathPrefixRewrite("/api/sale");
 
-// Migrate DB (best effort)
-try
-{
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<SaleDbContext>();
-    await db.Database.MigrateAsync();
-}
-catch
-{
-    // ignore in bootstrap
-}
+// NOTE: Database migrations are now handled in the CD pipeline
+// See .github/workflows/sale-cd.yml for the migration step
 
 // Endpoints
 app.MapGrpcService<SaleService>();
