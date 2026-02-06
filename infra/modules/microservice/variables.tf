@@ -50,16 +50,3 @@ variable "no_auth_routes" {
   type        = list(string)
   default     = []
 }
-
-
-variable "jwt_issuer" {
-  description = "JWT Issuer for authentication"
-  type        = string
-  default     = ""
-}
-
-variable "jwt_audience" {
-  description = "JWT Audience for authentication"
-  type        = string
-  default     = ""
-}

@@ -4,9 +4,10 @@ export async function onRequest(context) {
   // Get the API endpoint from environment variable or use default
   const apiEndpoint = env.API_ENDPOINT_URL || 'https://medion.soltunemontepre.tech';
 
-  // Get the path from the request
+  // Get the path from the request — keep the /api prefix intact
+  // because API Gateway routes expect it (e.g. /api/identity/health)
   const url = new URL(request.url);
-  const path = url.pathname.replace('/api', '');
+  const path = url.pathname;
 
   // Build the target URL
   const targetUrl = `${apiEndpoint}${path}${url.search}`;

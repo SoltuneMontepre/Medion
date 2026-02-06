@@ -65,8 +65,6 @@ module "approval_service" {
   ecr_repository            = module.ecr.repository_urls["approval-api"]
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
-  jwt_audience              = local.jwt_audience
-  jwt_issuer                = local.jwt_issuer
 
   no_auth_routes = [
     "/health/{proxy+}",
@@ -91,8 +89,6 @@ module "sale_service" {
   ecr_repository            = module.ecr.repository_urls["sale-api"]
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
-  jwt_audience              = local.jwt_audience
-  jwt_issuer                = local.jwt_issuer
 
   no_auth_routes = [
     "/health/{proxy+}",
@@ -123,8 +119,6 @@ module "payroll_service" {
   ecr_repository            = module.ecr.repository_urls["payroll-api"]
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
-  jwt_audience              = local.jwt_audience
-  jwt_issuer                = local.jwt_issuer
 
   no_auth_routes = [
     "/health/{proxy+}",
@@ -149,8 +143,6 @@ module "inventory_service" {
   ecr_repository            = module.ecr.repository_urls["inventory-api"]
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
-  jwt_audience              = local.jwt_audience
-  jwt_issuer                = local.jwt_issuer
 
   no_auth_routes = [
     "/health/{proxy+}",
@@ -175,8 +167,6 @@ module "manufacture_service" {
   ecr_repository            = module.ecr.repository_urls["manufacture-api"]
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
-  jwt_audience              = local.jwt_audience
-  jwt_issuer                = local.jwt_issuer
 
   no_auth_routes = [
     "/health/{proxy+}",
@@ -201,8 +191,6 @@ module "identity_service" {
   ecr_repository            = module.ecr.repository_urls["identity-api"]
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
-  jwt_audience              = local.jwt_audience
-  jwt_issuer                = local.jwt_issuer
 
   no_auth_routes = [
     "/health/{proxy+}",

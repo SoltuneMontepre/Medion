@@ -4,8 +4,7 @@ resource "aws_apigatewayv2_route" "default_route" {
   api_id             = var.api_gateway_id
   route_key          = "${each.value} /api/${var.service_name}/{proxy+}"
   target             = "integrations/${aws_apigatewayv2_integration.default_integration.id}"
-  authorization_type = "JWT"
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "options_bypass" {
@@ -23,17 +22,4 @@ resource "aws_apigatewayv2_route" "no_auth_routes" {
   route_key          = "ANY /api/${var.service_name}${each.value}"
   target             = "integrations/${aws_apigatewayv2_integration.default_integration.id}"
   authorization_type = "NONE"
-}
-
-
-resource "aws_apigatewayv2_authorizer" "jwt" {
-  api_id           = var.api_gateway_id
-  authorizer_type  = "JWT"
-  identity_sources = ["$request.header.Authorization"]
-  name             = "${var.service_name}-jwt-authorizer"
-
-  jwt_configuration {
-    issuer   = var.jwt_issuer
-    audience = [var.jwt_audience]
-  }
 }

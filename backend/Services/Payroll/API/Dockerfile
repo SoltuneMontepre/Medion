@@ -19,5 +19,7 @@ RUN dotnet publish -c Release -o /out /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
+# AWS Lambda Web Adapter — translates Lambda events to HTTP requests for Kestrel
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt/extensions/lambda-adapter
 COPY --from=build /out .
 ENTRYPOINT ["dotnet", "Payroll.API.dll"]
