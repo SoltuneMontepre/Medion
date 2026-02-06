@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const ApiUrl = import.meta.env.VITE_API_URL
+const ApiUrl = import.meta.env.VITE_API_ENDPOINT_URL
 
 const axiosInstance = axios.create({
 	baseURL: ApiUrl,
