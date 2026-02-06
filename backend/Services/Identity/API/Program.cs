@@ -13,6 +13,8 @@ using ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
+
 // Load JWT settings from configuration
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()
                   ?? throw new InvalidOperationException("JwtSettings configuration is missing");
@@ -20,13 +22,10 @@ var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSetting
 // Add services to DI container
 builder.Services.AddSingleton(jwtSettings);
 
-// Database configuration
-// Aspire uses resource name from AppHost.cs: "postgres-identity"
+// Database configuration - Aspire uses resource name from AppHost.cs: "postgres-identity"
 var connectionString = builder.Configuration.GetConnectionString("postgres-identity")
-                       ?? Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__POSTGRES-IDENTITY")
-                       ?? builder.Configuration.GetConnectionString("DefaultConnection");
-
-connectionString = connectionString ?? throw new InvalidOperationException("Connection string not found.");
+                       ?? builder.Configuration.GetConnectionString("DefaultConnection")
+                       ?? throw new InvalidOperationException("Connection string not found.");
 
 builder.Services.AddDbContext<IdentityDbContext>(options =>
     options.UseNpgsql(connectionString, npgsqlOptions =>
@@ -221,8 +220,8 @@ app.MapControllers();
 // gRPC endpoints
 app.MapGrpcService<TokenVerificationService>();
 
-// Health check endpoint
-app.MapGet("/health", () => new { status = "healthy", timestamp = DateTime.UtcNow });
+// Aspire health checks
+app.MapDefaultEndpoints();
 
 // Root endpoint
 app.MapGet("/", () => new { service = "Identity.API", version = "1.0" });

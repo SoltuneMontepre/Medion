@@ -2,21 +2,26 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Sale.API.Middleware;
+using Sale.Application;
+using Sale.Infrastructure;
 using Sale.Infrastructure.Data;
 using ServiceDefaults;
 using SharedStorage;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Config - Use Aspire resource names from AppHost.cs
+builder.AddServiceDefaults();
+
+// Database configuration
 var postgres = builder.Configuration.GetConnectionString("postgres-sale")
-               ?? Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__POSTGRES-SALE")
                ?? "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=sale";
-var rabbitmq = builder.Configuration.GetConnectionString("rabbitmq")
-               ?? Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__RABBITMQ")
-               ?? "amqp://guest:guest@localhost:5672";
+
+// Add Application and Infrastructure services
+builder.Services.AddApplicationServices();
+builder.Services.AddInfrastructureServices();
 
 // Services
+builder.Services.AddControllers();
 builder.Services.AddGrpc(o => { o.EnableDetailedErrors = true; }).AddJsonTranscoding();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -63,16 +68,41 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddGrpcReflection();
 
 builder.Services.AddDbContext<SaleDbContext>(opt =>
-    opt.UseNpgsql(postgres));
+    opt.UseNpgsql(postgres, npgsqlOptions =>
+        npgsqlOptions.MigrationsAssembly("Sale.Infrastructure")));
 
 
 // Add S3 Storage
 builder.Services.AddS3Storage(builder.Configuration);
 
+// MassTransit with RabbitMQ - Aspire-aware configuration
 builder.Services.AddMassTransit(x =>
 {
     x.SetKebabCaseEndpointNameFormatter();
-    x.UsingRabbitMq((context, cfg) => { cfg.Host(new Uri(rabbitmq)); });
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        // Get connection string from configuration (injected by Aspire)
+        var configuration = context.GetService<IConfiguration>();
+        var connectionString = configuration?.GetConnectionString("rabbitmq");
+
+        if (!string.IsNullOrEmpty(connectionString))
+        {
+            // Aspire provides connection string in format: amqp://user:pass@host:port
+            var uri = new Uri(connectionString);
+            cfg.Host(uri);
+        }
+        else
+        {
+            // Local development fallback
+            cfg.Host("localhost", h =>
+            {
+                h.Username("guest");
+                h.Password("guest");
+            });
+        }
+
+        cfg.ConfigureEndpoints(context);
+    });
 });
 
 var app = builder.Build();
@@ -90,6 +120,10 @@ app.UseDefaultExceptionHandler();
 
 app.UseSwagger();
 app.UsePathPrefixRewrite("/api/sale");
+app.MapDefaultEndpoints();
+
+// Map Controllers
+app.MapControllers();
 
 // NOTE: Database migrations are now handled in the CD pipeline
 // See .github/workflows/sale-cd.yml for the migration step
