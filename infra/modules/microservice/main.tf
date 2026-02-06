@@ -9,15 +9,7 @@ resource "aws_lambda_function" "this" {
   architectures = ["x86_64"]
 
   environment {
-    variables = merge(var.environment_variables, {
-      # AWS Lambda Web Adapter configuration (binary is COPY'd into Docker image)
-      PORT                         = "8080"
-      AWS_LWA_READINESS_CHECK_PORT = "8080"
-      AWS_LWA_READINESS_CHECK_PATH = "/health"
-      AWS_LWA_ASYNC_INIT           = "true"
-      # Strip the /api/{service} prefix so the app receives clean paths
-      AWS_LWA_REMOVE_BASE_PATH = "/api/${var.service_name}"
-    })
+    variables = var.environment_variables
   }
 
   lifecycle {
