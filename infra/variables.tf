@@ -1,17 +1,23 @@
+variable "cors_origins" {
+  description = "List of allowed CORS origins for API Gateway"
+  type        = list(string)
+  default     = ["http://localhost:4200", "http://localhost:4201"]
+}
+
 variable "aws_region" {
-  description = "The AWS region to deploy resources in"
+  description = "aws region"
   type        = string
   default     = "ap-southeast-1"
 }
 
-variable "project_name" {
-  description = "The name of the project"
+variable "doppler_project" {
+  description = "doppler project name"
   type        = string
   default     = "medion"
 }
 
-variable "organization" {
-  description = "The organization name for Terraform Cloud"
+variable "doppler_config" {
   type        = string
-  default     = "medion"
+  description = "doppler config"
+  default     = "dev"
 }
