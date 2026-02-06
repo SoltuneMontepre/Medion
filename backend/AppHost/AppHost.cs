@@ -2,36 +2,52 @@ using Projects;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-// Infrastructure
-var postgres = builder.AddPostgres("postgres")
+// Infrastructure - RabbitMQ (shared)
+var rabbitmq = builder.AddRabbitMQ("rabbitmq")
     .WithDataVolume();
 
-var rabbitmq = builder.AddRabbitMQ("rabbitmq")
+// PostgreSQL - One per service
+var salePostgres = builder.AddPostgres("postgres-sale")
+    .WithDataVolume();
+
+var approvalPostgres = builder.AddPostgres("postgres-approval")
+    .WithDataVolume();
+
+var payrollPostgres = builder.AddPostgres("postgres-payroll")
+    .WithDataVolume();
+
+var inventoryPostgres = builder.AddPostgres("postgres-inventory")
+    .WithDataVolume();
+
+var manufacturePostgres = builder.AddPostgres("postgres-manufacture")
+    .WithDataVolume();
+
+var identityPostgres = builder.AddPostgres("postgres-identity")
     .WithDataVolume();
 
 // Services
 var saleApi = builder.AddProject<Sale_API>("sale-api")
-    .WithReference(postgres)
+    .WithReference(salePostgres)
     .WithReference(rabbitmq);
 
 var approvalApi = builder.AddProject<Approval_API>("approval-api")
-    .WithReference(postgres)
+    .WithReference(approvalPostgres)
     .WithReference(rabbitmq);
 
 var payrollApi = builder.AddProject<Payroll_API>("payroll-api")
-    .WithReference(postgres)
+    .WithReference(payrollPostgres)
     .WithReference(rabbitmq);
 
 var inventoryApi = builder.AddProject<Inventory_API>("inventory-api")
-    .WithReference(postgres)
+    .WithReference(inventoryPostgres)
     .WithReference(rabbitmq);
 
 var manufactureApi = builder.AddProject<Manufacture_API>("manufacture-api")
-    .WithReference(postgres)
+    .WithReference(manufacturePostgres)
     .WithReference(rabbitmq);
 
 var identityApi = builder.AddProject<Identity_API>("identity-api")
-    .WithReference(postgres)
+    .WithReference(identityPostgres)
     .WithReference(rabbitmq);
 
 // Gateway

@@ -21,11 +21,9 @@ var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSetting
 builder.Services.AddSingleton(jwtSettings);
 
 // Database configuration
-var connectionString = Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__POSTGRES");
-
-// If Aspire env var not set, use config
-if (string.IsNullOrEmpty(connectionString))
-    connectionString = builder.Configuration.GetConnectionString("postgres")
+// Aspire uses resource name from AppHost.cs: "postgres-identity"
+var connectionString = builder.Configuration.GetConnectionString("postgres-identity")
+                       ?? Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__POSTGRES-IDENTITY")
                        ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
 connectionString = connectionString ?? throw new InvalidOperationException("Connection string not found.");

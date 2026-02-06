@@ -1,20 +1,18 @@
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using Sale.API.Grpc;
 using Sale.API.Middleware;
-using Sale.Application.Abstractions;
 using Sale.Infrastructure.Data;
 using ServiceDefaults;
 using SharedStorage;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Config
-var postgres = builder.Configuration.GetConnectionString("Postgres")
-               ?? Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__POSTGRES")
+// Config - Use Aspire resource names from AppHost.cs
+var postgres = builder.Configuration.GetConnectionString("postgres-sale")
+               ?? Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__POSTGRES-SALE")
                ?? "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=sale";
-var rabbitmq = builder.Configuration.GetConnectionString("RabbitMq")
+var rabbitmq = builder.Configuration.GetConnectionString("rabbitmq")
                ?? Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__RABBITMQ")
                ?? "amqp://guest:guest@localhost:5672";
 
@@ -67,7 +65,6 @@ builder.Services.AddGrpcReflection();
 builder.Services.AddDbContext<SaleDbContext>(opt =>
     opt.UseNpgsql(postgres));
 
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
 // Add S3 Storage
 builder.Services.AddS3Storage(builder.Configuration);
@@ -98,7 +95,6 @@ app.UsePathPrefixRewrite("/api/sale");
 // See .github/workflows/sale-cd.yml for the migration step
 
 // Endpoints
-app.MapGrpcService<SaleService>();
 app.MapGrpcReflectionService();
 
 // Health + root info
