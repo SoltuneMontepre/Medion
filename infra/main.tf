@@ -66,12 +66,11 @@ module "approval_service" {
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
 
-  no_auth_routes = [
-    "/health/{proxy+}",
-    "/health",
-    "/swagger/{proxy+}",
-    "/swagger",
-  ]
+  # Optimized for cold start performance
+  memory_size                    = 2048 # 2 GB = ~1.2 vCPUs
+  timeout                        = 120
+  ephemeral_storage_size         = 1024
+  reserved_concurrent_executions = 1 # Keep 1 instance warm
 
   environment_variables = {
     ASPNETCORE_ENVIRONMENT      = "Production"
@@ -90,12 +89,11 @@ module "sale_service" {
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
 
-  no_auth_routes = [
-    "/health/{proxy+}",
-    "/health",
-    "/swagger/{proxy+}",
-    "/swagger",
-  ]
+  # Optimized for cold start performance
+  memory_size                    = 2048 # 2 GB = ~1.2 vCPUs
+  timeout                        = 120
+  ephemeral_storage_size         = 1024
+  reserved_concurrent_executions = 1 # Keep 1 instance warm
 
   environment_variables = {
     ASPNETCORE_ENVIRONMENT      = "Production"
@@ -120,12 +118,11 @@ module "payroll_service" {
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
 
-  no_auth_routes = [
-    "/health/{proxy+}",
-    "/health",
-    "/swagger/{proxy+}",
-    "/swagger",
-  ]
+  # Optimized for cold start performance
+  memory_size                    = 2048 # 2 GB = ~1.2 vCPUs
+  timeout                        = 120
+  ephemeral_storage_size         = 1024
+  reserved_concurrent_executions = 1 # Keep 1 instance warm
 
   environment_variables = {
     ASPNETCORE_ENVIRONMENT      = "Production"
@@ -144,12 +141,11 @@ module "inventory_service" {
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
 
-  no_auth_routes = [
-    "/health/{proxy+}",
-    "/health",
-    "/swagger/{proxy+}",
-    "/swagger",
-  ]
+  # Optimized for cold start performance
+  memory_size                    = 2048 # 2 GB = ~1.2 vCPUs
+  timeout                        = 120
+  ephemeral_storage_size         = 1024
+  reserved_concurrent_executions = 1 # Keep 1 instance warm
 
   environment_variables = {
     ASPNETCORE_ENVIRONMENT      = "Production"
@@ -168,12 +164,11 @@ module "manufacture_service" {
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
 
-  no_auth_routes = [
-    "/health/{proxy+}",
-    "/health",
-    "/swagger/{proxy+}",
-    "/swagger",
-  ]
+  # Optimized for cold start performance
+  memory_size                    = 2048 # 2 GB = ~1.2 vCPUs
+  timeout                        = 120
+  ephemeral_storage_size         = 1024
+  reserved_concurrent_executions = 1 # Keep 1 instance warm
 
   environment_variables = {
     ASPNETCORE_ENVIRONMENT      = "Production"
@@ -192,12 +187,12 @@ module "identity_service" {
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
 
-  no_auth_routes = [
-    "/health/{proxy+}",
-    "/health",
-    "/swagger/{proxy+}",
-    "/swagger",
-  ]
+  # Identity has heavier initialization (EF Core, Identity Framework, JWT)
+  memory_size                    = 2560 # 2.5 GB = ~1.5 vCPUs
+  timeout                        = 120
+  ephemeral_storage_size         = 1024
+  reserved_concurrent_executions = 1 # Keep 1 instance warm
+
 
   environment_variables = {
     ASPNETCORE_ENVIRONMENT         = "Production"

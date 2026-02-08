@@ -11,9 +11,21 @@ COPY Services/Approval/API/ ./Services/Approval/API/
 
 WORKDIR /src/Services/Approval/API
 RUN dotnet restore
-RUN dotnet publish -c Release -o /out /p:UseAppHost=false /p:PublishReadyToRun=true /p:PublishSingleFile=false
+
+RUN dotnet publish -c Release -o /out \
+    /p:UseAppHost=false \
+    /p:PublishReadyToRun=true \
+    /p:PublishSingleFile=false \
+    /p:PublishTrimmed=false \
+    /p:TieredCompilation=false \
+    /p:TieredCompilationQuickJit=false
 
 FROM public.ecr.aws/lambda/dotnet:10 AS runtime
 WORKDIR /var/task
 COPY --from=build /out .
+
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 \
+    DOTNET_gcServer=0 \
+    DOTNET_RUNNING_IN_CONTAINER=true
+
 CMD ["Approval.API"]

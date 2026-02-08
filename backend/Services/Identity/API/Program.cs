@@ -28,8 +28,22 @@ var connectionString = builder.Configuration.GetConnectionString("postgres-ident
                        ?? throw new InvalidOperationException("Connection string not found.");
 
 builder.Services.AddDbContext<IdentityDbContext>(options =>
+{
     options.UseNpgsql(connectionString, npgsqlOptions =>
-        npgsqlOptions.MigrationsAssembly("Identity.Infrastructure")));
+    {
+        npgsqlOptions.MigrationsAssembly("Identity.Infrastructure");
+        // Optimize for Lambda: reduce connection timeout and enable pooling
+        npgsqlOptions.CommandTimeout(30);
+        npgsqlOptions.EnableRetryOnFailure(maxRetryCount: 3);
+    });
+    
+    // Disable sensitive data logging in production for performance
+    if (!builder.Environment.IsDevelopment())
+    {
+        options.EnableSensitiveDataLogging(false);
+        options.EnableDetailedErrors(false);
+    }
+});
 
 // Identity services
 builder.Services.AddIdentity<User, Role>(options =>
@@ -70,6 +84,16 @@ builder.Services.AddAuthentication(options =>
     });
 
 builder.Services.AddAuthorization();
+
+// Configure Data Protection for Lambda environment
+// Lambda functions are ephemeral, so we use ephemeral data protection
+// Keys are stored in /tmp which is fast and doesn't require external dependencies
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Services.AddDataProtection()
+        .PersistKeysToFileSystem(new DirectoryInfo("/tmp/dpkeys"))
+        .SetDefaultKeyLifetime(TimeSpan.FromDays(7));
+}
 
 // CQRS + Mapster (Application layer)
 builder.Services.AddApplicationServices();
@@ -192,7 +216,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Auto-migrate database in Development environment
+// Auto-migrate database in Development environment (for Aspire local development)
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();

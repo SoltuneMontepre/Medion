@@ -43,10 +43,27 @@ variable "environment_variables" {
   default     = {}
 }
 
-### Route Bypass
-
-variable "no_auth_routes" {
-  description = "List of routes that bypass authentication"
-  type        = list(string)
-  default     = []
+variable "memory_size" {
+  description = "Amount of memory in MB for Lambda function (128-10240). More memory = more CPU = faster cold starts"
+  type        = number
+  default     = 3008 # ~2 vCPUs for better initialization performance
 }
+
+variable "timeout" {
+  description = "Lambda function timeout in seconds (1-900)"
+  type        = number
+  default     = 120
+}
+
+variable "ephemeral_storage_size" {
+  description = "Ephemeral storage size in MB for /tmp directory (512-10240)"
+  type        = number
+  default     = 1024 # Increased from default 512 MB for data protection keys
+}
+
+variable "reserved_concurrent_executions" {
+  description = "Reserved concurrent executions to keep instances warm. -1 = unreserved, 0 = disabled, >0 = reserved count"
+  type        = number
+  default     = -1 # Unreserved by default
+}
+

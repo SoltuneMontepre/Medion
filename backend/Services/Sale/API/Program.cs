@@ -98,7 +98,7 @@ builder.Services.AddMassTransit(x =>
 
 var app = builder.Build();
 
-// Auto-migrate database in Development environment
+// Auto-migrate database in Development environment (for Aspire local development)
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();

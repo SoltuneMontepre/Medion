@@ -5,9 +5,7 @@ using ServiceDefaults;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
-
 builder.Services.AddGrpc().AddJsonTranscoding();
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
