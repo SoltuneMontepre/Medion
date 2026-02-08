@@ -85,15 +85,9 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// Configure Data Protection for Lambda environment
-// Lambda functions are ephemeral, so we use ephemeral data protection
-// Keys are stored in /tmp which is fast and doesn't require external dependencies
-if (!builder.Environment.IsDevelopment())
-{
-    builder.Services.AddDataProtection()
-        .PersistKeysToFileSystem(new DirectoryInfo("/tmp/dpkeys"))
-        .SetDefaultKeyLifetime(TimeSpan.FromDays(7));
-}
+// Data Protection: Use default ephemeral in-memory keys for Lambda
+// Lambda functions are stateless and ephemeral, so persistent key storage doesn't help
+// If cross-instance key persistence is needed, use AWS Systems Manager Parameter Store
 
 // CQRS + Mapster (Application layer)
 builder.Services.AddApplicationServices();
