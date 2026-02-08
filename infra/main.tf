@@ -70,8 +70,7 @@ module "approval_service" {
   memory_size                    = 2048 # 2 GB = ~1.2 vCPUs
   timeout                        = 120
   ephemeral_storage_size         = 1024
-  reserved_concurrent_executions = 1 # Keep 1 instance warm
-
+  reserved_concurrent_executions = 0
   environment_variables = {
     ASPNETCORE_ENVIRONMENT      = "Production"
     CONNECTIONSTRINGS__POSTGRES = local.approval_db_url
@@ -93,8 +92,7 @@ module "sale_service" {
   memory_size                    = 2048 # 2 GB = ~1.2 vCPUs
   timeout                        = 120
   ephemeral_storage_size         = 1024
-  reserved_concurrent_executions = 1 # Keep 1 instance warm
-
+  reserved_concurrent_executions = 0
   environment_variables = {
     ASPNETCORE_ENVIRONMENT      = "Production"
     CONNECTIONSTRINGS__POSTGRES = local.sale_db_url
@@ -122,7 +120,7 @@ module "payroll_service" {
   memory_size                    = 2048 # 2 GB = ~1.2 vCPUs
   timeout                        = 120
   ephemeral_storage_size         = 1024
-  reserved_concurrent_executions = 1 # Keep 1 instance warm
+  reserved_concurrent_executions = 0
 
   environment_variables = {
     ASPNETCORE_ENVIRONMENT      = "Production"
@@ -145,7 +143,7 @@ module "inventory_service" {
   memory_size                    = 2048 # 2 GB = ~1.2 vCPUs
   timeout                        = 120
   ephemeral_storage_size         = 1024
-  reserved_concurrent_executions = 1 # Keep 1 instance warm
+  reserved_concurrent_executions = 0
 
   environment_variables = {
     ASPNETCORE_ENVIRONMENT      = "Production"
@@ -168,8 +166,7 @@ module "manufacture_service" {
   memory_size                    = 2048 # 2 GB = ~1.2 vCPUs
   timeout                        = 120
   ephemeral_storage_size         = 1024
-  reserved_concurrent_executions = 1 # Keep 1 instance warm
-
+  reserved_concurrent_executions = 0
   environment_variables = {
     ASPNETCORE_ENVIRONMENT      = "Production"
     CONNECTIONSTRINGS__POSTGRES = local.manufacture_db_url
@@ -191,7 +188,7 @@ module "identity_service" {
   memory_size                    = 2560 # 2.5 GB = ~1.5 vCPUs
   timeout                        = 120
   ephemeral_storage_size         = 1024
-  reserved_concurrent_executions = 1 # Keep 1 instance warm
+  reserved_concurrent_executions = 0
 
 
   environment_variables = {
