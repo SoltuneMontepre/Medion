@@ -1,4 +1,5 @@
 using Identity.Domain.Abstractions;
+using Identity.Domain.Identifiers;
 using Microsoft.AspNetCore.Identity;
 
 namespace Identity.Domain.Entities;
@@ -7,11 +8,11 @@ namespace Identity.Domain.Entities;
 ///     User entity representing an identity in the system
 ///     Extends BaseEntity for audit trails and soft delete support
 /// </summary>
-public sealed class User : IdentityUser<Guid>, IAuditable, ISoftDelete
+public sealed class User : IdentityUser<IdentityId>, IAuditable, ISoftDelete
 {
     public User()
     {
-        Id = Guid.CreateVersion7();
+        Id = IdentityId.New();
     }
 
     public string FirstName { get; set; } = null!;
@@ -33,13 +34,13 @@ public sealed class User : IdentityUser<Guid>, IAuditable, ISoftDelete
     // IAuditable members
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
-    public Guid? CreatedBy { get; set; }
-    public Guid? UpdatedBy { get; set; }
+    public IdentityId? CreatedBy { get; set; }
+    public IdentityId? UpdatedBy { get; set; }
 
     // ISoftDelete members
     public bool IsDeleted { get; set; }
     public DateTime? DeletedAt { get; set; }
-    public Guid? DeletedBy { get; set; }
+    public IdentityId? DeletedBy { get; set; }
 
     public static User Create(string email, string userName, string firstName, string lastName)
     {

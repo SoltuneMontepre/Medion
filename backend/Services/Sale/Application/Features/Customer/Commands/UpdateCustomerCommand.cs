@@ -1,5 +1,6 @@
 using MediatR;
 using Sale.Application.Common.DTOs;
+using Sale.Domain.Identifiers;
 using ServiceDefaults.ApiResponses;
 
 namespace Sale.Application.Features.Customer.Commands;
@@ -9,7 +10,7 @@ namespace Sale.Application.Features.Customer.Commands;
 /// </summary>
 public class UpdateCustomerCommand : IRequest<ApiResult<CustomerDto>>
 {
-  public Guid Id { get; set; }
+  public CustomerId Id { get; set; }
   public string FirstName { get; set; } = null!;
   public string LastName { get; set; } = null!;
   public string Address { get; set; } = null!;

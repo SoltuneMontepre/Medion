@@ -1,4 +1,5 @@
 using Sale.Domain.Entities;
+using Sale.Domain.Identifiers;
 
 namespace Sale.Domain.Repositories;
 
@@ -7,12 +8,12 @@ namespace Sale.Domain.Repositories;
 /// </summary>
 public interface ICustomerRepository
 {
-  Task<Customer?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+  Task<Customer?> GetByIdAsync(CustomerId id, CancellationToken cancellationToken = default);
   Task<IEnumerable<Customer>> GetAllAsync(CancellationToken cancellationToken = default);
   Task<IEnumerable<Customer>> GetAllActiveAsync(CancellationToken cancellationToken = default);
   Task AddAsync(Customer customer, CancellationToken cancellationToken = default);
   Task UpdateAsync(Customer customer, CancellationToken cancellationToken = default);
-  Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
-  Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default);
+  Task DeleteAsync(CustomerId id, CancellationToken cancellationToken = default);
+  Task<bool> ExistsAsync(CustomerId id, CancellationToken cancellationToken = default);
   Task<string> GenerateCustomerCodeAsync(CancellationToken cancellationToken = default);
 }

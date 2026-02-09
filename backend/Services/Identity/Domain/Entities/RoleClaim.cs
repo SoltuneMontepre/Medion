@@ -1,3 +1,5 @@
+using Identity.Domain.Identifiers;
+
 namespace Identity.Domain.Entities;
 
 /// <summary>
@@ -9,14 +11,14 @@ public class RoleClaim : BaseEntity
     {
     }
 
-    public Guid RoleId { get; set; }
+    public IdentityId RoleId { get; set; }
     public string ClaimType { get; set; } = null!;
     public string ClaimValue { get; set; } = null!;
 
     // Navigation property
     public Role? Role { get; set; }
 
-    public static RoleClaim Create(Guid roleId, string claimType, string claimValue)
+    public static RoleClaim Create(IdentityId roleId, string claimType, string claimValue)
     {
         return new RoleClaim
         {

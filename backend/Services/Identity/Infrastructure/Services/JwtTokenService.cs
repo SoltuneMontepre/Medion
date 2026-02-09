@@ -1,5 +1,6 @@
 using Identity.Application.Common.Abstractions;
 using Identity.Domain.Entities;
+using Identity.Domain.Identifiers;
 using Identity.Domain.Repositories;
 
 namespace Identity.Infrastructure.Services;
@@ -54,7 +55,7 @@ public class JwtTokenService(JwtSettings jwtSettings, IRoleRepository roleReposi
         return tokenHandler.WriteToken(token);
     }
 
-    public async Task<string> GenerateRefreshTokenAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<string> GenerateRefreshTokenAsync(IdentityId userId, CancellationToken cancellationToken = default)
     {
         // Generate a secure random refresh token
         var randomNumber = new byte[64];
