@@ -9,7 +9,7 @@ import type {
 	User,
 } from './types'
 
-const AUTH_BASE = '/api/auth'
+const AUTH_BASE = '/api/identity'
 
 export const identityQueryKeys = {
 	me: ['identity', 'me'] as const,
