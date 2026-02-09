@@ -104,10 +104,9 @@ builder.Services.AddMassTransit(x =>
 
 var app = builder.Build();
 
-// Auto-migrate database in Development environment (for Aspire local development)
-if (app.Environment.IsDevelopment())
+// Auto-migrate database on startup
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<SaleDbContext>();
     await dbContext.Database.MigrateAsync();
 }
@@ -122,7 +121,7 @@ app.MapDefaultEndpoints();
 // Map Controllers
 app.MapControllers();
 
-// NOTE: Database migrations are now handled in the CD pipeline
+// NOTE: CD pipeline also runs migrations; app startup keeps auto-migrate enabled
 // See .github/workflows/sale-cd.yml for the migration step
 
 // Endpoints

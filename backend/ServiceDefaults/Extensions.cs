@@ -45,7 +45,7 @@ public static class Extensions
         where TBuilder : IHostApplicationBuilder
     {
         var isLambda = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AWS_LAMBDA_FUNCTION_NAME"));
-        
+
         builder.Services.AddSerilog((services, loggerConfiguration) =>
         {
             loggerConfiguration
@@ -109,9 +109,9 @@ public static class Extensions
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder)
         where TBuilder : IHostApplicationBuilder
     {
-        // Skip expensive initialization in AWS Lambda 
+        // Skip expensive initialization in AWS Lambda
         var isLambda = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AWS_LAMBDA_FUNCTION_NAME"));
-        
+
         builder.AddSerilog();
 
         builder.AddDefaultExceptionHandler();

@@ -12,29 +12,29 @@ namespace Sale.Application.Features.Customer.Commands;
 public class CreateCustomerCommandHandler(ICustomerRepository customerRepository)
     : IRequestHandler<CreateCustomerCommand, ApiResult<CustomerDto>>
 {
-  public async Task<ApiResult<CustomerDto>> Handle(CreateCustomerCommand request, CancellationToken cancellationToken)
-  {
-    // Generate unique customer code
-    var customerCode = await customerRepository.GenerateCustomerCodeAsync(cancellationToken);
-
-    var dto = new CreateCustomerDto
+    public async Task<ApiResult<CustomerDto>> Handle(CreateCustomerCommand request, CancellationToken cancellationToken)
     {
-      FirstName = request.FirstName,
-      LastName = request.LastName,
-      Address = request.Address,
-      PhoneNumber = request.PhoneNumber
-    };
+        // Generate unique customer code
+        var customerCode = await customerRepository.GenerateCustomerCodeAsync(cancellationToken);
 
-    // Map from DTO to entity and set fields not handled by mapping
-    var customer = dto.Adapt<Domain.Entities.Customer>();
-    customer.Code = customerCode;
-    customer.CreatedAt = DateTime.UtcNow;
+        var dto = new CreateCustomerDto
+        {
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            Address = request.Address,
+            PhoneNumber = request.PhoneNumber
+        };
 
-    // Save to database
-    await customerRepository.AddAsync(customer, cancellationToken);
+        // Map from DTO to entity and set fields not handled by mapping
+        var customer = dto.Adapt<Domain.Entities.Customer>();
+        customer.Code = customerCode;
+        customer.CreatedAt = DateTime.UtcNow;
 
-    // Map to DTO and return
-    var customerDto = customer.Adapt<CustomerDto>();
-    return ApiResult<CustomerDto>.Created(customerDto, "Customer created successfully");
-  }
+        // Save to database
+        await customerRepository.AddAsync(customer, cancellationToken);
+
+        // Map to DTO and return
+        var customerDto = customer.Adapt<CustomerDto>();
+        return ApiResult<CustomerDto>.Created(customerDto, "Customer created successfully");
+    }
 }
