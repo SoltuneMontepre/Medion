@@ -66,11 +66,7 @@ module "approval_service" {
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
 
-  # Optimized for cold start performance
-  memory_size                    = 2048 # 2 GB = ~1.2 vCPUs
-  timeout                        = 120
-  ephemeral_storage_size         = 1024
-  reserved_concurrent_executions = 0
+
   environment_variables = {
     ASPNETCORE_ENVIRONMENT      = "Production"
     CONNECTIONSTRINGS__POSTGRES = local.approval_db_url
@@ -88,11 +84,6 @@ module "sale_service" {
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
 
-  # Optimized for cold start performance
-  memory_size                    = 2048 # 2 GB = ~1.2 vCPUs
-  timeout                        = 120
-  ephemeral_storage_size         = 1024
-  reserved_concurrent_executions = 0
   environment_variables = {
     ASPNETCORE_ENVIRONMENT      = "Production"
     CONNECTIONSTRINGS__POSTGRES = local.sale_db_url
@@ -116,12 +107,6 @@ module "payroll_service" {
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
 
-  # Optimized for cold start performance
-  memory_size                    = 2048 # 2 GB = ~1.2 vCPUs
-  timeout                        = 120
-  ephemeral_storage_size         = 1024
-  reserved_concurrent_executions = 0
-
   environment_variables = {
     ASPNETCORE_ENVIRONMENT      = "Production"
     CONNECTIONSTRINGS__POSTGRES = local.payroll_db_url
@@ -139,12 +124,6 @@ module "inventory_service" {
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
 
-  # Optimized for cold start performance
-  memory_size                    = 2048 # 2 GB = ~1.2 vCPUs
-  timeout                        = 120
-  ephemeral_storage_size         = 1024
-  reserved_concurrent_executions = 0
-
   environment_variables = {
     ASPNETCORE_ENVIRONMENT      = "Production"
     CONNECTIONSTRINGS__POSTGRES = local.inventory_db_url
@@ -161,12 +140,6 @@ module "manufacture_service" {
   ecr_repository            = module.ecr.repository_urls["manufacture-api"]
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
-
-  # Optimized for cold start performance
-  memory_size                    = 2048 # 2 GB = ~1.2 vCPUs
-  timeout                        = 120
-  ephemeral_storage_size         = 1024
-  reserved_concurrent_executions = 0
   environment_variables = {
     ASPNETCORE_ENVIRONMENT      = "Production"
     CONNECTIONSTRINGS__POSTGRES = local.manufacture_db_url
@@ -183,12 +156,6 @@ module "identity_service" {
   ecr_repository            = module.ecr.repository_urls["identity-api"]
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
-
-  # Identity has heavier initialization (EF Core, Identity Framework, JWT)
-  memory_size                    = 2560 # 2.5 GB = ~1.5 vCPUs
-  timeout                        = 120
-  ephemeral_storage_size         = 1024
-  reserved_concurrent_executions = 0
 
 
   environment_variables = {
