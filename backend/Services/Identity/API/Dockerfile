@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7-labs
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
 EXPOSE 8080
@@ -19,6 +20,7 @@ RUN dotnet publish -c Release -o /out /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
+# AWS Lambda Web Adapter: translates Lambda events to HTTP requests for Kestrel
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt/extensions/lambda-adapter
 COPY --from=build /out .
 ENTRYPOINT ["dotnet", "Identity.API.dll"]
