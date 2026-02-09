@@ -6,24 +6,16 @@ var builder = DistributedApplication.CreateBuilder(args);
 var rabbitmq = builder.AddRabbitMQ("rabbitmq")
     .WithDataVolume();
 
-// PostgreSQL - One per service
-var salePostgres = builder.AddPostgres("postgres-sale")
+// PostgreSQL - Single container, multiple databases
+var postgres = builder.AddPostgres("postgres")
     .WithDataVolume();
 
-var approvalPostgres = builder.AddPostgres("postgres-approval")
-    .WithDataVolume();
-
-var payrollPostgres = builder.AddPostgres("postgres-payroll")
-    .WithDataVolume();
-
-var inventoryPostgres = builder.AddPostgres("postgres-inventory")
-    .WithDataVolume();
-
-var manufacturePostgres = builder.AddPostgres("postgres-manufacture")
-    .WithDataVolume();
-
-var identityPostgres = builder.AddPostgres("postgres-identity")
-    .WithDataVolume();
+var salePostgres = postgres.AddDatabase("postgres-sale");
+var approvalPostgres = postgres.AddDatabase("postgres-approval");
+var payrollPostgres = postgres.AddDatabase("postgres-payroll");
+var inventoryPostgres = postgres.AddDatabase("postgres-inventory");
+var manufacturePostgres = postgres.AddDatabase("postgres-manufacture");
+var identityPostgres = postgres.AddDatabase("postgres-identity");
 
 // Services
 var saleApi = builder.AddProject<Sale_API>("sale-api")
