@@ -1,9 +1,11 @@
 using Identity.API.Filters;
 using Identity.API.Middleware;
+using Identity.API.Serialization;
 using Identity.API.Services;
 using Identity.Application;
 using Identity.Application.Common.Abstractions;
 using Identity.Domain.Entities;
+using Identity.Domain.Identifiers;
 using Identity.Domain.Repositories;
 using Identity.Infrastructure.Persistence;
 using Identity.Infrastructure.Persistence.Repositories;
@@ -36,7 +38,7 @@ builder.Services.AddDbContext<IdentityDbContext>(options =>
         npgsqlOptions.CommandTimeout(30);
         npgsqlOptions.EnableRetryOnFailure(maxRetryCount: 3);
     });
-    
+
     // Disable sensitive data logging in production for performance
     if (!builder.Environment.IsDevelopment())
     {
@@ -120,6 +122,9 @@ builder.Services.AddControllers(options =>
 {
     // Add global filter to check token blacklist
     options.Filters.Add<CheckTokenBlacklistFilter>();
+}).AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new StronglyTypedIdJsonConverter<IdentityId>());
 });
 
 // API documentation

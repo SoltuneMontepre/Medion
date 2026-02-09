@@ -1,4 +1,5 @@
 using Identity.Domain.Entities;
+using Identity.Domain.Identifiers;
 using Identity.Domain.Repositories;
 
 namespace Identity.Infrastructure.Persistence.Repositories;
@@ -8,7 +9,7 @@ namespace Identity.Infrastructure.Persistence.Repositories;
 /// </summary>
 public class UserRepository(IdentityDbContext dbContext) : IUserRepository
 {
-    public async Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<User?> GetByIdAsync(IdentityId id, CancellationToken cancellationToken = default)
     {
         return await dbContext.Users
             .Include(u => u.Roles)
@@ -73,7 +74,7 @@ public class UserRepository(IdentityDbContext dbContext) : IUserRepository
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(IdentityId id, CancellationToken cancellationToken = default)
     {
         var user = await GetByIdAsync(id, cancellationToken);
         if (user != null)
@@ -84,7 +85,7 @@ public class UserRepository(IdentityDbContext dbContext) : IUserRepository
         }
     }
 
-    public async Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<bool> ExistsAsync(IdentityId id, CancellationToken cancellationToken = default)
     {
         return await dbContext.Users.AnyAsync(u => u.Id == id && !u.IsDeleted, cancellationToken);
     }

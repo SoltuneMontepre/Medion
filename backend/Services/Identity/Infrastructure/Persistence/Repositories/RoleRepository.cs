@@ -1,4 +1,5 @@
 using Identity.Domain.Entities;
+using Identity.Domain.Identifiers;
 using Identity.Domain.Repositories;
 
 namespace Identity.Infrastructure.Persistence.Repositories;
@@ -8,7 +9,7 @@ namespace Identity.Infrastructure.Persistence.Repositories;
 /// </summary>
 public class RoleRepository(IdentityDbContext dbContext) : IRoleRepository
 {
-    public async Task<Role?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Role?> GetByIdAsync(IdentityId id, CancellationToken cancellationToken = default)
     {
         return await dbContext.Roles
             .Include(r => r.UserRoles)
@@ -42,7 +43,7 @@ public class RoleRepository(IdentityDbContext dbContext) : IRoleRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<Role>> GetUserRolesAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Role>> GetUserRolesAsync(IdentityId userId, CancellationToken cancellationToken = default)
     {
         return await dbContext.Roles
             .Include(r => r.UserRoles)
@@ -64,7 +65,7 @@ public class RoleRepository(IdentityDbContext dbContext) : IRoleRepository
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(IdentityId id, CancellationToken cancellationToken = default)
     {
         var role = await GetByIdAsync(id, cancellationToken);
         if (role != null)
@@ -75,7 +76,7 @@ public class RoleRepository(IdentityDbContext dbContext) : IRoleRepository
         }
     }
 
-    public async Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<bool> ExistsAsync(IdentityId id, CancellationToken cancellationToken = default)
     {
         return await dbContext.Roles.AnyAsync(r => r.Id == id && !r.IsDeleted, cancellationToken);
     }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Sale.Application.Common.DTOs;
 using Sale.Application.Features.Customer.Commands;
 using Sale.Application.Features.Customer.Queries;
+using Sale.Domain.Identifiers;
 using ServiceDefaults.ApiResponses;
 
 namespace Sale.API.Controllers;
@@ -30,10 +31,10 @@ public class CustomerController(IMediator mediator) : ApiControllerBase
     /// <summary>
     ///     Get customer by ID
     /// </summary>
-    [HttpGet("{id:guid}")]
+    [HttpGet("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResult<CustomerDto>))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetById(CustomerId id, CancellationToken cancellationToken)
     {
         var query = new GetCustomerByIdQuery(id);
         var customer = await mediator.Send(query, cancellationToken);
@@ -64,11 +65,11 @@ public class CustomerController(IMediator mediator) : ApiControllerBase
     /// <summary>
     ///     Update an existing customer
     /// </summary>
-    [HttpPut("{id:guid}")]
+    [HttpPut("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResult<CustomerDto>))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCustomerDto request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(CustomerId id, [FromBody] UpdateCustomerDto request, CancellationToken cancellationToken)
     {
         var command = new UpdateCustomerCommand
         {
@@ -86,10 +87,10 @@ public class CustomerController(IMediator mediator) : ApiControllerBase
     /// <summary>
     ///     Delete a customer (soft delete)
     /// </summary>
-    [HttpDelete("{id:guid}")]
+    [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResult<bool>))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(CustomerId id, CancellationToken cancellationToken)
     {
         var command = new DeleteCustomerCommand(id);
         var result = await mediator.Send(command, cancellationToken);

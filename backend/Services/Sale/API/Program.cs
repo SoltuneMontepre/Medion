@@ -2,7 +2,9 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Sale.API.Middleware;
+using Sale.API.Serialization;
 using Sale.Application;
+using Sale.Domain.Identifiers;
 using Sale.Infrastructure;
 using Sale.Infrastructure.Data;
 using ServiceDefaults;
@@ -17,7 +19,11 @@ builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
 // Services
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new StronglyTypedIdJsonConverter<CustomerId>());
+    options.JsonSerializerOptions.Converters.Add(new StronglyTypedIdJsonConverter<UserId>());
+});
 builder.Services.AddGrpc(o => { o.EnableDetailedErrors = true; }).AddJsonTranscoding();
 
 builder.Services.AddEndpointsApiExplorer();

@@ -1,3 +1,5 @@
+using Identity.Domain.Identifiers;
+
 namespace Identity.Application.Common.DTOs;
 
 /// <summary>
@@ -6,7 +8,7 @@ namespace Identity.Application.Common.DTOs;
 public class TokenVerificationDto
 {
     public bool IsValid { get; set; }
-    public Guid UserId { get; set; }
+    public IdentityId UserId { get; set; }
     public string UserName { get; set; } = null!;
     public string Email { get; set; } = null!;
     public ICollection<string> Roles { get; set; } = new List<string>();

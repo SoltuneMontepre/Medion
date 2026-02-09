@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Sale.Domain.Entities;
+using Sale.Domain.Identifiers;
 using Sale.Domain.Repositories;
 using Sale.Infrastructure.Data;
 
@@ -10,7 +11,7 @@ namespace Sale.Infrastructure.Persistence.Repositories;
 /// </summary>
 public class CustomerRepository(SaleDbContext dbContext) : ICustomerRepository
 {
-    public async Task<Customer?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Customer?> GetByIdAsync(CustomerId id, CancellationToken cancellationToken = default)
     {
         return await dbContext.Customers
             .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted, cancellationToken);
@@ -47,7 +48,7 @@ public class CustomerRepository(SaleDbContext dbContext) : ICustomerRepository
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(CustomerId id, CancellationToken cancellationToken = default)
     {
         var customer = await GetByIdAsync(id, cancellationToken);
         if (customer != null)
@@ -58,7 +59,7 @@ public class CustomerRepository(SaleDbContext dbContext) : ICustomerRepository
         }
     }
 
-    public async Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<bool> ExistsAsync(CustomerId id, CancellationToken cancellationToken = default)
     {
         return await dbContext.Customers.AnyAsync(c => c.Id == id && !c.IsDeleted, cancellationToken);
     }
