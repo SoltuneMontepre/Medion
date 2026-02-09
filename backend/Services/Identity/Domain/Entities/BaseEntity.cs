@@ -1,19 +1,20 @@
 using Identity.Domain.Abstractions;
+using Identity.Domain.Identifiers;
 
 namespace Identity.Domain.Entities;
 
 public abstract class BaseEntity : IAuditable, ISoftDelete
 {
-    public Guid Id { get; protected set; } = Guid.CreateVersion7();
+    public IdentityId Id { get; protected set; } = IdentityId.New();
 
     // IAuditable members
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
-    public Guid? CreatedBy { get; set; }
-    public Guid? UpdatedBy { get; set; }
+    public IdentityId? CreatedBy { get; set; }
+    public IdentityId? UpdatedBy { get; set; }
 
     // ISoftDelete members
     public bool IsDeleted { get; set; }
     public DateTime? DeletedAt { get; set; }
-    public Guid? DeletedBy { get; set; }
+    public IdentityId? DeletedBy { get; set; }
 }

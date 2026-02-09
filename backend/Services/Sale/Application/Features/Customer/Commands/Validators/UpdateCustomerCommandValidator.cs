@@ -1,4 +1,5 @@
 using FluentValidation;
+using Sale.Domain.Identifiers;
 
 namespace Sale.Application.Features.Customer.Commands.Validators;
 
@@ -11,7 +12,7 @@ public class UpdateCustomerCommandValidator : AbstractValidator<UpdateCustomerCo
     public UpdateCustomerCommandValidator()
     {
         RuleFor(x => x.Id)
-            .NotEqual(Guid.Empty)
+            .Must(id => !id.IsEmpty)
             .WithMessage("Customer ID is required");
 
         RuleFor(x => x.FirstName)

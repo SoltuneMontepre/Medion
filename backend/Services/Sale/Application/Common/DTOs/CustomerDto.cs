@@ -1,3 +1,5 @@
+using Sale.Domain.Identifiers;
+
 namespace Sale.Application.Common.DTOs;
 
 /// <summary>
@@ -5,7 +7,7 @@ namespace Sale.Application.Common.DTOs;
 /// </summary>
 public class CustomerDto
 {
-  public Guid Id { get; set; }
+  public CustomerId Id { get; set; }
   public string Code { get; set; } = null!;
   public string FirstName { get; set; } = null!;
   public string LastName { get; set; } = null!;
@@ -13,6 +15,6 @@ public class CustomerDto
   public string PhoneNumber { get; set; } = null!;
   public DateTime CreatedAt { get; set; }
   public DateTime? UpdatedAt { get; set; }
-  public Guid? CreatedBy { get; set; }
-  public Guid? UpdatedBy { get; set; }
+  public UserId? CreatedBy { get; set; }
+  public UserId? UpdatedBy { get; set; }
 }

@@ -2,6 +2,7 @@ using Identity.Application.Common.Abstractions;
 using Identity.Application.Common.DTOs;
 using Identity.Application.Features.Auth.Commands;
 using Identity.Application.Features.Auth.Queries;
+using Identity.Domain.Identifiers;
 using ServiceDefaults.ApiResponses;
 
 namespace Identity.API.Controllers;
@@ -81,7 +82,7 @@ public class AuthController(IMediator mediator, ITokenBlacklistService tokenBlac
 
         var userDto = new UserDto
         {
-            Id = Guid.Parse(userId!),
+            Id = IdentityId.Parse(userId!),
             Email = email!,
             UserName = userName!,
             FirstName = firstName!,
@@ -101,7 +102,7 @@ public class AuthController(IMediator mediator, ITokenBlacklistService tokenBlac
     [HttpGet("user/{userId}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResult<UserDto>))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetUser(Guid userId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetUser(IdentityId userId, CancellationToken cancellationToken)
     {
         var query = new GetUserByIdQuery(userId);
         var result = await mediator.Send(query, cancellationToken);

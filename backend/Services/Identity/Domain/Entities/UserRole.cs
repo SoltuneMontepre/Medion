@@ -1,3 +1,5 @@
+using Identity.Domain.Identifiers;
+
 namespace Identity.Domain.Entities;
 
 /// <summary>
@@ -9,14 +11,14 @@ public class UserRole : BaseEntity
     {
     }
 
-    public Guid UserId { get; set; }
-    public Guid RoleId { get; set; }
+    public IdentityId UserId { get; set; }
+    public IdentityId RoleId { get; set; }
 
     // Navigation properties
     public User? User { get; set; }
     public Role? Role { get; set; }
 
-    public static UserRole Create(Guid userId, Guid roleId)
+    public static UserRole Create(IdentityId userId, IdentityId roleId)
     {
         return new UserRole
         {

@@ -1,5 +1,6 @@
 using Identity.Domain.Abstractions;
 using Identity.Domain.Entities;
+using Identity.Domain.Identifiers;
 
 namespace Identity.Infrastructure.Persistence;
 
@@ -8,7 +9,7 @@ namespace Identity.Infrastructure.Persistence;
 ///     Manages all entities and their relationships
 /// </summary>
 public class IdentityDbContext(DbContextOptions<IdentityDbContext> options)
-    : IdentityDbContext<User, Role, Guid>(options)
+    : IdentityDbContext<User, Role, IdentityId>(options)
 {
     public new DbSet<UserRole> UserRoles { get; set; } = null!;
     public new DbSet<UserClaim> UserClaims { get; set; } = null!;

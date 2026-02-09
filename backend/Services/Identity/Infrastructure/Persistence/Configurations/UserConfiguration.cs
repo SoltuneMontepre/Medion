@@ -1,4 +1,6 @@
 using Identity.Domain.Entities;
+using Identity.Domain.Identifiers;
+using Identity.Infrastructure.Persistence.Converters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -9,6 +11,18 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
   public void Configure(EntityTypeBuilder<User> builder)
   {
     builder.HasKey(e => e.Id);
+
+    builder.Property(e => e.Id)
+        .HasConversion(new StronglyTypedIdValueConverter<IdentityId>());
+
+    builder.Property(e => e.CreatedBy)
+        .HasConversion(new NullableStronglyTypedIdValueConverter<IdentityId>());
+
+    builder.Property(e => e.UpdatedBy)
+        .HasConversion(new NullableStronglyTypedIdValueConverter<IdentityId>());
+
+    builder.Property(e => e.DeletedBy)
+        .HasConversion(new NullableStronglyTypedIdValueConverter<IdentityId>());
 
     builder.Property(e => e.Email)
         .IsRequired()

@@ -1,3 +1,5 @@
+using Identity.Domain.Identifiers;
+
 namespace Identity.Application.Common.DTOs;
 
 /// <summary>
@@ -5,7 +7,7 @@ namespace Identity.Application.Common.DTOs;
 /// </summary>
 public class UserDto
 {
-    public Guid Id { get; set; }
+    public IdentityId Id { get; set; }
     public string Email { get; set; } = null!;
     public string UserName { get; set; } = null!;
     public string FirstName { get; set; } = null!;
