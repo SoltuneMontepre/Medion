@@ -253,8 +253,6 @@ app.MapDefaultEndpoints();
 
 // Root endpoint
 app.MapGet("/", () => new { service = "Identity.API", version = "1.0" });
-
-// NOTE: Database migrations are now handled in the CD pipeline
-// See .github/workflows/identity-cd.yml for the migration step
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
 
 await app.RunAsync();

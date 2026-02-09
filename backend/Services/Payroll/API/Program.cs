@@ -58,5 +58,6 @@ app.UseSwagger();
 app.UsePathPrefixRewrite("/api/payroll");
 
 app.MapGet("/", () => new { name = "Payroll.API" });
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
 
 await app.RunAsync();
