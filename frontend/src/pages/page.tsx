@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useLocation } from 'react-router'
 import { Button, Card, CardBody, CardHeader, Input } from '@heroui/react'
 import type { ApiResult } from '../services/apiResult'
 import { useLogin, useGetMe } from '../services/Identity/identityApi'
@@ -8,7 +8,10 @@ import type { AuthToken, LoginRequest, User } from '../services/Identity/types'
 
 const LoginPage = (): React.JSX.Element => {
 	const navigate = useNavigate()
+	const location = useLocation()
 	const { setToken, setUser } = useAuth()
+	const from = (location.state as { from?: { pathname: string } })?.from
+		?.pathname
 	const [form, setForm] = useState<LoginRequest>({
 		userNameOrEmail: '',
 		password: '',
@@ -24,7 +27,7 @@ const LoginPage = (): React.JSX.Element => {
 		setToken(result.data.accessToken)
 		const { data: meResult } = await getMe()
 		if (meResult?.isSuccess && meResult.data) setUser(meResult.data as User)
-		navigate('/dashboard')
+		navigate(from ?? '/dashboard', { replace: true })
 	}
 
 	return (
