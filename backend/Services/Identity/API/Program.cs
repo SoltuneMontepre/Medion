@@ -215,10 +215,9 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Auto-migrate database in Development environment (for Aspire local development)
-if (app.Environment.IsDevelopment())
+// Auto-migrate database on startup
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
     await dbContext.Database.MigrateAsync();
 }

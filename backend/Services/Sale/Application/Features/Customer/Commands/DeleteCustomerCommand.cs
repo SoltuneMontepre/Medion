@@ -9,5 +9,5 @@ namespace Sale.Application.Features.Customer.Commands;
 /// </summary>
 public class DeleteCustomerCommand(CustomerId id) : IRequest<ApiResult<bool>>
 {
-  public CustomerId Id { get; set; } = id;
+    public CustomerId Id { get; set; } = id;
 }

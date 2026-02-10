@@ -10,16 +10,16 @@ namespace Sale.Application.Features.Customer.Commands;
 public class DeleteCustomerCommandHandler(ICustomerRepository customerRepository)
     : IRequestHandler<DeleteCustomerCommand, ApiResult<bool>>
 {
-  public async Task<ApiResult<bool>> Handle(DeleteCustomerCommand request, CancellationToken cancellationToken)
-  {
-    // Check if customer exists
-    var exists = await customerRepository.ExistsAsync(request.Id, cancellationToken);
-    if (!exists)
-      return ApiResult<bool>.NotFound($"Customer with ID '{request.Id}' not found");
+    public async Task<ApiResult<bool>> Handle(DeleteCustomerCommand request, CancellationToken cancellationToken)
+    {
+        // Check if customer exists
+        var exists = await customerRepository.ExistsAsync(request.Id, cancellationToken);
+        if (!exists)
+            return ApiResult<bool>.NotFound($"Customer with ID '{request.Id}' not found");
 
-    // Soft delete
-    await customerRepository.DeleteAsync(request.Id, cancellationToken);
+        // Soft delete
+        await customerRepository.DeleteAsync(request.Id, cancellationToken);
 
-    return ApiResult<bool>.Success(true, "Customer deleted successfully");
-  }
+        return ApiResult<bool>.Success(true, "Customer deleted successfully");
+    }
 }

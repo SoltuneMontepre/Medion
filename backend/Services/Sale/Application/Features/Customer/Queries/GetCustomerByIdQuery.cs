@@ -9,5 +9,5 @@ namespace Sale.Application.Features.Customer.Queries;
 /// </summary>
 public class GetCustomerByIdQuery(CustomerId customerId) : IRequest<CustomerDto?>
 {
-  public CustomerId CustomerId { get; set; } = customerId;
+    public CustomerId CustomerId { get; set; } = customerId;
 }

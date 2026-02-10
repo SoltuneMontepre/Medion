@@ -14,24 +14,24 @@ namespace Sale.Application;
 /// </summary>
 public static class DependencyInjection
 {
-  public static IServiceCollection AddApplicationServices(this IServiceCollection services)
-  {
-    // Register FluentValidation
-    services.AddValidatorsFromAssembly(typeof(CreateCustomerCommand).Assembly);
-
-    // Register MediatR with Validation Pipeline Behavior
-    services.AddMediatR(cfg =>
+    public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-      cfg.RegisterServicesFromAssembly(typeof(CreateCustomerCommand).Assembly);
-      cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-    });
+        // Register FluentValidation
+        services.AddValidatorsFromAssembly(typeof(CreateCustomerCommand).Assembly);
 
-    // Register Mapster
-    var typeAdapterConfig = new TypeAdapterConfig();
-    typeAdapterConfig.Apply(new MappingConfig());
-    services.AddSingleton(typeAdapterConfig);
-    services.AddScoped<IMapper, ServiceMapper>();
+        // Register MediatR with Validation Pipeline Behavior
+        services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssembly(typeof(CreateCustomerCommand).Assembly);
+            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+        });
 
-    return services;
-  }
+        // Register Mapster
+        var typeAdapterConfig = new TypeAdapterConfig();
+        typeAdapterConfig.Apply(new MappingConfig());
+        services.AddSingleton(typeAdapterConfig);
+        services.AddScoped<IMapper, ServiceMapper>();
+
+        return services;
+    }
 }
