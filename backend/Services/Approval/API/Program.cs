@@ -31,16 +31,6 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Approval API"
     });
 
-    // JWT Bearer authentication
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        Description = "Enter the JWT token without 'Bearer ' prefix. Example: eyJhbGc..."
-    });
-
     var authorizationUrl = new Uri($"{authority}/protocol/openid-connect/auth");
     var tokenUrl = new Uri($"{authority}/protocol/openid-connect/token");
 
@@ -55,9 +45,7 @@ builder.Services.AddSwaggerGen(c =>
                 TokenUrl = tokenUrl,
                 Scopes = new Dictionary<string, string>
                 {
-                    { "openid", "OpenID" },
-                    { "profile", "User profile" },
-                    { "email", "User email" }
+                    { "openid", "OpenID" }
                 }
             }
         }
@@ -71,10 +59,10 @@ builder.Services.AddSwaggerGen(c =>
                 Reference = new OpenApiReference
                 {
                     Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
+                    Id = "oauth2"
                 }
             },
-            Array.Empty<string>()
+            new[] { "openid" }
         }
     });
 });
@@ -88,6 +76,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
+            ValidIssuer = authority,
             NameClaimType = "preferred_username",
             RoleClaimType = "roles"
         };

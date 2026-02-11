@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
 using ServiceDefaults;
 
@@ -6,6 +7,20 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 var authority = builder.Configuration["Auth:Authority"];
+
+builder.Services
+    .AddAuthentication("Bearer")
+    .AddJwtBearer("Bearer", options =>
+    {
+        options.Authority = authority;
+        options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters = new()
+        {
+            ValidateAudience = false
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 // Configure CORS for frontend
 builder.Services.AddCors(options =>
@@ -30,16 +45,6 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Unified API gateway for all Medion microservices"
     });
 
-    // JWT Bearer authentication
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        Description = "Enter the JWT token without 'Bearer ' prefix. Example: eyJhbGc..."
-    });
-
     if (!string.IsNullOrWhiteSpace(authority))
     {
         var authorizationUrl = new Uri($"{authority}/protocol/openid-connect/auth");
@@ -56,9 +61,7 @@ builder.Services.AddSwaggerGen(c =>
                     TokenUrl = tokenUrl,
                     Scopes = new Dictionary<string, string>
                     {
-                        { "openid", "OpenID" },
-                        { "profile", "User profile" },
-                        { "email", "User email" }
+                        { "openid", "OpenID" }
                     }
                 }
             }
@@ -73,10 +76,10 @@ builder.Services.AddSwaggerGen(c =>
                 Reference = new OpenApiReference
                 {
                     Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
+                    Id = "oauth2"
                 }
             },
-            Array.Empty<string>()
+            new[] { "openid" }
         }
     });
 });
@@ -95,6 +98,9 @@ app.MapDefaultEndpoints();
 // Enable CORS
 app.UseCors();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseSwagger();
 
 app.UseSwaggerUI(options =>
@@ -109,13 +115,14 @@ app.UseSwaggerUI(options =>
     options.SwaggerEndpoint("/swagger-docs/manufacture-api/v1/swagger.json", "Manufacture API");
 
     options.RoutePrefix = "swagger";
+    options.ConfigObject.PersistAuthorization = true;
 
     var oauthClientId = builder.Configuration["Swagger:OAuthClientId"];
     if (!string.IsNullOrWhiteSpace(oauthClientId))
     {
         options.OAuthClientId(oauthClientId);
         options.OAuthUsePkce();
-        options.OAuthScopes("openid", "profile", "email");
+        options.OAuthScopes("openid");
     }
 });
 
@@ -150,6 +157,6 @@ foreach (var (serviceName, label) in services)
         }
     });
 
-app.MapReverseProxy();
+app.MapReverseProxy().RequireAuthorization();
 
 await app.RunAsync();
