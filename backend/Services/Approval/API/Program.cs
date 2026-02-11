@@ -11,9 +11,16 @@ builder.AddServiceDefaults();
 var authSection = builder.Configuration.GetSection("Auth");
 var authority = authSection["Authority"];
 var audience = authSection["Audience"];
+var publicAuthority = authSection["PublicAuthority"];
+var tokenIssuer = authSection["TokenIssuer"];
+var swaggerAuthority = string.IsNullOrWhiteSpace(publicAuthority) ? authority : publicAuthority;
 if (string.IsNullOrWhiteSpace(authority) || string.IsNullOrWhiteSpace(audience))
 {
     throw new InvalidOperationException("Auth configuration is missing. Expected Auth:Authority and Auth:Audience.");
+}
+if (string.IsNullOrWhiteSpace(tokenIssuer))
+{
+    tokenIssuer = authority;
 }
 builder.Services.AddGrpc().AddJsonTranscoding();
 builder.Services.AddEndpointsApiExplorer();
@@ -31,8 +38,8 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Approval API"
     });
 
-    var authorizationUrl = new Uri($"{authority}/protocol/openid-connect/auth");
-    var tokenUrl = new Uri($"{authority}/protocol/openid-connect/token");
+    var authorizationUrl = new Uri($"{swaggerAuthority}/protocol/openid-connect/auth");
+    var tokenUrl = new Uri($"{swaggerAuthority}/protocol/openid-connect/token");
 
     c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
     {
@@ -76,7 +83,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidIssuer = authority,
+            ValidIssuer = tokenIssuer,
             NameClaimType = "preferred_username",
             RoleClaimType = "roles"
         };

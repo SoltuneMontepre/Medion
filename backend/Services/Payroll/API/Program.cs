@@ -11,9 +11,14 @@ builder.AddServiceDefaults();
 var authSection = builder.Configuration.GetSection("Auth");
 var authority = authSection["Authority"];
 var audience = authSection["Audience"];
+var swaggerAuthority = authSection["SwaggerAuthority"];
 if (string.IsNullOrWhiteSpace(authority) || string.IsNullOrWhiteSpace(audience))
 {
     throw new InvalidOperationException("Auth configuration is missing. Expected Auth:Authority and Auth:Audience.");
+}
+if (string.IsNullOrWhiteSpace(swaggerAuthority))
+{
+    swaggerAuthority = authority;
 }
 
 builder.Services.AddGrpc().AddJsonTranscoding();
@@ -33,8 +38,8 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Payroll API"
     });
 
-    var authorizationUrl = new Uri($"{authority}/protocol/openid-connect/auth");
-    var tokenUrl = new Uri($"{authority}/protocol/openid-connect/token");
+    var authorizationUrl = new Uri($"{swaggerAuthority}/protocol/openid-connect/auth");
+    var tokenUrl = new Uri($"{swaggerAuthority}/protocol/openid-connect/token");
 
     c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
     {

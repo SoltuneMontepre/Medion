@@ -7,16 +7,24 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 var authority = builder.Configuration["Auth:Authority"];
+if (string.IsNullOrWhiteSpace(authority))
+{
+    throw new InvalidOperationException("Auth configuration is missing. Expected Auth:Authority.");
+}
+var audience = builder.Configuration["Auth:Audience"];
+var requireHttpsMetadata = builder.Configuration.GetValue("Auth:RequireHttpsMetadata",
+    !builder.Environment.IsDevelopment());
 
 builder.Services
     .AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {
         options.Authority = authority;
-        options.RequireHttpsMetadata = false;
+        options.RequireHttpsMetadata = requireHttpsMetadata;
         options.TokenValidationParameters = new()
         {
-            ValidateAudience = false
+            ValidateAudience = true,
+            ValidAudience = audience
         };
     });
 
