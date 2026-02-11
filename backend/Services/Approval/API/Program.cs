@@ -1,10 +1,20 @@
 using Approval.API.Middleware;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+
+var authSection = builder.Configuration.GetSection("Auth");
+var authority = authSection["Authority"];
+var audience = authSection["Audience"];
+if (string.IsNullOrWhiteSpace(authority) || string.IsNullOrWhiteSpace(audience))
+{
+    throw new InvalidOperationException("Auth configuration is missing. Expected Auth:Authority and Auth:Audience.");
+}
 builder.Services.AddGrpc().AddJsonTranscoding();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -31,6 +41,28 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Enter the JWT token without 'Bearer ' prefix. Example: eyJhbGc..."
     });
 
+    var authorizationUrl = new Uri($"{authority}/protocol/openid-connect/auth");
+    var tokenUrl = new Uri($"{authority}/protocol/openid-connect/token");
+
+    c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.OAuth2,
+        Flows = new OpenApiOAuthFlows
+        {
+            AuthorizationCode = new OpenApiOAuthFlow
+            {
+                AuthorizationUrl = authorizationUrl,
+                TokenUrl = tokenUrl,
+                Scopes = new Dictionary<string, string>
+                {
+                    { "openid", "OpenID" },
+                    { "profile", "User profile" },
+                    { "email", "User email" }
+                }
+            }
+        }
+    });
+
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -47,6 +79,22 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = authority;
+        options.Audience = audience;
+        options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            NameClaimType = "preferred_username",
+            RoleClaimType = "roles"
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 // Use global exception handling
@@ -54,6 +102,8 @@ app.UseDefaultExceptionHandler();
 
 app.UseSwagger();
 app.UsePathPrefixRewrite("/api/approval");
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapGet("/", () => new { name = "Approval.API" });
 

@@ -5,6 +5,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
+var authority = builder.Configuration["Auth:Authority"];
+
 // Configure CORS for frontend
 builder.Services.AddCors(options =>
 {
@@ -37,6 +39,31 @@ builder.Services.AddSwaggerGen(c =>
         BearerFormat = "JWT",
         Description = "Enter the JWT token without 'Bearer ' prefix. Example: eyJhbGc..."
     });
+
+    if (!string.IsNullOrWhiteSpace(authority))
+    {
+        var authorizationUrl = new Uri($"{authority}/protocol/openid-connect/auth");
+        var tokenUrl = new Uri($"{authority}/protocol/openid-connect/token");
+
+        c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.OAuth2,
+            Flows = new OpenApiOAuthFlows
+            {
+                AuthorizationCode = new OpenApiOAuthFlow
+                {
+                    AuthorizationUrl = authorizationUrl,
+                    TokenUrl = tokenUrl,
+                    Scopes = new Dictionary<string, string>
+                    {
+                        { "openid", "OpenID" },
+                        { "profile", "User profile" },
+                        { "email", "User email" }
+                    }
+                }
+            }
+        });
+    }
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
@@ -80,9 +107,16 @@ app.UseSwaggerUI(options =>
     options.SwaggerEndpoint("/swagger-docs/payroll-api/v1/swagger.json", "Payroll API");
     options.SwaggerEndpoint("/swagger-docs/inventory-api/v1/swagger.json", "Inventory API");
     options.SwaggerEndpoint("/swagger-docs/manufacture-api/v1/swagger.json", "Manufacture API");
-    options.SwaggerEndpoint("/swagger-docs/identity-api/v1/swagger.json", "Identity API");
 
     options.RoutePrefix = "swagger";
+
+    var oauthClientId = builder.Configuration["Swagger:OAuthClientId"];
+    if (!string.IsNullOrWhiteSpace(oauthClientId))
+    {
+        options.OAuthClientId(oauthClientId);
+        options.OAuthUsePkce();
+        options.OAuthScopes("openid", "profile", "email");
+    }
 });
 
 app.MapGet("/", () => new { name = "API Gateway", version = 1 });
@@ -94,8 +128,7 @@ var services = new[]
     ("approval-api", "Approval API"),
     ("payroll-api", "Payroll API"),
     ("inventory-api", "Inventory API"),
-    ("manufacture-api", "Manufacture API"),
-    ("identity-api", "Identity API")
+    ("manufacture-api", "Manufacture API")
 };
 
 foreach (var (serviceName, label) in services)
