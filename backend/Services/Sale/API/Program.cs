@@ -1,5 +1,7 @@
 using MassTransit;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Sale.API.Middleware;
 using Sale.API.Serialization;
@@ -13,6 +15,14 @@ using SharedStorage;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+
+var authSection = builder.Configuration.GetSection("Auth");
+var authority = authSection["Authority"];
+var audience = authSection["Audience"];
+if (string.IsNullOrWhiteSpace(authority) || string.IsNullOrWhiteSpace(audience))
+{
+    throw new InvalidOperationException("Auth configuration is missing. Expected Auth:Authority and Auth:Audience.");
+}
 
 // Add Application and Infrastructure services
 builder.Services.AddApplicationServices();
@@ -41,14 +51,24 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Sale API"
     });
 
-    // JWT Bearer authentication
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    var authorizationUrl = new Uri($"{authority}/protocol/openid-connect/auth");
+    var tokenUrl = new Uri($"{authority}/protocol/openid-connect/token");
+
+    c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
     {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        Description = "Enter the JWT token without 'Bearer ' prefix. Example: eyJhbGc..."
+        Type = SecuritySchemeType.OAuth2,
+        Flows = new OpenApiOAuthFlows
+        {
+            AuthorizationCode = new OpenApiOAuthFlow
+            {
+                AuthorizationUrl = authorizationUrl,
+                TokenUrl = tokenUrl,
+                Scopes = new Dictionary<string, string>
+                {
+                    { "openid", "OpenID" }
+                }
+            }
+        }
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -59,15 +79,32 @@ builder.Services.AddSwaggerGen(c =>
                 Reference = new OpenApiReference
                 {
                     Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
+                    Id = "oauth2"
                 }
             },
-            Array.Empty<string>()
+            new[] { "openid" }
         }
     });
 });
 
 builder.Services.AddGrpcReflection();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = authority;
+        options.Audience = audience;
+        options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidIssuer = authority,
+            NameClaimType = "preferred_username",
+            RoleClaimType = "roles"
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 // Add S3 Storage
 builder.Services.AddS3Storage(builder.Configuration);
@@ -116,6 +153,8 @@ app.UseDefaultExceptionHandler();
 
 app.UseSwagger();
 app.UsePathPrefixRewrite("/api/sale");
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapDefaultEndpoints();
 
 // Map Controllers

@@ -1,0 +1,67 @@
+{
+  "realm": "medion",
+  "enabled": true,
+  "defaultDefaultClientScopes": ["web-origins", "roles", "profile", "email"],
+  "defaultOptionalClientScopes": [
+    "address",
+    "phone",
+    "offline_access",
+    "microprofile-jwt"
+  ],
+  "clientScopes": [
+    {
+      "name": "medion-audience",
+      "protocol": "openid-connect",
+      "protocolMappers": [
+        {
+          "name": "aud-medion-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "medion-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "medion-api",
+      "protocol": "openid-connect",
+      "bearerOnly": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false
+    },
+    {
+      "clientId": "medion-swagger",
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["http://localhost:5000/swagger/oauth2-redirect.html"],
+      "webOrigins": ["http://localhost:5000"],
+      "rootUrl": "http://localhost:5000",
+      "baseUrl": "/swagger",
+      "attributes": {
+        "pkce.supported": "true",
+        "pkce.code.challenge.method": "S256"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "roles",
+        "profile",
+        "email",
+        "medion-audience"
+      ]
+    }
+  ]
+}
