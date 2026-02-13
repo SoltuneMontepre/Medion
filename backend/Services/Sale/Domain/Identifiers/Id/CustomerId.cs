@@ -2,22 +2,22 @@ using System.ComponentModel;
 
 namespace Sale.Domain.Identifiers;
 
-[TypeConverter(typeof(StronglyTypedIdTypeConverter<UserId>))]
-public readonly record struct UserId(Guid Value) : IStronglyTypedId, IParsable<UserId>
+[TypeConverter(typeof(StronglyTypedIdTypeConverter<CustomerId>))]
+public readonly record struct CustomerId(Guid Value) : IStronglyTypedId, IParsable<CustomerId>
 {
-    public static UserId New() => new(Guid.CreateVersion7());
-    public static UserId Empty => new(Guid.Empty);
+    public static CustomerId New() => new(Guid.CreateVersion7());
+    public static CustomerId Empty => new(Guid.Empty);
     public bool IsEmpty => Value == Guid.Empty;
 
-    public static UserId Parse(string value) => Parse(value, null);
-    public static UserId Parse(string s, IFormatProvider? provider)
+    public static CustomerId Parse(string value) => Parse(value, null);
+    public static CustomerId Parse(string s, IFormatProvider? provider)
     {
         if (!TryParse(s, provider, out var result))
-            throw new FormatException("Invalid UserId format.");
+            throw new FormatException("Invalid CustomerId format.");
         return result;
     }
 
-    public static bool TryParse(string? s, IFormatProvider? provider, out UserId result)
+    public static bool TryParse(string? s, IFormatProvider? provider, out CustomerId result)
     {
         result = Empty;
         if (string.IsNullOrWhiteSpace(s))
@@ -30,7 +30,7 @@ public readonly record struct UserId(Guid Value) : IStronglyTypedId, IParsable<U
         if (!Guid.TryParse(trimmed, out var guid))
             return false;
 
-        result = new UserId(guid);
+        result = new CustomerId(guid);
         return true;
     }
 

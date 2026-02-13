@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sale.Application.Common.DTOs;
 using Sale.Application.Features.Customer.Commands;
@@ -13,7 +14,7 @@ namespace Sale.API.Controllers;
 ///     Handles CRUD operations for customers
 /// </summary>
 [ApiController]
-[Route("[controller]")]
+[Route("customers")]
 public class CustomerController(IMediator mediator) : ApiControllerBase
 {
     /// <summary>
@@ -24,6 +25,21 @@ public class CustomerController(IMediator mediator) : ApiControllerBase
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var query = new GetAllCustomersQuery();
+        var customers = await mediator.Send(query, cancellationToken);
+        return Ok(customers, "Customers retrieved successfully");
+    }
+
+    /// <summary>
+    ///     Search customers by code, name, or phone
+    /// </summary>
+    [HttpGet("search")]
+    [Authorize(Roles = "Sale Admin")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResult<IReadOnlyList<CustomerDto>>))]
+    public async Task<IActionResult> Search([FromQuery] string term, [FromQuery] int? limit,
+        CancellationToken cancellationToken)
+    {
+        var effectiveLimit = limit is > 0 and <= 50 ? limit.Value : 20;
+        var query = new SearchCustomersQuery(term, effectiveLimit);
         var customers = await mediator.Send(query, cancellationToken);
         return Ok(customers, "Customers retrieved successfully");
     }

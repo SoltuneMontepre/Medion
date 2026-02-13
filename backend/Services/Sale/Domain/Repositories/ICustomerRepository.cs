@@ -16,4 +16,5 @@ public interface ICustomerRepository
     Task DeleteAsync(CustomerId id, CancellationToken cancellationToken = default);
     Task<bool> ExistsAsync(CustomerId id, CancellationToken cancellationToken = default);
     Task<string> GenerateCustomerCodeAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<Customer>> SearchAsync(string term, int limit, CancellationToken cancellationToken = default);
 }

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Sale.Application.Abstractions;
 using Sale.Domain.Repositories;
 using Sale.Infrastructure.Data;
 using Sale.Infrastructure.Persistence.Repositories;
@@ -23,6 +24,12 @@ public static class DependencyInjection
 
         // Register repositories
         services.AddScoped<ICustomerRepository, CustomerRepository>();
+        services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<IUserDigitalSignatureRepository, UserDigitalSignatureRepository>();
+
+        // Digital signature service (Vault integration will replace this)
+        services.AddScoped<IDigitalSignatureService, DigitalSignatureService>();
 
         return services;
     }

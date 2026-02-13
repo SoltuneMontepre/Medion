@@ -14,6 +14,15 @@ public class MappingConfig : IRegister
         // Customer -> CustomerDto (default mapping works)
         config.NewConfig<Customer, CustomerDto>();
 
+        // Product -> ProductDto
+        config.NewConfig<Product, ProductDto>();
+
+        // Order -> OrderDto
+        config.NewConfig<Order, OrderDto>();
+
+        // OrderItem -> OrderItemDto
+        config.NewConfig<OrderItem, OrderItemDto>();
+
 #pragma warning disable CS8603 // Possible null reference return - Mapster's Ignore() method signature issue
         // CreateCustomerDto -> Customer
         config.NewConfig<CreateCustomerDto, Customer>()

@@ -86,4 +86,22 @@ public class CustomerRepository(SaleDbContext dbContext) : ICustomerRepository
 
         return $"{prefix}{nextNumber:D6}";
     }
+
+    public async Task<IEnumerable<Customer>> SearchAsync(string term, int limit, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(term))
+            return Array.Empty<Customer>();
+
+        var normalized = term.Trim();
+
+        return await dbContext.Customers
+            .Where(c => !c.IsDeleted &&
+                        (EF.Functions.ILike(c.Code, $"%{normalized}%") ||
+                         EF.Functions.ILike(c.FirstName, $"%{normalized}%") ||
+                         EF.Functions.ILike(c.LastName, $"%{normalized}%") ||
+                         EF.Functions.ILike(c.PhoneNumber, $"%{normalized}%")))
+            .OrderBy(c => c.Code)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+    }
 }

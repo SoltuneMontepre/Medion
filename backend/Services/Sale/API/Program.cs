@@ -7,6 +7,7 @@ using Sale.API.Middleware;
 using Sale.API.Serialization;
 using Sale.Application;
 using Sale.Domain.Identifiers;
+using Sale.Domain.Identifiers.Id;
 using Sale.Infrastructure;
 using Sale.Infrastructure.Data;
 using ServiceDefaults;
@@ -33,6 +34,9 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.Converters.Add(new StronglyTypedIdJsonConverter<CustomerId>());
     options.JsonSerializerOptions.Converters.Add(new StronglyTypedIdJsonConverter<UserId>());
+    options.JsonSerializerOptions.Converters.Add(new StronglyTypedIdJsonConverter<ProductId>());
+    options.JsonSerializerOptions.Converters.Add(new StronglyTypedIdJsonConverter<OrderId>());
+    options.JsonSerializerOptions.Converters.Add(new StronglyTypedIdJsonConverter<OrderItemId>());
 });
 builder.Services.AddGrpc(o => { o.EnableDetailedErrors = true; }).AddJsonTranscoding();
 
@@ -44,6 +48,18 @@ builder.Services.AddSwaggerGen(c =>
         Title = "Sale API",
         Version = "v1"
     });
+
+    var idTypes = typeof(IStronglyTypedId).Assembly.GetTypes()
+        .Where(t => typeof(IStronglyTypedId).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
+
+    foreach (var idType in idTypes)
+    {
+        c.MapType(idType, () => new OpenApiSchema
+        {
+            Type = "string",
+            Format = "uuid"
+        });
+    }
 
     c.AddServer(new OpenApiServer
     {
