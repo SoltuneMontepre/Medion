@@ -1,20 +1,28 @@
 using System.Data;
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using Sale.Application.Abstractions;
 using Sale.Domain.Entities;
 using Sale.Domain.Identifiers;
 using Sale.Domain.Identifiers.Id;
-using Sale.Domain.Repositories;
 using Sale.Infrastructure.Data;
+using Sale.Infrastructure.Persistence;
 
 namespace Sale.Infrastructure.Persistence.Repositories;
 
-public class OrderRepository(SaleDbContext dbContext) : IOrderRepository
+public class OrderRepository(SaleDbContext dbContext) : BaseRepository<Order, OrderId>(dbContext), IOrderRepository
 {
-  public async Task<Order?> GetByIdAsync(OrderId id, CancellationToken cancellationToken = default)
+  public override async Task<Order?> GetByIdAsync(OrderId id, CancellationToken cancellationToken = default,
+    params Expression<Func<Order, object>>[] includes)
   {
-    return await dbContext.Orders
-        .Include(o => o.Items)
-        .FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
+    IQueryable<Order> query = Queryable.Include(o => o.Items);
+    if (includes.Length > 0)
+    {
+      foreach (var include in includes)
+        query = query.Include(include);
+    }
+
+    return await query.FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
   }
 
   public async Task<Order?> GetTodayOrderForCustomerAsync(CustomerId customerId, DateOnly date,
@@ -23,15 +31,9 @@ public class OrderRepository(SaleDbContext dbContext) : IOrderRepository
     var start = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
     var end = date.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc);
 
-    return await dbContext.Orders
-        .FirstOrDefaultAsync(o => o.CustomerId == customerId && o.OrderDate >= start && o.OrderDate <= end,
-            cancellationToken);
-  }
-
-  public async Task AddAsync(Order order, CancellationToken cancellationToken = default)
-  {
-    await dbContext.Orders.AddAsync(order, cancellationToken);
-    await dbContext.SaveChangesAsync(cancellationToken);
+    return await Queryable
+      .FirstOrDefaultAsync(o => o.CustomerId == customerId && o.OrderDate >= start && o.OrderDate <= end,
+        cancellationToken);
   }
 
   public async Task<string> GenerateOrderNumberAsync(DateOnly date, CancellationToken cancellationToken = default)
@@ -42,7 +44,7 @@ public class OrderRepository(SaleDbContext dbContext) : IOrderRepository
 
   private async Task<int> GetNextSequenceValueAsync(DateOnly date, CancellationToken cancellationToken)
   {
-    var connection = dbContext.Database.GetDbConnection();
+    var connection = DbContext.Database.GetDbConnection();
     if (connection.State != ConnectionState.Open)
       await connection.OpenAsync(cancellationToken);
 

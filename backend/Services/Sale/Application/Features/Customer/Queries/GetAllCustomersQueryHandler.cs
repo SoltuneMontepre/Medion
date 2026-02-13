@@ -1,7 +1,7 @@
 using Mapster;
 using MediatR;
+using Sale.Application.Abstractions;
 using Sale.Application.Common.DTOs;
-using Sale.Domain.Repositories;
 
 namespace Sale.Application.Features.Customer.Queries;
 

@@ -1,7 +1,7 @@
 using Sale.Domain.Entities;
 using Sale.Domain.Identifiers;
 
-namespace Sale.Domain.Repositories;
+namespace Sale.Application.Abstractions;
 
 public interface IUserDigitalSignatureRepository
 {

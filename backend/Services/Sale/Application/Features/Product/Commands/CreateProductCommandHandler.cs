@@ -1,8 +1,8 @@
 using Mapster;
 using MediatR;
+using Sale.Application.Abstractions;
 using Sale.Application.Common.DTOs;
 using Sale.Domain.Entities;
-using Sale.Domain.Repositories;
 using ServiceDefaults.ApiResponses;
 
 namespace Sale.Application.Features.Product.Commands;

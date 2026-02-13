@@ -14,7 +14,6 @@ namespace Sale.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("products")]
-[Authorize(Roles = "Sale Admin")]
 public class ProductController(IMediator mediator) : ApiControllerBase
 {
     /// <summary>
