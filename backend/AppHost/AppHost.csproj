@@ -12,12 +12,12 @@
 
     <ItemGroup>
         <ProjectReference Include="../Gateway/YarpGateway.csproj"/>
+        <ProjectReference Include="../Services/Security/API/Security.API.csproj"/>
         <ProjectReference Include="../Services/Sale/API/Sale.API.csproj"/>
         <ProjectReference Include="../Services/Approval/API/Approval.API.csproj"/>
         <ProjectReference Include="../Services/Payroll/API/Payroll.API.csproj"/>
         <ProjectReference Include="../Services/Inventory/API/Inventory.API.csproj"/>
         <ProjectReference Include="../Services/Manufacture/API/Manufacture.API.csproj"/>
-        <ProjectReference Include="../Services/Identity/API/Identity.API.csproj"/>
     </ItemGroup>
 
 </Project>

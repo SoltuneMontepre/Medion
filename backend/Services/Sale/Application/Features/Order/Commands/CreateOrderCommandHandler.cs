@@ -49,10 +49,6 @@ public class CreateOrderCommandHandler(
       return ApiResult<OrderDto>.Failure("One or more products were not found", 400, errors);
     }
 
-    var isPinValid = await digitalSignatureService.VerifyPinAsync(request.SalesStaffId, request.Pin, cancellationToken);
-    if (!isPinValid)
-      return ApiResult<OrderDto>.Failure("Invalid PIN", 401);
-
     var orderNumber = await orderRepository.GenerateOrderNumberAsync(today, cancellationToken);
     var order = new Domain.Entities.Order();
     order.Initialize(orderNumber, request.CustomerId, request.SalesStaffId, DateTime.UtcNow);
@@ -68,7 +64,27 @@ public class CreateOrderCommandHandler(
     }
 
     var payload = BuildSignaturePayload(order, request.Items);
-    var signature = await digitalSignatureService.SignAsync(request.SalesStaffId, payload, cancellationToken);
+    DigitalSignatureResult signature;
+    try
+    {
+      signature = await digitalSignatureService.SignAsync(request.SalesStaffId, payload, request.Pin, cancellationToken);
+    }
+    catch (DigitalSignatureException signatureException) when (signatureException.Failure == DigitalSignatureFailure.InvalidPin)
+    {
+      return ApiResult<OrderDto>.Failure("Invalid PIN", 401);
+    }
+    catch (DigitalSignatureException signatureException) when (signatureException.Failure == DigitalSignatureFailure.InvalidArgument)
+    {
+      return ApiResult<OrderDto>.Failure(signatureException.Message, 400);
+    }
+    catch (DigitalSignatureException signatureException) when (signatureException.Failure == DigitalSignatureFailure.Unavailable)
+    {
+      return ApiResult<OrderDto>.InternalServerError("Security service is unavailable.");
+    }
+    catch (DigitalSignatureException signatureException) when (signatureException.Failure == DigitalSignatureFailure.Internal)
+    {
+      return ApiResult<OrderDto>.InternalServerError(signatureException.Message);
+    }
     order.MarkSigned(request.SalesStaffId, signature.Signature, signature.PublicKey, DateTime.UtcNow);
     order.CreatedAt = DateTime.UtcNow;
     order.CreatedBy = request.SalesStaffId;

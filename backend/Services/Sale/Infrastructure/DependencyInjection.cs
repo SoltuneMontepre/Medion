@@ -1,3 +1,4 @@
+using Medion.Security.Contracts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,8 +28,13 @@ public static class DependencyInjection
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IUserDigitalSignatureRepository, UserDigitalSignatureRepository>();
 
-        // Digital signature service (Vault integration will replace this)
-        services.AddScoped<IDigitalSignatureService, DigitalSignatureService>();
+        var securityServiceUrl = config["SecurityService:GrpcUrl"] ?? "http://security-api";
+        services.AddGrpcClient<SignatureService.SignatureServiceClient>(options =>
+        {
+            options.Address = new Uri(securityServiceUrl);
+        });
+
+        services.AddScoped<IDigitalSignatureService, GrpcDigitalSignatureService>();
 
         return services;
     }

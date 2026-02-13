@@ -1,12 +1,14 @@
 <Solution>
     <Folder Name="/Protos/"/>
     <Folder Name="/Protos/Approval/"/>
-    <Folder Name="/Protos/Identity/"/>
     <Folder Name="/Protos/Inventory/"/>
     <Folder Name="/Protos/Manufacture/"/>
     <Folder Name="/Protos/Payroll/"/>
     <Folder Name="/Protos/Sale/">
         <File Path="Protos\sale\sale.proto"/>
+    </Folder>
+    <Folder Name="/Protos/Security/">
+        <File Path="Protos\security\signature.proto"/>
     </Folder>
     <Folder Name="/Services/"/>
     <Folder Name="/Services/Approval/">
@@ -15,12 +17,7 @@
         <Project Path="Services/Approval/Domain/Approval.Domain.csproj"/>
         <Project Path="Services/Approval/Infrastructure/Approval.Infrastructure.csproj"/>
     </Folder>
-    <Folder Name="/Services/Identity/">
-        <Project Path="Services/Identity/API/Identity.API.csproj"/>
-        <Project Path="Services/Identity/Application/Identity.Application.csproj"/>
-        <Project Path="Services/Identity/Domain/Identity.Domain.csproj"/>
-        <Project Path="Services/Identity/Infrastructure/Identity.Infrastructure.csproj"/>
-    </Folder>
+
     <Folder Name="/Services/Inventory/">
         <Project Path="Services/Inventory/API/Inventory.API.csproj"/>
         <Project Path="Services/Inventory/Application/Inventory.Application.csproj"/>
@@ -38,6 +35,11 @@
         <Project Path="Services/Payroll/Application/Payroll.Application.csproj"/>
         <Project Path="Services/Payroll/Domain/Payroll.Domain.csproj"/>
         <Project Path="Services/Payroll/Infrastructure/Payroll.Infrastructure.csproj"/>
+    </Folder>
+    <Folder Name="/Services/Security/">
+        <Project Path="Services/Security/API/Security.API.csproj"/>
+        <Project Path="Services/Security/Application/Security.Application.csproj"/>
+        <Project Path="Services/Security/Infrastructure/Security.Infrastructure.csproj"/>
     </Folder>
     <Folder Name="/Services/Sale/">
         <Project Path="Services/Sale/API/Sale.API.csproj"/>

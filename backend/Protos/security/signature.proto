@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package medion.security.v1;
+
+option csharp_namespace = "Medion.Security.Contracts";
+
+service SignatureService {
+    rpc VerifyAndSign (SignRequest) returns (SignResponse);
+    rpc CheckPin (PinRequest) returns (PinResponse);
+}
+
+message SignRequest {
+    string user_id = 1;
+    string payload = 2;
+    string pin = 3;
+}
+
+message SignResponse {
+    bytes signature = 1;
+    string public_key = 2;
+    bool is_success = 3;
+}
+
+message PinRequest {
+    string user_id = 1;
+    string pin = 2;
+}
+
+message PinResponse {
+    bool is_valid = 1;
+}

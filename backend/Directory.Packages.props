@@ -31,6 +31,9 @@
 
     <ItemGroup Label="gRPC">
         <PackageVersion Include="Grpc.AspNetCore" Version="2.71.0"/>
+        <PackageVersion Include="Grpc.Net.Client" Version="2.71.0"/>
+        <PackageVersion Include="Grpc.Net.ClientFactory" Version="2.71.0"/>
+        <PackageVersion Include="Google.Protobuf" Version="3.33.0"/>
         <PackageVersion Include="Microsoft.AspNetCore.Grpc.JsonTranscoding" Version="9.0.0"/>
         <PackageVersion Include="Microsoft.AspNetCore.Grpc.Swagger" Version="0.9.1"/>
         <PackageVersion Include="Google.Api.CommonProtos" Version="2.17.0"/>
@@ -82,6 +85,10 @@
 
     <ItemGroup Label="AWS">
         <PackageVersion Include="AWSSDK.S3" Version="3.7.400.3"/>
+    </ItemGroup>
+
+    <ItemGroup Label="Vault">
+        <PackageVersion Include="VaultSharp" Version="1.17.5"/>
     </ItemGroup>
 
     <ItemGroup Label="Serilog">

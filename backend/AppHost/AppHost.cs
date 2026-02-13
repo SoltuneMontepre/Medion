@@ -24,8 +24,13 @@ var payrollPostgres = postgres.AddDatabase("postgres-payroll");
 var inventoryPostgres = postgres.AddDatabase("postgres-inventory");
 var manufacturePostgres = postgres.AddDatabase("postgres-manufacture");
 
+
 // Services
 var saleApi = builder.AddProject<Sale_API>("sale-api")
+    .WithReference(salePostgres)
+    .WithReference(rabbitmq);
+
+var securityApi = builder.AddProject<Security_API>("security-api")
     .WithReference(salePostgres)
     .WithReference(rabbitmq);
 
@@ -44,6 +49,8 @@ var inventoryApi = builder.AddProject<Inventory_API>("inventory-api")
 var manufactureApi = builder.AddProject<Manufacture_API>("manufacture-api")
     .WithReference(manufacturePostgres)
     .WithReference(rabbitmq);
+
+saleApi.WithReference(securityApi);
 
 // Gateway
 builder.AddProject<YarpGateway>("gateway")
