@@ -8,8 +8,9 @@ module "iam" {
 module "api_gateway" {
   source = "./modules/api-gateway"
 
-  project_name = local.project_name
-  cors_origins = var.cors_origins
+  project_name         = local.project_name
+  cors_origins         = var.cors_origins
+  auth_integration_uri = "http://${module.ec2.ec2_instance_public_dns}/api/auth"
 }
 
 module "ecr" {
@@ -168,3 +169,6 @@ module "identity_service" {
   }
 }
 
+module "ec2" {
+  source = "./modules/ec2"
+}
