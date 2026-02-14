@@ -1,0 +1,16 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "run-mise-dev",
+      "type": "shell",
+      "command": "mise dev",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated", // Dùng panel riêng để không bị lẫn log
+        "clear": true // Xóa log cũ mỗi lần chạy cho sạch
+      }
+    }
+  ]
+}

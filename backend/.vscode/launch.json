@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "🚀 Mise: Dev (Fast)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run non-existent-script", // Lệnh giả để nó không làm gì
+      "preLaunchTask": "run-mise-dev" // Gọi cái task ở trên
+    }
+  ]
+}
