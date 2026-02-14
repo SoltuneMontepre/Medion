@@ -46,6 +46,8 @@ public static class Extensions
     {
         var isLambda = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AWS_LAMBDA_FUNCTION_NAME"));
 
+        builder.Logging.ClearProviders();
+
         builder.Services.AddSerilog((services, loggerConfiguration) =>
         {
             loggerConfiguration
