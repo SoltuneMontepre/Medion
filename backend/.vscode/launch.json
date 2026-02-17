@@ -5,8 +5,9 @@
       "name": "🚀 Mise: Dev (Fast)",
       "type": "node-terminal",
       "request": "launch",
-      "command": "npm run non-existent-script", // Lệnh giả để nó không làm gì
-      "preLaunchTask": "run-mise-dev" // Gọi cái task ở trên
+      "command": "echo 'Mise dev đã sẵn sàng!'",
+      "preLaunchTask": "run-mise-dev",
+      "cwd": "${workspaceFolder}"
     }
   ]
 }

@@ -9,7 +9,9 @@ using Sale.Infrastructure.Persistence.Repositories;
 namespace Sale.Infrastructure;
 
 /// <summary>
-///     Extension methods for registering Infrastructure layer services
+///     Extension methods for registering Infrastructure layer services.
+///     Note: Vault client has been moved to the Audit Service.
+///     This service now focuses solely on customer domain operations.
 /// </summary>
 public static class DependencyInjection
 {
@@ -39,3 +41,5 @@ public static class DependencyInjection
         return services;
     }
 }
+
+

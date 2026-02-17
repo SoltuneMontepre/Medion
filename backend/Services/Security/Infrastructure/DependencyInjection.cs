@@ -22,6 +22,7 @@ public static class DependencyInjection
 
     services.AddVaultClient(config);
     services.AddScoped<ISignatureService, HashiCorpSignatureService>();
+    services.AddScoped<IVaultDigitalSignatureService, VaultDigitalSignatureService>();
 
     return services;
   }

@@ -1,4 +1,5 @@
 using MassTransit;
+using Medion.Shared.Events;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -125,10 +126,16 @@ builder.Services.AddAuthorization();
 // Add S3 Storage
 builder.Services.AddS3Storage(builder.Configuration);
 
-// MassTransit with RabbitMQ - Aspire-aware configuration
+// MassTransit with RabbitMQ - Configure for event publishing
 builder.Services.AddMassTransit(x =>
 {
+    // Publish events in kebab-case by default
     x.SetKebabCaseEndpointNameFormatter();
+
+    // Explicitly add the event types that this service publishes
+    // This ensures proper message routing and configuration
+    x.AddPublishMessageTypes(typeof(CustomerCreatedIntegrationEvent).Assembly);
+
     x.UsingRabbitMq((context, cfg) =>
     {
         // Get connection string from configuration (injected by Aspire)

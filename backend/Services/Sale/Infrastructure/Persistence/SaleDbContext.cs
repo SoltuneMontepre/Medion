@@ -10,6 +10,7 @@ public sealed class SaleDbContext(DbContextOptions<SaleDbContext> options) : DbC
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<UserDigitalSignature> UserDigitalSignatures => Set<UserDigitalSignature>();
+    public DbSet<CustomerSignature> CustomerSignatures => Set<CustomerSignature>();
     public DbSet<OrderDailySequence> OrderDailySequences => Set<OrderDailySequence>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

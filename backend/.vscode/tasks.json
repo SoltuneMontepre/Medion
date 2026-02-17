@@ -5,11 +5,21 @@
       "label": "run-mise-dev",
       "type": "shell",
       "command": "mise dev",
-      "problemMatcher": [],
+      "isBackground": true, // <--- ĐÂY LÀ DÒNG QUAN TRỌNG NHẤT
+      "problemMatcher": {
+        "pattern": {
+          "regexp": ".*"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": ".*"
+        }
+      },
       "presentation": {
         "reveal": "always",
-        "panel": "dedicated", // Dùng panel riêng để không bị lẫn log
-        "clear": true // Xóa log cũ mỗi lần chạy cho sạch
+        "panel": "dedicated",
+        "clear": true
       }
     }
   ]
