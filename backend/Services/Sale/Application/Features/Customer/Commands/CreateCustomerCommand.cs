@@ -9,7 +9,7 @@ namespace Sale.Application.Features.Customer.Commands;
 ///     Command to create a new customer with digital signature support.
 ///     The CreatedByUserId is captured for non-repudiation, ensuring accountability
 ///     in customer creation operations.
-///     
+///
 ///     NOTE: This is a record to enable immutable data passing through MediatR pipeline.
 ///     The TransactionSigningBehavior will create a new command instance via "with" pattern
 ///     to attach the signature before passing to handler.
