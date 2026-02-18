@@ -27,7 +27,9 @@ var securityPostgres = postgres.AddDatabase("postgres-security");
 
 // MongoDB - For Audit Logs
 var mongodb = builder.AddMongoDB("mongodb")
-    .WithDataVolume();
+    .WithImageTag("6.0")
+    .WithDataVolume("medion-mongo-data-v4")
+    .WithArgs("--wiredTigerCacheSizeGB", "0.25");
 
 // Services
 var securityApi = builder.AddProject<Security_API>("security-api")
