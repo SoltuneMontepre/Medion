@@ -22,6 +22,7 @@ public static class DependencyInjection
                 npgsqlOptions.MigrationsAssembly("Security.Infrastructure")));
 
         services.AddScoped<IUserDigitalSignatureRepository, UserDigitalSignatureRepository>();
+        services.AddScoped<IUserSecurityProfileRepository, UserSecurityProfileRepository>();
         services.AddScoped<ISignatureRepository, SignatureRepository>();
 
         services.AddVaultClient(config);

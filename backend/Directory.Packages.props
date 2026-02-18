@@ -93,6 +93,10 @@
         <PackageVersion Include="VaultSharp" Version="1.17.5"/>
     </ItemGroup>
 
+    <ItemGroup Label="Security">
+        <PackageVersion Include="BCrypt.Net-Next" Version="4.0.3"/>
+    </ItemGroup>
+
     <ItemGroup Label="MongoDB">
         <PackageVersion Include="MongoDB.Driver" Version="3.5.0"/>
         <PackageVersion Include="MongoDB.Bson" Version="3.5.0"/>

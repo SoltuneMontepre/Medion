@@ -8,6 +8,7 @@ public sealed class SecurityDbContext(DbContextOptions<SecurityDbContext> option
 {
     public DbSet<UserDigitalSignature> UserDigitalSignatures => Set<UserDigitalSignature>();
     public DbSet<TransactionSignature> TransactionSignatures => Set<TransactionSignature>();
+    public DbSet<UserSecurityProfile> UserSecurityProfiles => Set<UserSecurityProfile>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

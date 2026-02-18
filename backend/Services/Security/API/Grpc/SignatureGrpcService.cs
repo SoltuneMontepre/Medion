@@ -1,5 +1,6 @@
 using Grpc.Core;
 using MediatR;
+using Security.Application.Abstractions;
 using Security.Application.Common.Abstractions;
 using Security.Application.Features.Signature.Commands;
 
@@ -12,6 +13,7 @@ namespace Security.API.Grpc;
 public class SignatureGrpcService(
     IMediator mediator,
     IVaultService vaultService,
+    IUserSecurityProfileRepository userSecurityProfileRepository,
     ILogger<SignatureGrpcService> logger)
     : SignatureService.SignatureServiceBase
 {
@@ -26,20 +28,16 @@ public class SignatureGrpcService(
                 request.OperationType,
                 request.UserId);
 
-            // Step 1: Validate transaction password against Vault
-            var isPasswordValid = await vaultService.ValidateTransactionPasswordAsync(
-                request.UserId,
-                request.TransactionPassword,
-                context.CancellationToken);
+            if (!Guid.TryParse(request.UserId, out var userId))
+                throw new RpcException(new Status(StatusCode.InvalidArgument, "User ID is invalid"));
 
-            if (!isPasswordValid)
+            // Step 1: Validate transaction PIN against stored BCrypt hash
+            var profile = await userSecurityProfileRepository.GetByUserIdAsync(userId, context.CancellationToken);
+            if (profile == null ||
+                !BCrypt.Net.BCrypt.EnhancedVerify(request.TransactionPassword, profile.TransactionPinHash))
             {
-                logger.LogWarning("Transaction password validation failed for user {UserId}", request.UserId);
-                return new SignResponse
-                {
-                    Success = false,
-                    ErrorMessage = "Transaction password validation failed"
-                };
+                logger.LogWarning("Transaction PIN validation failed for user {UserId}", request.UserId);
+                throw new RpcException(new Status(StatusCode.Unauthenticated, "Mã PIN giao dịch không chính xác"));
             }
 
             // Step 2: Generate digital signature via Vault
@@ -53,7 +51,7 @@ public class SignatureGrpcService(
                 request.Payload,
                 signatureHash,
                 request.OperationType,
-                Guid.Parse(request.UserId));
+                userId);
 
             await mediator.Send(command, context.CancellationToken);
 

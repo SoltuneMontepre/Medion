@@ -15,5 +15,6 @@
         <PackageReference Include="Mapster"/>
         <PackageReference Include="Mapster.DependencyInjection"/>
         <PackageReference Include="MassTransit"/>
+        <PackageReference Include="BCrypt.Net-Next"/>
     </ItemGroup>
 </Project>

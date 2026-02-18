@@ -51,6 +51,30 @@ namespace Security.Infrastructure.Migrations
                     b.ToTable("UserDigitalSignatures");
                 });
 
+            modelBuilder.Entity("Security.Domain.Entities.UserSecurityProfile", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TransactionPinHash")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("UserSecurityProfiles");
+                });
+
             modelBuilder.Entity("Security.Domain.Entities.TransactionSignature", b =>
                 {
                     b.Property<Guid>("Id")

@@ -17,6 +17,7 @@
         <PackageReference Include="Grpc.AspNetCore.Server.Reflection"/>
         <PackageReference Include="Grpc.Tools" PrivateAssets="All"/>
         <PackageReference Include="Microsoft.AspNetCore.Grpc.JsonTranscoding"/>
+        <PackageReference Include="Swashbuckle.AspNetCore"/>
     </ItemGroup>
 
     <ItemGroup>

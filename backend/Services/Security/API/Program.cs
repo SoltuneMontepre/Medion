@@ -14,6 +14,9 @@ builder.AddServiceDefaults();
 builder.Services.AddGrpc(o => { o.EnableDetailedErrors = true; }).AddJsonTranscoding();
 builder.Services.AddGrpcReflection();
 builder.Services.AddHealthChecks();
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 // Register MediatR for command/query handling
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<CreateSignatureCommand>());
@@ -74,10 +77,13 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseDefaultExceptionHandler();
+app.UseSwagger();
+app.UseSwaggerUI();
 app.MapDefaultEndpoints();
 
 app.MapGrpcService<SignatureGrpcService>();
 app.MapGrpcReflectionService();
+app.MapControllers();
 
 app.MapGet("/", () => new { name = "Security.API", grpc = "/medion.security.v1.SignatureService" });
 app.MapHealthChecks("/health");

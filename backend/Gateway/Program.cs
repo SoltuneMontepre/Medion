@@ -119,6 +119,7 @@ app.UseSwaggerUI(options =>
     options.SwaggerEndpoint("/swagger-docs/payroll-api/v1/swagger.json", "Payroll API");
     options.SwaggerEndpoint("/swagger-docs/inventory-api/v1/swagger.json", "Inventory API");
     options.SwaggerEndpoint("/swagger-docs/manufacture-api/v1/swagger.json", "Manufacture API");
+    options.SwaggerEndpoint("/swagger-docs/security-api/v1/swagger.json", "Security API");
 
     options.RoutePrefix = "swagger";
     options.ConfigObject.PersistAuthorization = true;
@@ -141,7 +142,8 @@ var services = new[]
     ("approval-api", "Approval API"),
     ("payroll-api", "Payroll API"),
     ("inventory-api", "Inventory API"),
-    ("manufacture-api", "Manufacture API")
+    ("manufacture-api", "Manufacture API"),
+    ("security-api", "Security API")
 };
 
 foreach (var (serviceName, label) in services)
