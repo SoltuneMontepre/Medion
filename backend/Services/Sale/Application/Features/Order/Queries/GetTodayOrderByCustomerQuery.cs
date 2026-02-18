@@ -6,5 +6,5 @@ namespace Sale.Application.Features.Order.Queries;
 
 public sealed class GetTodayOrderByCustomerQuery(CustomerId customerId) : IRequest<OrderSummaryDto?>
 {
-  public CustomerId CustomerId { get; } = customerId;
+    public CustomerId CustomerId { get; } = customerId;
 }

@@ -132,10 +132,7 @@ builder.Services.AddMassTransit(x =>
     // Publish events in kebab-case by default
     x.SetKebabCaseEndpointNameFormatter();
 
-    // Explicitly add the event types that this service publishes
-    // This ensures proper message routing and configuration
-    x.AddPublishMessageTypes(typeof(CustomerCreatedIntegrationEvent).Assembly);
-
+    // Configure RabbitMQ as the transport
     x.UsingRabbitMq((context, cfg) =>
     {
         // Get connection string from configuration (injected by Aspire)

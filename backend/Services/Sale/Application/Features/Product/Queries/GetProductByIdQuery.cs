@@ -6,5 +6,5 @@ namespace Sale.Application.Features.Product.Queries;
 
 public class GetProductByIdQuery(ProductId productId) : IRequest<ProductDetailDto?>
 {
-  public ProductId ProductId { get; } = productId;
+    public ProductId ProductId { get; } = productId;
 }

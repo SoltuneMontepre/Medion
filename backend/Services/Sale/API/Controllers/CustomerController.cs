@@ -69,7 +69,12 @@ public class CustomerController(IMediator mediator) : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateCustomerDto request, CancellationToken cancellationToken)
     {
-        var command = new CreateCustomerCommand(request);
+        // Extract the authenticated user ID from the current principal
+        var userId = User.FindFirst("sub")?.Value
+                    ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                    ?? throw new InvalidOperationException("User ID not found in claims.");
+
+        var command = new CreateCustomerCommand(request, new UserId(Guid.Parse(userId)));
         var result = await mediator.Send(command, cancellationToken);
 
         if (result.IsSuccess && result.Data != null)

@@ -18,12 +18,12 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-  var dbContext = scope.ServiceProvider.GetRequiredService<SecurityDbContext>();
-  var hasMigrations = dbContext.Database.GetMigrations().Any();
-  if (hasMigrations)
-    await dbContext.Database.MigrateAsync();
-  else
-    await dbContext.Database.EnsureCreatedAsync();
+    var dbContext = scope.ServiceProvider.GetRequiredService<SecurityDbContext>();
+    var hasMigrations = dbContext.Database.GetMigrations().Any();
+    if (hasMigrations)
+        await dbContext.Database.MigrateAsync();
+    else
+        await dbContext.Database.EnsureCreatedAsync();
 }
 
 app.UseDefaultExceptionHandler();

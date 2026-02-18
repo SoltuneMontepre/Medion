@@ -15,45 +15,45 @@ namespace Sale.Infrastructure.Persistence.Repositories;
 public class CustomerSignatureRepository(SaleDbContext dbContext)
     : BaseRepository<CustomerSignature, CustomerSignatureId>(dbContext), ICustomerSignatureRepository
 {
-  public async Task<CustomerSignature?> GetByCustomerIdAsync(
-      CustomerId customerId,
-      CancellationToken cancellationToken = default)
-  {
-    return await Queryable
-        .FirstOrDefaultAsync(cs => cs.CustomerId == customerId, cancellationToken);
-  }
-
-  public async Task<IEnumerable<CustomerSignature>> GetByUserIdAsync(
-      UserId userId,
-      CancellationToken cancellationToken = default)
-  {
-    return await Queryable
-        .Where(cs => cs.SignedByUserId == userId)
-        .OrderByDescending(cs => cs.SignedAt)
-        .ToListAsync(cancellationToken);
-  }
-
-  public async Task<IEnumerable<CustomerSignature>> GetByDateRangeAsync(
-      DateTime startDate,
-      DateTime endDate,
-      CancellationToken cancellationToken = default)
-  {
-    return await Queryable
-        .Where(cs => cs.SignedAt >= startDate && cs.SignedAt <= endDate)
-        .OrderByDescending(cs => cs.SignedAt)
-        .ToListAsync(cancellationToken);
-  }
-
-  public async Task MarkAsVerifiedAsync(
-      CustomerSignatureId id,
-      CancellationToken cancellationToken = default)
-  {
-    var signature = await GetByIdAsync(id, cancellationToken);
-    if (signature != null)
+    public async Task<CustomerSignature?> GetByCustomerIdAsync(
+        CustomerId customerId,
+        CancellationToken cancellationToken = default)
     {
-      signature.IsVerified = true;
-      signature.VerifiedAt = DateTime.UtcNow;
-      await UpdateAsync(signature, cancellationToken);
+        return await Queryable
+            .FirstOrDefaultAsync(cs => cs.CustomerId == customerId, cancellationToken);
     }
-  }
+
+    public async Task<IEnumerable<CustomerSignature>> GetByUserIdAsync(
+        UserId userId,
+        CancellationToken cancellationToken = default)
+    {
+        return await Queryable
+            .Where(cs => cs.SignedByUserId == userId)
+            .OrderByDescending(cs => cs.SignedAt)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<CustomerSignature>> GetByDateRangeAsync(
+        DateTime startDate,
+        DateTime endDate,
+        CancellationToken cancellationToken = default)
+    {
+        return await Queryable
+            .Where(cs => cs.SignedAt >= startDate && cs.SignedAt <= endDate)
+            .OrderByDescending(cs => cs.SignedAt)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task MarkAsVerifiedAsync(
+        CustomerSignatureId id,
+        CancellationToken cancellationToken = default)
+    {
+        var signature = await GetByIdAsync(id, cancellationToken);
+        if (signature != null)
+        {
+            signature.IsVerified = true;
+            signature.VerifiedAt = DateTime.UtcNow;
+            await UpdateAsync(signature, cancellationToken);
+        }
+    }
 }

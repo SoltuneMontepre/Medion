@@ -6,6 +6,7 @@
     <ItemGroup>
         <ProjectReference Include="../Domain/Sale.Domain.csproj"/>
         <ProjectReference Include="../../../ServiceDefaults/ServiceDefaults.csproj"/>
+        <ProjectReference Include="../../../Shared/Shared.csproj"/>
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="MediatR"/>
@@ -13,5 +14,6 @@
         <PackageReference Include="FluentValidation.DependencyInjectionExtensions"/>
         <PackageReference Include="Mapster"/>
         <PackageReference Include="Mapster.DependencyInjection"/>
+        <PackageReference Include="MassTransit"/>
     </ItemGroup>
 </Project>

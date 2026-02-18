@@ -64,4 +64,5 @@ public sealed record CreateCustomerSignaturePayload(
     /// <summary>The ID of the user creating the customer (for non-repudiation).</summary>
     string CreatedByUserId,
     /// <summary>The timestamp when the signature operation occurs.</summary>
-    DateTime SignedAt);
+    DateTime SignedAt
+);

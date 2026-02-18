@@ -6,5 +6,5 @@ namespace Sale.Application.Features.Product.Commands;
 
 public class DeleteProductCommand(ProductId id) : IRequest<ApiResult<bool>>
 {
-  public ProductId Id { get; } = id;
+    public ProductId Id { get; } = id;
 }

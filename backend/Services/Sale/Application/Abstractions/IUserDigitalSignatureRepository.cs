@@ -5,6 +5,6 @@ namespace Sale.Application.Abstractions;
 
 public interface IUserDigitalSignatureRepository
 {
-  Task<UserDigitalSignature?> GetByUserIdAsync(UserId userId, CancellationToken cancellationToken = default);
-  Task AddOrUpdateAsync(UserDigitalSignature signature, CancellationToken cancellationToken = default);
+    Task<UserDigitalSignature?> GetByUserIdAsync(UserId userId, CancellationToken cancellationToken = default);
+    Task AddOrUpdateAsync(UserDigitalSignature signature, CancellationToken cancellationToken = default);
 }

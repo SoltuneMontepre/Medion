@@ -24,48 +24,48 @@ builder.Services.AddAuditInfrastructureServices(builder.Configuration);
 // Configure MassTransit with RabbitMQ for event consumption
 builder.Services.AddMassTransit(x =>
 {
-  // Register the consumer for CustomerCreatedIntegrationEvent
-  x.AddConsumer<Audit.Application.IntegrationEvents.Consumers.CustomerCreatedAuditConsumer>();
+    // Register the consumer for CustomerCreatedIntegrationEvent
+    x.AddConsumer<Audit.Application.IntegrationEvents.Consumers.CustomerCreatedAuditConsumer>();
 
-  x.UsingRabbitMq((context, cfg) =>
-  {
-    // Get connection string from configuration
-    var configuration = context.GetService<IConfiguration>();
-    var connectionString = configuration?.GetConnectionString("rabbitmq");
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        // Get connection string from configuration
+        var configuration = context.GetService<IConfiguration>();
+        var connectionString = configuration?.GetConnectionString("rabbitmq");
 
-    if (!string.IsNullOrEmpty(connectionString))
-    {
-      var uri = new Uri(connectionString);
-      cfg.Host(uri);
-    }
-    else
-    {
-      // Local development fallback
-      cfg.Host("localhost", h =>
+        if (!string.IsNullOrEmpty(connectionString))
         {
-            h.Username("guest");
-            h.Password("guest");
+            var uri = new Uri(connectionString);
+            cfg.Host(uri);
+        }
+        else
+        {
+            // Local development fallback
+            cfg.Host("localhost", h =>
+            {
+              h.Username("guest");
+              h.Password("guest");
           });
-    }
+        }
 
-    // Configure the customer-created audit consumer
-    cfg.ReceiveEndpoint("audit-customer-created", e =>
-      {
-        // Bind consumer to this endpoint
-        e.ConfigureConsumer<Audit.Application.IntegrationEvents.Consumers.CustomerCreatedAuditConsumer>(context);
+        // Configure the customer-created audit consumer
+        cfg.ReceiveEndpoint("audit-customer-created", e =>
+        {
+            // Bind consumer to this endpoint
+            e.ConfigureConsumer<Audit.Application.IntegrationEvents.Consumers.CustomerCreatedAuditConsumer>(context);
 
-        // Retry policy: retry up to 5 times with incremental backoff
-        e.UseRetry(r => r.Incremental(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1)));
+            // Retry policy: retry up to 5 times with incremental backoff
+            e.UseRetry(r => r.Incremental(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1)));
 
-        // Concurrency: process up to 10 messages in parallel
-        e.PrefetchCount = 10;
+            // Concurrency: process up to 10 messages in parallel
+            e.PrefetchCount = 10;
 
-        // Instance ID for distributed tracing
-        e.InstanceId = "audit-01";
-      });
+            // Instance ID for distributed tracing
+            e.InstanceId = "audit-01";
+        });
 
-    cfg.ConfigureEndpoints(context);
-  });
+        cfg.ConfigureEndpoints(context);
+    });
 });
 
 var app = builder.Build();
@@ -73,12 +73,12 @@ var app = builder.Build();
 // Database initialization
 using (var scope = app.Services.CreateScope())
 {
-  var dbContext = scope.ServiceProvider.GetRequiredService<AuditDbContext>();
-  var hasMigrations = dbContext.Database.GetMigrations().Any();
-  if (hasMigrations)
-    await dbContext.Database.MigrateAsync();
-  else
-    await dbContext.Database.EnsureCreatedAsync();
+    var dbContext = scope.ServiceProvider.GetRequiredService<AuditDbContext>();
+    var hasMigrations = dbContext.Database.GetMigrations().Any();
+    if (hasMigrations)
+        await dbContext.Database.MigrateAsync();
+    else
+        await dbContext.Database.EnsureCreatedAsync();
 }
 
 app.UseDefaultExceptionHandler();

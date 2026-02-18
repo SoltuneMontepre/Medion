@@ -51,9 +51,4 @@ public sealed record CustomerCreatedIntegrationEvent(
     /// </summary>
     string Action = "CREATE")
 {
-  /// <summary>
-  ///     Required for MassTransit message contract.
-  ///     The timestamp property provides the event timestamp.
-  /// </summary>
-  public DateTime? Timestamp { get; } = Timestamp;
 }
