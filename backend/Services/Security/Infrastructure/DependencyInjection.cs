@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Security.Application.Abstractions;
 using Security.Application.Common.Abstractions;
+using Security.Application.Features.Signature.Commands;
 using Security.Infrastructure.Data;
 using Security.Infrastructure.Persistence.Repositories;
 using Security.Infrastructure.Services;
@@ -21,6 +22,7 @@ public static class DependencyInjection
                 npgsqlOptions.MigrationsAssembly("Security.Infrastructure")));
 
         services.AddScoped<IUserDigitalSignatureRepository, UserDigitalSignatureRepository>();
+        services.AddScoped<ISignatureRepository, SignatureRepository>();
 
         services.AddVaultClient(config);
         services.AddScoped<ISignatureService, HashiCorpSignatureService>();
