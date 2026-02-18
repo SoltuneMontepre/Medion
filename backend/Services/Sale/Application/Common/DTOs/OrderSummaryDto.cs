@@ -1,5 +1,4 @@
 using Sale.Domain.Entities;
-using Sale.Domain.Identifiers;
 using Sale.Domain.Identifiers.Id;
 
 namespace Sale.Application.Common.DTOs;

@@ -1,7 +1,6 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
-using Security.Application.Abstractions;
-using Security.Domain;
+using Security.Domain.Entities;
 using Security.Domain.Identifiers;
 
 namespace Security.Application.Features.Signature.Commands;
@@ -17,36 +16,36 @@ public record CreateSignatureCommand(
 
 public class CreateSignatureCommandHandler : IRequestHandler<CreateSignatureCommand, SignatureId>
 {
-  private readonly ISignatureRepository _repository;
-  private readonly ILogger<CreateSignatureCommandHandler> _logger;
+    private readonly ILogger<CreateSignatureCommandHandler> _logger;
+    private readonly ISignatureRepository _repository;
 
-  public CreateSignatureCommandHandler(
-      ISignatureRepository repository,
-      ILogger<CreateSignatureCommandHandler> logger)
-  {
-    _repository = repository;
-    _logger = logger;
-  }
+    public CreateSignatureCommandHandler(
+        ISignatureRepository repository,
+        ILogger<CreateSignatureCommandHandler> logger)
+    {
+        _repository = repository;
+        _logger = logger;
+    }
 
-  public async Task<SignatureId> Handle(
-      CreateSignatureCommand request,
-      CancellationToken cancellationToken)
-  {
-    var signature = Domain.Entities.TransactionSignature.CreateSigned(
-        request.Payload,
-        request.SignatureHash,
-        request.OperationType,
-        request.UserId);
+    public async Task<SignatureId> Handle(
+        CreateSignatureCommand request,
+        CancellationToken cancellationToken)
+    {
+        var signature = TransactionSignature.CreateSigned(
+            request.Payload,
+            request.SignatureHash,
+            request.OperationType,
+            request.UserId);
 
-    await _repository.AddAsync(signature, cancellationToken);
+        await _repository.AddAsync(signature, cancellationToken);
 
-    _logger.LogInformation("Signature record persisted for operation {OperationType}", request.OperationType);
+        _logger.LogInformation("Signature record persisted for operation {OperationType}", request.OperationType);
 
-    return signature.Id;
-  }
+        return signature.Id;
+    }
 }
 
 public interface ISignatureRepository
 {
-  Task AddAsync(Domain.Entities.TransactionSignature signature, CancellationToken cancellationToken);
+    Task AddAsync(TransactionSignature signature, CancellationToken cancellationToken);
 }

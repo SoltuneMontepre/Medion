@@ -1,10 +1,10 @@
 using System.Text.Json;
 using MassTransit;
 using MediatR;
+using Medion.Shared.Enums;
 using Medion.Shared.Events;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Sale.Application.Common.Context;
 using TransactionContext = Sale.Application.Common.Context.TransactionContext;
 
 namespace Sale.Application.Common.Behaviors;
@@ -12,7 +12,6 @@ namespace Sale.Application.Common.Behaviors;
 /// <summary>
 ///     MediatR Pipeline Behavior that publishes audit events to RabbitMQ asynchronously
 ///     Runs AFTER the main handler completes successfully.
-///
 ///     CLEAN ARCHITECTURE:
 ///     - This behavior runs at API boundary (has access to HttpContext)
 ///     - Extracts user info and signature from TransactionContext (scoped, Application layer)
@@ -22,7 +21,7 @@ namespace Sale.Application.Common.Behaviors;
 public class AuditLoggingBehavior<TRequest, TResponse>(
     IPublishEndpoint publishEndpoint,
     IHttpContextAccessor httpContextAccessor,
-    Sale.Application.Common.Context.TransactionContext transactionContext,
+    TransactionContext transactionContext,
     ILogger<AuditLoggingBehavior<TRequest, TResponse>> logger)
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
@@ -52,10 +51,16 @@ public class AuditLoggingBehavior<TRequest, TResponse>(
         try
         {
             var userIdClaim = httpContext?.User.FindFirst("sub")
-                              ?? httpContext?.User.FindFirst("NameIdentifier");
+                                ?? httpContext?.User.FindFirst("NameIdentifier");
             var userId = userIdClaim?.Value ?? "SYSTEM";
 
             var ipAddress = httpContext?.Connection.RemoteIpAddress?.ToString() ?? "UNKNOWN";
+
+            // Capture TraceId from HttpContext for distributed tracing
+            var traceId = httpContext?.TraceIdentifier ?? Guid.NewGuid().ToString();
+
+            // Capture User-Agent for client information
+            var userAgent = httpContext?.Request.Headers.UserAgent.ToString();
 
             // ✅ CLEAN ARCHITECTURE: Get signature from scoped TransactionContext (not HttpContext)
             var signatureHash = transactionContext.SignatureHash;
@@ -78,15 +83,19 @@ public class AuditLoggingBehavior<TRequest, TResponse>(
                 SignatureHash = signatureHash,
                 IpAddress = ipAddress,
                 StatusCode = 200,
-                ErrorMessage = null
+                ErrorMessage = null,
+                TraceId = traceId,
+                ActionStatus = ActionStatus.Success,
+                UserAgent = userAgent
             };
 
             logger.LogInformation(
-                "Publishing audit event for action {Action} on entity {EntityType} {EntityId} (signature: {Signature})",
+                "Publishing audit event for action {Action} on entity {EntityType} {EntityId} (signature: {Signature}, traceId: {TraceId})",
                 action,
                 entityType,
                 entityId,
-                signatureHash?[..16] + "...");
+                signatureHash?[..16] + "...",
+                traceId);
 
             await publishEndpoint.Publish(auditEvent, cancellationToken);
 
@@ -114,8 +123,10 @@ public class AuditLoggingBehavior<TRequest, TResponse>(
             _ => ("EXECUTE", typeof(TRequest).Name, "N/A")
         };
 
-        string ExtractEntityType(string name, string prefix) =>
-            name.Replace(prefix, "").Replace("Command", "").ToUpperInvariant();
+        string ExtractEntityType(string name, string prefix)
+        {
+            return name.Replace(prefix, "").Replace("Command", "").ToUpperInvariant();
+        }
 
         string ExtractIdFromRequest()
         {

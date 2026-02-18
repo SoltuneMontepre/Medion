@@ -1,5 +1,5 @@
 using Sale.Domain.Abstractions;
-using Sale.Domain.Identifiers;
+using Sale.Domain.Identifiers.Id;
 
 namespace Sale.Domain.Entities;
 
@@ -7,7 +7,6 @@ namespace Sale.Domain.Entities;
 ///     Customer entity representing a customer in the sales system
 ///     Extends BaseEntity for audit trails and soft delete support
 /// </summary>
-
 public sealed class Customer : BaseEntity<CustomerId>
 {
     public Customer()
@@ -22,7 +21,7 @@ public sealed class Customer : BaseEntity<CustomerId>
     public string PhoneNumber { get; set; } = null!;
 
     /// <summary>
-    /// Digital signature hash for non-repudiation
+    ///     Digital signature hash for non-repudiation
     /// </summary>
     public string? SignatureHash { get; set; }
 }

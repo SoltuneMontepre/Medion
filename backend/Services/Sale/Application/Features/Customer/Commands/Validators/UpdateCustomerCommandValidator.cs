@@ -1,5 +1,4 @@
 using FluentValidation;
-using Sale.Domain.Identifiers;
 
 namespace Sale.Application.Features.Customer.Commands.Validators;
 

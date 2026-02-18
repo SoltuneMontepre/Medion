@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
-using System.Text;
 using Security.Application.Abstractions;
 using VaultSharp;
+using VaultSharp.V1.Commons;
 using VaultSharp.V1.SecretsEngines.Transit;
 
 namespace Security.Infrastructure;
@@ -33,7 +33,7 @@ public sealed class HashiCorpSignatureService(
         return Rfc2898DeriveBytes.Pbkdf2(pin, salt, Iterations, HashAlgorithmName.SHA256, HashSize);
     }
 
-    private static byte[] ExtractSignatureBytes(VaultSharp.V1.Commons.Secret<SigningResponse> response)
+    private static byte[] ExtractSignatureBytes(Secret<SigningResponse> response)
     {
         var signature = response?.Data?.Signature;
         if (string.IsNullOrWhiteSpace(signature))

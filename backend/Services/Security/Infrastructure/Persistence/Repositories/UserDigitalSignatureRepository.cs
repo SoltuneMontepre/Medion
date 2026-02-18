@@ -8,7 +8,8 @@ namespace Security.Infrastructure.Persistence.Repositories;
 
 public class UserDigitalSignatureRepository(SecurityDbContext dbContext) : IUserDigitalSignatureRepository
 {
-    public async Task<UserDigitalSignature?> GetByUserIdAsync(UserId userId, CancellationToken cancellationToken = default)
+    public async Task<UserDigitalSignature?> GetByUserIdAsync(UserId userId,
+        CancellationToken cancellationToken = default)
     {
         return await dbContext.UserDigitalSignatures
             .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);

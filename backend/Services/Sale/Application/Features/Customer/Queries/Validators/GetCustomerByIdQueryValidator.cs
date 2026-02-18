@@ -1,7 +1,6 @@
 using FluentValidation;
-using Sale.Application.Features.Customer.Queries;
 
-namespace Sale.Application.Features.Customer.Validators;
+namespace Sale.Application.Features.Customer.Queries.Validators;
 
 /// <summary>
 ///     Validator for GetCustomerByIdQuery

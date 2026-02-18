@@ -15,13 +15,8 @@ var publicAuthority = authSection["PublicAuthority"];
 var tokenIssuer = authSection["TokenIssuer"];
 var swaggerAuthority = string.IsNullOrWhiteSpace(publicAuthority) ? authority : publicAuthority;
 if (string.IsNullOrWhiteSpace(authority) || string.IsNullOrWhiteSpace(audience))
-{
     throw new InvalidOperationException("Auth configuration is missing. Expected Auth:Authority and Auth:Audience.");
-}
-if (string.IsNullOrWhiteSpace(tokenIssuer))
-{
-    tokenIssuer = authority;
-}
+if (string.IsNullOrWhiteSpace(tokenIssuer)) tokenIssuer = authority;
 builder.Services.AddGrpc().AddJsonTranscoding();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>

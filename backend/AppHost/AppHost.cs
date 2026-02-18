@@ -39,7 +39,7 @@ var securityApi = builder.AddProject<Security_API>("security-api")
 var saleApi = builder.AddProject<Sale_API>("sale-api")
     .WithReference(salePostgres)
     .WithReference(rabbitmq)
-    .WithReference(securityApi);  // gRPC dependency for signing
+    .WithReference(securityApi); // gRPC dependency for signing
 
 var approvalApi = builder.AddProject<Approval_API>("approval-api")
     .WithReference(approvalPostgres)

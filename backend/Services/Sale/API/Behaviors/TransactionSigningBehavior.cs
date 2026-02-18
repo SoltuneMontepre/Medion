@@ -2,10 +2,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using Grpc.Core;
 using MediatR;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using Sale.Application.Common.Attributes;
-using Sale.Application.Common.Context;
 using Security.API.Grpc;
 using TransactionContext = Sale.Application.Common.Context.TransactionContext;
 
@@ -13,14 +10,12 @@ namespace Sale.API.Behaviors;
 
 /// <summary>
 ///     MediatR Pipeline Behavior that intercepts commands requiring digital signature.
-///
 ///     CLEAN ARCHITECTURE DESIGN:
 ///     1. This behavior sits at the layer boundary (HTTP concerns)
 ///     2. Reads HttpContext to extract password (infrastructure concern)
 ///     3. Calls gRPC to validate and sign
 ///     4. Stores signature in Application-level TransactionContext (scoped)
 ///     5. Handler injects TransactionContext - NOT HttpContext
-///
 ///     Result: Application → Domain dependency only. Handler is pure application logic.
 /// </summary>
 public class TransactionSigningBehavior<TRequest, TResponse>(
@@ -51,14 +46,12 @@ public class TransactionSigningBehavior<TRequest, TResponse>(
 
         var transactionPassword = passwordValues.FirstOrDefault();
         if (string.IsNullOrWhiteSpace(transactionPassword))
-        {
             throw new UnauthorizedAccessException("Transaction password cannot be empty");
-        }
 
         // Extract user ID from claims
         var userIdClaim = httpContext.User.FindFirst("sub")
-                  ?? httpContext.User.FindFirst("sid")
-                  ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier)
+                          ?? httpContext.User.FindFirst("sid")
+                          ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier)
                           ?? throw new UnauthorizedAccessException("User ID claim not found");
 
         var userId = userIdClaim.Value;
@@ -129,4 +122,3 @@ public class TransactionSigningBehavior<TRequest, TResponse>(
         }
     }
 }
-

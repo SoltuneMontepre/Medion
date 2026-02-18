@@ -1,7 +1,6 @@
-using System.Text;
-using System.Text.Json;
 using Security.Application.Abstractions;
 using VaultSharp;
+using VaultSharp.V1.Commons;
 using VaultSharp.V1.SecretsEngines.Transit;
 
 namespace Security.Infrastructure;
@@ -10,7 +9,6 @@ namespace Security.Infrastructure;
 ///     Implementation of digital signature service using HashiCorp Vault's Transit Engine.
 ///     This service provides cryptographic signing and verification operations for ensuring
 ///     non-repudiation and data integrity in customer creation workflows.
-///
 ///     Key Features:
 ///     - Uses Transit Engine for cryptographic operations (HSM-backed if configured)
 ///     - Deterministic signing ensures reproducible signatures for the same data
@@ -43,8 +41,7 @@ public sealed class VaultDigitalSignatureService(
             var response = await vaultClient.V1.Secrets.Transit.SignDataAsync(
                 vaultOptions.KeyName,
                 signOptions,
-                vaultOptions.MountPoint,
-                wrapTimeToLive: null);
+                vaultOptions.MountPoint);
 
             // Extract and validate the signature from the response
             var signature = ExtractSignatureFromResponse(response);
@@ -95,7 +92,7 @@ public sealed class VaultDigitalSignatureService(
     ///     Vault signatures follow the format: vault:v1:{base64-encoded-signature}
     /// </summary>
     private static string ExtractSignatureFromResponse(
-        VaultSharp.V1.Commons.Secret<SigningResponse> response)
+        Secret<SigningResponse> response)
     {
         var signature = response?.Data?.Signature;
 

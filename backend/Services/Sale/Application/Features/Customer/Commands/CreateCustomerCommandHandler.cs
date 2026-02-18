@@ -2,10 +2,10 @@ using System.Text.Json;
 using Mapster;
 using MassTransit;
 using MediatR;
+using Medion.Shared.Enums;
 using Medion.Shared.Events;
 using Microsoft.Extensions.Logging;
 using Sale.Application.Abstractions;
-using Sale.Application.Common.Context;
 using Sale.Application.Common.DTOs;
 using ServiceDefaults.ApiResponses;
 using TransactionContext = Sale.Application.Common.Context.TransactionContext;
@@ -14,24 +14,21 @@ namespace Sale.Application.Features.Customer.Commands;
 
 /// <summary>
 ///     Handler for CreateCustomerCommand - PURE APPLICATION LOGIC.
-///
 ///     CLEAN ARCHITECTURE:
 ///     - This handler does NOT know about HttpContext or Infrastructure
 ///     - It injects TransactionContext to retrieve signature (Application layer)
 ///     - It publishes AuditLogIntegrationEvent which MassTransit Outbox will handle atomically
 ///     - Customer entity and audit event are persisted in SAME database transaction
-///
 ///     ATOMICITY (MassTransit Outbox Pattern):
 ///     1. Add customer to DbContext (NOT saved yet)
 ///     2. Publish audit event via MassTransit (stored in Outbox table)
 ///     3. Call SaveChangesAsync ONCE - commits: Customer + OutboxState entry
 ///     4. MassTransit background worker picks up event and publishes to RabbitMQ
-///
 ///     Result: Exactly-once delivery semantics. No data loss if service crashes.
 /// </summary>
 public class CreateCustomerCommandHandler(
     ICustomerRepository customerRepository,
-    Sale.Application.Common.Context.TransactionContext transactionContext,
+    TransactionContext transactionContext,
     IPublishEndpoint publishEndpoint,
     ILogger<CreateCustomerCommandHandler> logger)
     : IRequestHandler<CreateCustomerCommand, ApiResult<CustomerDto>>
@@ -50,7 +47,8 @@ public class CreateCustomerCommandHandler(
         if (!transactionContext.HasValidSignature)
         {
             logger.LogWarning("No valid transaction signature found in context");
-            throw new InvalidOperationException("Transaction signature not found. Ensure TransactionSigningBehavior executed.");
+            throw new InvalidOperationException(
+                "Transaction signature not found. Ensure TransactionSigningBehavior executed.");
         }
 
         // Step 1: Generate unique customer code
@@ -69,7 +67,7 @@ public class CreateCustomerCommandHandler(
         customer.Code = customerCode;
         customer.CreatedAt = DateTime.UtcNow;
         customer.CreatedBy = request.CreatedByUserId;
-        customer.SignatureHash = transactionContext.SignatureHash;  // ✅ Attach signature from context
+        customer.SignatureHash = transactionContext.SignatureHash; // ✅ Attach signature from context
 
         logger.LogInformation(
             "Customer entity prepared: {CustomerId} with signature: {Signature}",
@@ -77,6 +75,8 @@ public class CreateCustomerCommandHandler(
             customer.SignatureHash?[..16] + "...");
 
         // Step 4: Create audit log integration event
+        // NOTE: TraceId and UserAgent are not available in this handler (no HttpContext access)
+        // Consider using AuditLoggingBehavior instead for complete audit context
         var auditEvent = new AuditLogIntegrationEvent
         {
             EventId = Guid.NewGuid().ToString(),
@@ -97,7 +97,10 @@ public class CreateCustomerCommandHandler(
                 createdAt = customer.CreatedAt
             }),
             SignatureHash = transactionContext.SignatureHash,
-            StatusCode = 201
+            StatusCode = 201,
+            TraceId = Guid.NewGuid().ToString(), // Placeholder - HttpContext not available here
+            ActionStatus = ActionStatus.Success,
+            UserAgent = null // Not available without HttpContext
         };
 
         // Step 3: Save customer to repository
@@ -114,7 +117,8 @@ public class CreateCustomerCommandHandler(
         catch (Exception ex)
         {
             // Log but don't fail customer creation if audit event fails
-            logger.LogWarning(ex, "Warning: Failed to publish audit event for customer {CustomerId}", customer.Id.Value);
+            logger.LogWarning(ex, "Warning: Failed to publish audit event for customer {CustomerId}",
+                customer.Id.Value);
         }
 
         // Step 5: Return success to caller

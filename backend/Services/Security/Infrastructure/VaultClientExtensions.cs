@@ -35,20 +35,14 @@ public static class VaultClientExtensions
 
         IAuthMethodInfo authMethod;
         if (!string.IsNullOrWhiteSpace(token))
-        {
             authMethod = new TokenAuthMethodInfo(token);
-        }
         else if (string.Equals(options.Auth.Method, "AppRole", StringComparison.OrdinalIgnoreCase)
                  && !string.IsNullOrWhiteSpace(roleId)
                  && !string.IsNullOrWhiteSpace(secretId))
-        {
             authMethod = new AppRoleAuthMethodInfo(roleId, secretId);
-        }
         else
-        {
             throw new InvalidOperationException(
                 "Vault authentication is not configured. Set MEDION_VAULT_TOKEN environment variable, configure Vault:Auth:Token in appsettings, or configure Vault:Auth for AppRole.");
-        }
 
         var settings = new VaultClientSettings(options.Url, authMethod)
         {

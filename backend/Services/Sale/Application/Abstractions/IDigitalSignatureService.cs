@@ -5,6 +5,7 @@ namespace Sale.Application.Abstractions;
 public interface IDigitalSignatureService
 {
     Task<bool> VerifyPinAsync(UserId userId, string pin, CancellationToken cancellationToken = default);
+
     Task<DigitalSignatureResult> SignAsync(UserId userId, string payload, string pin,
         CancellationToken cancellationToken = default);
 }

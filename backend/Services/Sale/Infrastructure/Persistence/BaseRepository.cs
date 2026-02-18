@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Sale.Application.Abstractions;
 using Sale.Domain.Abstractions;
 using Sale.Domain.Identifiers;
-using Sale.Infrastructure.Data;
 
 namespace Sale.Infrastructure.Persistence;
 

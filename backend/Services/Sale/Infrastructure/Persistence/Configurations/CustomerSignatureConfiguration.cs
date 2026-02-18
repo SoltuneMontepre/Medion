@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Sale.Domain.Entities;
 using Sale.Domain.Identifiers;
+using Sale.Domain.Identifiers.Id;
 using Sale.Infrastructure.Persistence.Converters;
 
 namespace Sale.Infrastructure.Persistence.Configurations;

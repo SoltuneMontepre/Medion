@@ -1,25 +1,25 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <LangVersion>preview</LangVersion>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <LangVersion>preview</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="../Application/Security.Application.csproj"/>
-    <ProjectReference Include="../Infrastructure/Security.Infrastructure.csproj"/>
-    <ProjectReference Include="../../../ServiceDefaults/ServiceDefaults.csproj"/>
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="../Application/Security.Application.csproj"/>
+        <ProjectReference Include="../Infrastructure/Security.Infrastructure.csproj"/>
+        <ProjectReference Include="../../../ServiceDefaults/ServiceDefaults.csproj"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Grpc.AspNetCore"/>
-    <PackageReference Include="Grpc.AspNetCore.Server.Reflection"/>
-    <PackageReference Include="Grpc.Tools" PrivateAssets="All"/>
-    <PackageReference Include="Microsoft.AspNetCore.Grpc.JsonTranscoding"/>
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Grpc.AspNetCore"/>
+        <PackageReference Include="Grpc.AspNetCore.Server.Reflection"/>
+        <PackageReference Include="Grpc.Tools" PrivateAssets="All"/>
+        <PackageReference Include="Microsoft.AspNetCore.Grpc.JsonTranscoding"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <Protobuf Include="$(GrpcProtoRoot)/security/signature.proto" GrpcServices="Server"/>
-  </ItemGroup>
+    <ItemGroup>
+        <Protobuf Include="$(GrpcProtoRoot)/security/signature.proto" GrpcServices="Server"/>
+    </ItemGroup>
 </Project>

@@ -5,11 +5,9 @@ namespace Sale.Domain.Identifiers.Id;
 [TypeConverter(typeof(StronglyTypedIdTypeConverter<OrderId>))]
 public readonly record struct OrderId(Guid Value) : IStronglyTypedId, IParsable<OrderId>
 {
-    public static OrderId New() => new(Guid.CreateVersion7());
     public static OrderId Empty => new(Guid.Empty);
     public bool IsEmpty => Value == Guid.Empty;
 
-    public static OrderId Parse(string value) => Parse(value, null);
     public static OrderId Parse(string s, IFormatProvider? provider)
     {
         if (!TryParse(s, provider, out var result))
@@ -34,5 +32,18 @@ public readonly record struct OrderId(Guid Value) : IStronglyTypedId, IParsable<
         return true;
     }
 
-    public override string ToString() => Value.ToString();
+    public static OrderId New()
+    {
+        return new OrderId(Guid.CreateVersion7());
+    }
+
+    public static OrderId Parse(string value)
+    {
+        return Parse(value, null);
+    }
+
+    public override string ToString()
+    {
+        return Value.ToString();
+    }
 }

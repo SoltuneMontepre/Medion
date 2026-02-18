@@ -13,13 +13,8 @@ var authority = authSection["Authority"];
 var audience = authSection["Audience"];
 var swaggerAuthority = authSection["SwaggerAuthority"];
 if (string.IsNullOrWhiteSpace(authority) || string.IsNullOrWhiteSpace(audience))
-{
     throw new InvalidOperationException("Auth configuration is missing. Expected Auth:Authority and Auth:Audience.");
-}
-if (string.IsNullOrWhiteSpace(swaggerAuthority))
-{
-    swaggerAuthority = authority;
-}
+if (string.IsNullOrWhiteSpace(swaggerAuthority)) swaggerAuthority = authority;
 
 builder.Services.AddGrpc().AddJsonTranscoding();
 

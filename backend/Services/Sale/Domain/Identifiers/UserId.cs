@@ -5,11 +5,9 @@ namespace Sale.Domain.Identifiers;
 [TypeConverter(typeof(StronglyTypedIdTypeConverter<UserId>))]
 public readonly record struct UserId(Guid Value) : IStronglyTypedId, IParsable<UserId>
 {
-    public static UserId New() => new(Guid.CreateVersion7());
     public static UserId Empty => new(Guid.Empty);
     public bool IsEmpty => Value == Guid.Empty;
 
-    public static UserId Parse(string value) => Parse(value, null);
     public static UserId Parse(string s, IFormatProvider? provider)
     {
         if (!TryParse(s, provider, out var result))
@@ -34,5 +32,18 @@ public readonly record struct UserId(Guid Value) : IStronglyTypedId, IParsable<U
         return true;
     }
 
-    public override string ToString() => Value.ToString();
+    public static UserId New()
+    {
+        return new UserId(Guid.CreateVersion7());
+    }
+
+    public static UserId Parse(string value)
+    {
+        return Parse(value, null);
+    }
+
+    public override string ToString()
+    {
+        return Value.ToString();
+    }
 }

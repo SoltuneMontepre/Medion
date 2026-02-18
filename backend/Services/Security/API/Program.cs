@@ -1,6 +1,7 @@
+using System.Net.Sockets;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Security.API.Grpc;
-using Security.API.Services;
 using Security.Application.Features.Signature.Commands;
 using Security.Infrastructure;
 using Security.Infrastructure.Data;
@@ -30,11 +31,11 @@ using (var scope = app.Services.CreateScope())
     var maxRetries = 10;
     var retryDelay = TimeSpan.FromSeconds(2);
 
-    for (int attempt = 1; attempt <= maxRetries; attempt++)
-    {
+    for (var attempt = 1; attempt <= maxRetries; attempt++)
         try
         {
-            logger.LogInformation("Attempting database migration (attempt {Attempt}/{MaxRetries})...", attempt, maxRetries);
+            logger.LogInformation("Attempting database migration (attempt {Attempt}/{MaxRetries})...", attempt,
+                maxRetries);
 
             var hasMigrations = dbContext.Database.GetMigrations().Any();
             if (hasMigrations)
@@ -45,29 +46,31 @@ using (var scope = app.Services.CreateScope())
             logger.LogInformation("Database initialized successfully");
             break;
         }
-        catch (Npgsql.PostgresException ex) when (ex.SqlState == "57P03") // Database starting up
+        catch (PostgresException ex) when (ex.SqlState == "57P03") // Database starting up
         {
             if (attempt == maxRetries)
             {
                 logger.LogError(ex, "Failed to connect to database after {MaxRetries} attempts", maxRetries);
                 throw;
             }
+
             logger.LogWarning("Database is starting up, retrying in {Delay} seconds...", retryDelay.TotalSeconds);
             await Task.Delay(retryDelay);
             retryDelay = TimeSpan.FromSeconds(retryDelay.TotalSeconds * 1.5); // Exponential backoff
         }
-        catch (System.Net.Sockets.SocketException ex) // DNS/Network errors
+        catch (SocketException ex) // DNS/Network errors
         {
             if (attempt == maxRetries)
             {
                 logger.LogError(ex, "Failed to connect to database after {MaxRetries} attempts", maxRetries);
                 throw;
             }
-            logger.LogWarning("Network error connecting to database, retrying in {Delay} seconds...", retryDelay.TotalSeconds);
+
+            logger.LogWarning("Network error connecting to database, retrying in {Delay} seconds...",
+                retryDelay.TotalSeconds);
             await Task.Delay(retryDelay);
             retryDelay = TimeSpan.FromSeconds(retryDelay.TotalSeconds * 1.5);
         }
-    }
 }
 
 app.UseDefaultExceptionHandler();

@@ -1,9 +1,13 @@
+using System.Collections;
 using MassTransit;
+using MediatR;
 using Medion.Shared.Events;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Npgsql;
+using Sale.API.Behaviors;
 using Sale.API.Middleware;
 using Sale.API.Serialization;
 using Sale.API.Swagger;
@@ -11,9 +15,11 @@ using Sale.Application;
 using Sale.Domain.Identifiers;
 using Sale.Domain.Identifiers.Id;
 using Sale.Infrastructure;
-using Sale.Infrastructure.Data;
+using Sale.Infrastructure.Persistence;
+using Security.API.Grpc;
 using ServiceDefaults;
 using SharedStorage;
+using TransactionContext = Sale.Application.Common.Context.TransactionContext;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,9 +29,7 @@ var authSection = builder.Configuration.GetSection("Auth");
 var authority = authSection["Authority"];
 var audience = authSection["Audience"];
 if (string.IsNullOrWhiteSpace(authority) || string.IsNullOrWhiteSpace(audience))
-{
     throw new InvalidOperationException("Auth configuration is missing. Expected Auth:Authority and Auth:Audience.");
-}
 
 // Add Application and Infrastructure services
 builder.Services.AddApplicationServices();
@@ -35,10 +39,10 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 
 // Register TransactionContext (scoped, for passing signature through pipeline)
-builder.Services.AddScoped<Sale.Application.Common.Context.TransactionContext>();
+builder.Services.AddScoped<TransactionContext>();
 
 // Register TransactionSigningBehavior (needs gRPC client, so in API layer)
-builder.Services.AddScoped(typeof(MediatR.IPipelineBehavior<,>), typeof(Sale.API.Behaviors.TransactionSigningBehavior<,>));
+builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(TransactionSigningBehavior<,>));
 
 // Services
 builder.Services.AddControllers().AddJsonOptions(options =>
@@ -64,13 +68,11 @@ builder.Services.AddSwaggerGen(c =>
         .Where(t => typeof(IStronglyTypedId).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
 
     foreach (var idType in idTypes)
-    {
         c.MapType(idType, () => new OpenApiSchema
         {
             Type = "string",
             Format = "uuid"
         });
-    }
 
     c.AddServer(new OpenApiServer
     {
@@ -151,7 +153,7 @@ builder.Services.AddMassTransit(x =>
     x.AddEntityFrameworkOutbox<SaleDbContext>(o =>
     {
         // Use database transport to read from outbox
-        o.UsePostgres();  // or o.UseSqlite() if using SQLite
+        o.UsePostgres(); // or o.UseSqlite() if using SQLite
 
         // Configure how often to check for outbox messages
         o.QueryDelay = TimeSpan.FromSeconds(3);
@@ -191,16 +193,13 @@ builder.Services.AddMassTransit(x =>
 // Debug: Print all security-api related config and env vars
 Console.WriteLine("[Sale.API] === Security Service Discovery Debug ===");
 Console.WriteLine("[Sale.API] --- Environment Variables with 'security' ---");
-foreach (var ev in Environment.GetEnvironmentVariables().Cast<System.Collections.DictionaryEntry>()
-    .Where(x => x.Key.ToString()!.Contains("security", StringComparison.OrdinalIgnoreCase)))
-{
+foreach (var ev in Environment.GetEnvironmentVariables().Cast<DictionaryEntry>()
+             .Where(x => x.Key.ToString()!.Contains("security", StringComparison.OrdinalIgnoreCase)))
     Console.WriteLine($"[Sale.API] EnvVar: {ev.Key} = {ev.Value}");
-}
 Console.WriteLine("[Sale.API] --- Configuration with 'security' ---");
-foreach (var kv in builder.Configuration.AsEnumerable().Where(x => x.Key.Contains("security", StringComparison.OrdinalIgnoreCase)))
-{
+foreach (var kv in builder.Configuration.AsEnumerable()
+             .Where(x => x.Key.Contains("security", StringComparison.OrdinalIgnoreCase)))
     Console.WriteLine($"[Sale.API] Config: {kv.Key} = {kv.Value}");
-}
 Console.WriteLine("[Sale.API] === End Config Dump ===");
 
 // Try explicit config override first
@@ -208,8 +207,8 @@ var securityGrpcUrl = builder.Configuration["SecurityService:GrpcUrl"];
 
 // Try Aspire-injected service endpoints (various formats)
 var discoveredSecurityUrl = builder.Configuration["services:security-api:http:0"]
-    ?? builder.Configuration["services:security-api:https:0"]
-    ?? builder.Configuration.GetConnectionString("security-api");
+                            ?? builder.Configuration["services:security-api:https:0"]
+                            ?? builder.Configuration.GetConnectionString("security-api");
 
 // Resolve final address
 Uri securityGrpcAddress;
@@ -233,26 +232,23 @@ else
 // Log resolved address at startup for debugging
 Console.WriteLine($"[Sale.API] Security gRPC address FINAL: {securityGrpcAddress}");
 
-builder.Services.AddGrpcClient<Security.API.Grpc.SignatureService.SignatureServiceClient>(o =>
-{
-    o.Address = securityGrpcAddress;
-})
-.ConfigurePrimaryHttpMessageHandler(() =>
-{
-    // For unencrypted HTTP/2 (gRPC over plain HTTP), we need to configure the handler
-    return new SocketsHttpHandler
+builder.Services.AddGrpcClient<SignatureService.SignatureServiceClient>(o => { o.Address = securityGrpcAddress; })
+    .ConfigurePrimaryHttpMessageHandler(() =>
     {
-        KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-        KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-        EnableMultipleHttp2Connections = true
-    };
-})
-.ConfigureChannel(o =>
-{
-    // Force HTTP/2 for unencrypted gRPC connections
-    o.HttpVersion = new Version(2, 0);
-    o.HttpVersionPolicy = HttpVersionPolicy.RequestVersionExact;
-});
+        // For unencrypted HTTP/2 (gRPC over plain HTTP), we need to configure the handler
+        return new SocketsHttpHandler
+        {
+            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+            EnableMultipleHttp2Connections = true
+        };
+    })
+    .ConfigureChannel(o =>
+    {
+        // Force HTTP/2 for unencrypted gRPC connections
+        o.HttpVersion = new Version(2, 0);
+        o.HttpVersionPolicy = HttpVersionPolicy.RequestVersionExact;
+    });
 
 var app = builder.Build();
 
@@ -266,16 +262,16 @@ using (var scope = app.Services.CreateScope())
     var maxRetries = 10;
     var retryDelay = TimeSpan.FromSeconds(2);
 
-    for (int attempt = 1; attempt <= maxRetries; attempt++)
-    {
+    for (var attempt = 1; attempt <= maxRetries; attempt++)
         try
         {
-            logger.LogInformation("Attempting database migration (attempt {Attempt}/{MaxRetries})...", attempt, maxRetries);
+            logger.LogInformation("Attempting database migration (attempt {Attempt}/{MaxRetries})...", attempt,
+                maxRetries);
             await dbContext.Database.MigrateAsync();
             logger.LogInformation("Database migration completed successfully");
             break;
         }
-        catch (Npgsql.PostgresException ex) when (ex.SqlState == "57P03") // Database starting up
+        catch (PostgresException ex) when (ex.SqlState == "57P03") // Database starting up
         {
             if (attempt == maxRetries)
             {
@@ -288,7 +284,6 @@ using (var scope = app.Services.CreateScope())
             await Task.Delay(retryDelay);
             retryDelay = TimeSpan.FromSeconds(retryDelay.TotalSeconds * 1.5); // Exponential backoff
         }
-    }
 }
 
 // Use global exception handling

@@ -138,10 +138,7 @@ public static class Extensions
             // Lightweight HTTP client config for Lambda
             builder.Services.ConfigureHttpClientDefaults(http =>
             {
-                http.ConfigureHttpClient(client =>
-                {
-                    client.Timeout = TimeSpan.FromSeconds(30);
-                });
+                http.ConfigureHttpClient(client => { client.Timeout = TimeSpan.FromSeconds(30); });
             });
         }
 

@@ -1,9 +1,11 @@
 // using Medion.Security.Contracts; // LEGACY: Old proto namespace, removed
+
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Sale.Application.Abstractions;
-using Sale.Infrastructure.Data;
+using Sale.Infrastructure.Persistence;
 using Sale.Infrastructure.Persistence.Repositories;
 
 namespace Sale.Infrastructure;
@@ -28,7 +30,7 @@ public static class DependencyInjection
             // Suppress pending model changes warning in Development
             // TODO: Generate proper migration before production deployment
             options.ConfigureWarnings(warnings =>
-                warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+                warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
         });
 
         // Register repositories
@@ -49,5 +51,3 @@ public static class DependencyInjection
         return services;
     }
 }
-
-

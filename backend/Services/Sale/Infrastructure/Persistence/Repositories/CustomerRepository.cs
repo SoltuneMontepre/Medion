@@ -1,9 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Sale.Application.Abstractions;
 using Sale.Domain.Entities;
-using Sale.Domain.Identifiers;
-using Sale.Infrastructure.Data;
-using Sale.Infrastructure.Persistence;
+using Sale.Domain.Identifiers.Id;
 
 namespace Sale.Infrastructure.Persistence.Repositories;
 
@@ -55,16 +53,14 @@ public class CustomerRepository(SaleDbContext dbContext) : BaseRepository<Custom
         if (lastCustomer != null)
         {
             var lastNumberPart = lastCustomer.Code[prefix.Length..];
-            if (int.TryParse(lastNumberPart, out var lastNumber))
-            {
-                nextNumber = lastNumber + 1;
-            }
+            if (int.TryParse(lastNumberPart, out var lastNumber)) nextNumber = lastNumber + 1;
         }
 
         return $"{prefix}{nextNumber:D6}";
     }
 
-    public async Task<IEnumerable<Customer>> SearchAsync(string term, int limit, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Customer>> SearchAsync(string term, int limit,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(term))
             return Array.Empty<Customer>();

@@ -2,11 +2,10 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Sale.Domain.Entities;
 
-namespace Sale.Infrastructure.Data;
+namespace Sale.Infrastructure.Persistence;
 
 /// <summary>
 ///     Sale Service DbContext with MassTransit Outbox pattern for atomic event persistence.
-///
 ///     ATOMICITY GUARANTEE:
 ///     - Customer entity and AuditLogIntegrationEvent saved in SAME database transaction
 ///     - MassTransit Outbox automatically publishes events to RabbitMQ

@@ -1,10 +1,9 @@
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sale.Application.Common.DTOs;
 using Sale.Application.Features.Order.Commands;
 using Sale.Application.Features.Order.Queries;
-using Sale.Domain.Identifiers;
+using Sale.Domain.Identifiers.Id;
 using ServiceDefaults.ApiResponses;
 
 namespace Sale.API.Controllers;

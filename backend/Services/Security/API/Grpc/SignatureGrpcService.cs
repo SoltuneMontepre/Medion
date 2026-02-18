@@ -1,11 +1,9 @@
 using Grpc.Core;
 using MediatR;
-using Microsoft.Extensions.Logging;
-using Security.API.Grpc;
 using Security.Application.Common.Abstractions;
 using Security.Application.Features.Signature.Commands;
 
-namespace Security.API.Services;
+namespace Security.API.Grpc;
 
 /// <summary>
 ///     gRPC service for transaction signature operations
@@ -15,7 +13,7 @@ public class SignatureGrpcService(
     IMediator mediator,
     IVaultService vaultService,
     ILogger<SignatureGrpcService> logger)
-    : global::Security.API.Grpc.SignatureService.SignatureServiceBase
+    : SignatureService.SignatureServiceBase
 {
     public override async Task<SignResponse> SignTransaction(
         SignRequest request,

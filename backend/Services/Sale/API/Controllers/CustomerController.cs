@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +7,7 @@ using Sale.Application.Common.DTOs;
 using Sale.Application.Features.Customer.Commands;
 using Sale.Application.Features.Customer.Queries;
 using Sale.Domain.Identifiers;
+using Sale.Domain.Identifiers.Id;
 using ServiceDefaults.ApiResponses;
 
 namespace Sale.API.Controllers;
@@ -73,9 +75,10 @@ public class CustomerController(IMediator mediator) : ApiControllerBase
     {
         // Extract the authenticated user ID from the current principal
         var userId = User.FindFirst("sub")?.Value
-                    ?? User.FindFirst("sid")?.Value
-                    ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-                    ?? throw new InvalidOperationException("User ID not found in token claims. Ensure Keycloak is configured to include 'sub' claim.");
+                     ?? User.FindFirst("sid")?.Value
+                     ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                     ?? throw new InvalidOperationException(
+                         "User ID not found in token claims. Ensure Keycloak is configured to include 'sub' claim.");
 
         var command = new CreateCustomerCommand(
             request.FirstName,
@@ -98,7 +101,8 @@ public class CustomerController(IMediator mediator) : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResult<CustomerDto>))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Update(CustomerId id, [FromBody] UpdateCustomerDto request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(CustomerId id, [FromBody] UpdateCustomerDto request,
+        CancellationToken cancellationToken)
     {
         var command = new UpdateCustomerCommand
         {

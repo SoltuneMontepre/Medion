@@ -21,6 +21,10 @@ public interface IBaseRepository<TEntity, TId>
     Task AddAsync(TEntity entity, CancellationToken cancellationToken = default);
     Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
     Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default);
-    Task<bool> AnyAsync(Expression<Func<TEntity, bool>>? predicate = null, CancellationToken cancellationToken = default);
-    Task<long> CountAsync(Expression<Func<TEntity, bool>>? predicate = null, CancellationToken cancellationToken = default);
+
+    Task<bool> AnyAsync(Expression<Func<TEntity, bool>>? predicate = null,
+        CancellationToken cancellationToken = default);
+
+    Task<long> CountAsync(Expression<Func<TEntity, bool>>? predicate = null,
+        CancellationToken cancellationToken = default);
 }

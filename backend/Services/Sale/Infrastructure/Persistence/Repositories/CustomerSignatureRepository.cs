@@ -2,8 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Sale.Application.Abstractions;
 using Sale.Domain.Entities;
 using Sale.Domain.Identifiers;
-using Sale.Infrastructure.Data;
-using Sale.Infrastructure.Persistence;
+using Sale.Domain.Identifiers.Id;
 
 namespace Sale.Infrastructure.Persistence.Repositories;
 

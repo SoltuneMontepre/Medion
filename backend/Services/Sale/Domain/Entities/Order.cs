@@ -1,4 +1,3 @@
-
 using Sale.Domain.Abstractions;
 using Sale.Domain.Identifiers;
 using Sale.Domain.Identifiers.Id;

@@ -7,10 +7,15 @@ public sealed class StronglyTypedIdTypeConverter<TId> : TypeConverter
     where TId : struct, IStronglyTypedId
 {
     public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
-        => sourceType == typeof(string) || sourceType == typeof(Guid) || base.CanConvertFrom(context, sourceType);
+    {
+        return sourceType == typeof(string) || sourceType == typeof(Guid) || base.CanConvertFrom(context, sourceType);
+    }
 
     public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType)
-        => destinationType == typeof(string) || destinationType == typeof(Guid) || base.CanConvertTo(context, destinationType);
+    {
+        return destinationType == typeof(string) || destinationType == typeof(Guid) ||
+               base.CanConvertTo(context, destinationType);
+    }
 
     public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
     {
@@ -37,5 +42,7 @@ public sealed class StronglyTypedIdTypeConverter<TId> : TypeConverter
     }
 
     private static TId CreateId(Guid value)
-        => (TId)Activator.CreateInstance(typeof(TId), value)!;
+    {
+        return (TId)Activator.CreateInstance(typeof(TId), value)!;
+    }
 }

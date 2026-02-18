@@ -1,15 +1,13 @@
 using System.ComponentModel;
 
-namespace Sale.Domain.Identifiers;
+namespace Sale.Domain.Identifiers.Id;
 
 [TypeConverter(typeof(StronglyTypedIdTypeConverter<CustomerId>))]
 public readonly record struct CustomerId(Guid Value) : IStronglyTypedId, IParsable<CustomerId>
 {
-    public static CustomerId New() => new(Guid.CreateVersion7());
     public static CustomerId Empty => new(Guid.Empty);
     public bool IsEmpty => Value == Guid.Empty;
 
-    public static CustomerId Parse(string value) => Parse(value, null);
     public static CustomerId Parse(string s, IFormatProvider? provider)
     {
         if (!TryParse(s, provider, out var result))
@@ -34,5 +32,18 @@ public readonly record struct CustomerId(Guid Value) : IStronglyTypedId, IParsab
         return true;
     }
 
-    public override string ToString() => Value.ToString();
+    public static CustomerId New()
+    {
+        return new CustomerId(Guid.CreateVersion7());
+    }
+
+    public static CustomerId Parse(string value)
+    {
+        return Parse(value, null);
+    }
+
+    public override string ToString()
+    {
+        return Value.ToString();
+    }
 }

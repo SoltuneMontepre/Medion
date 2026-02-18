@@ -2,13 +2,13 @@ using Microsoft.EntityFrameworkCore;
 using Sale.Application.Abstractions;
 using Sale.Domain.Entities;
 using Sale.Domain.Identifiers;
-using Sale.Infrastructure.Data;
 
 namespace Sale.Infrastructure.Persistence.Repositories;
 
 public class UserDigitalSignatureRepository(SaleDbContext dbContext) : IUserDigitalSignatureRepository
 {
-    public async Task<UserDigitalSignature?> GetByUserIdAsync(UserId userId, CancellationToken cancellationToken = default)
+    public async Task<UserDigitalSignature?> GetByUserIdAsync(UserId userId,
+        CancellationToken cancellationToken = default)
     {
         return await dbContext.UserDigitalSignatures
             .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);

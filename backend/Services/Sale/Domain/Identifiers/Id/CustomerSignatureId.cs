@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace Sale.Domain.Identifiers;
+namespace Sale.Domain.Identifiers.Id;
 
 /// <summary>
 ///     Strongly-typed identifier for customer signature records.
@@ -9,11 +9,8 @@ namespace Sale.Domain.Identifiers;
 [TypeConverter(typeof(StronglyTypedIdTypeConverter<CustomerSignatureId>))]
 public readonly record struct CustomerSignatureId(Guid Value) : IStronglyTypedId, IParsable<CustomerSignatureId>
 {
-    public static CustomerSignatureId New() => new(Guid.CreateVersion7());
     public static CustomerSignatureId Empty => new(Guid.Empty);
     public bool IsEmpty => Value == Guid.Empty;
-
-    public static CustomerSignatureId Parse(string value) => Parse(value, null);
 
     public static CustomerSignatureId Parse(string s, IFormatProvider? provider)
     {
@@ -39,5 +36,18 @@ public readonly record struct CustomerSignatureId(Guid Value) : IStronglyTypedId
         return true;
     }
 
-    public override string ToString() => Value.ToString();
+    public static CustomerSignatureId New()
+    {
+        return new CustomerSignatureId(Guid.CreateVersion7());
+    }
+
+    public static CustomerSignatureId Parse(string value)
+    {
+        return Parse(value, null);
+    }
+
+    public override string ToString()
+    {
+        return Value.ToString();
+    }
 }

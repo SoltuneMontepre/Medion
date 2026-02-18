@@ -10,9 +10,9 @@ namespace Sale.Application.Features.Order.Commands;
 
 // TODO: LEGACY PIN-based signing temporarily disabled pending migration to transaction password-based signing via TransactionSigningBehavior
 public class CreateOrderCommandHandler(
-    ICustomerRepository customerRepository,
-    IOrderRepository orderRepository,
-    IProductRepository productRepository)
+        ICustomerRepository customerRepository,
+        IOrderRepository orderRepository,
+        IProductRepository productRepository)
     // IDigitalSignatureService digitalSignatureService) // Commented out - no longer registered
     : IRequestHandler<CreateOrderCommand, ApiResult<OrderDto>>
 {
@@ -23,7 +23,8 @@ public class CreateOrderCommandHandler(
             return ApiResult<OrderDto>.NotFound("Customer not found");
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var existingOrder = await orderRepository.GetTodayOrderForCustomerAsync(request.CustomerId, today, cancellationToken);
+        var existingOrder =
+            await orderRepository.GetTodayOrderForCustomerAsync(request.CustomerId, today, cancellationToken);
         if (existingOrder != null)
         {
             var errors = new Dictionary<string, string[]>
@@ -104,7 +105,8 @@ public class CreateOrderCommandHandler(
         return ApiResult<OrderDto>.Created(dto, "Order created and signed successfully");
     }
 
-    private static string BuildSignaturePayload(Domain.Entities.Order order, IReadOnlyCollection<CreateOrderItemDto> items)
+    private static string BuildSignaturePayload(Domain.Entities.Order order,
+        IReadOnlyCollection<CreateOrderItemDto> items)
     {
         var builder = new StringBuilder();
         builder.Append(order.OrderNumber).Append('|')
@@ -113,9 +115,7 @@ public class CreateOrderCommandHandler(
             .Append(order.SalesStaffId).Append('|');
 
         foreach (var item in items.OrderBy(i => i.ProductId.Value))
-        {
             builder.Append(item.ProductId).Append(':').Append(item.Quantity).Append(';');
-        }
 
         return builder.ToString();
     }
