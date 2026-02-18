@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Sale.API.Middleware;
 using Sale.API.Serialization;
+using Sale.API.Swagger;
 using Sale.Application;
 using Sale.Domain.Identifiers;
 using Sale.Domain.Identifiers.Id;
@@ -29,6 +30,15 @@ if (string.IsNullOrWhiteSpace(authority) || string.IsNullOrWhiteSpace(audience))
 // Add Application and Infrastructure services
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
+
+// Register HttpContextAccessor (required by AuditLoggingBehavior)
+builder.Services.AddHttpContextAccessor();
+
+// Register TransactionContext (scoped, for passing signature through pipeline)
+builder.Services.AddScoped<Sale.Application.Common.Context.TransactionContext>();
+
+// Register TransactionSigningBehavior (needs gRPC client, so in API layer)
+builder.Services.AddScoped(typeof(MediatR.IPipelineBehavior<,>), typeof(Sale.API.Behaviors.TransactionSigningBehavior<,>));
 
 // Services
 builder.Services.AddControllers().AddJsonOptions(options =>
@@ -67,6 +77,9 @@ builder.Services.AddSwaggerGen(c =>
         Url = "/api/sale",
         Description = "Sale API"
     });
+
+    // Add custom header for transaction password (required for sensitive operations)
+    c.OperationFilter<TransactionPasswordHeaderFilter>();
 
     var authorizationUrl = new Uri($"{authority}/protocol/openid-connect/auth");
     var tokenUrl = new Uri($"{authority}/protocol/openid-connect/token");
@@ -126,11 +139,23 @@ builder.Services.AddAuthorization();
 // Add S3 Storage
 builder.Services.AddS3Storage(builder.Configuration);
 
-// MassTransit with RabbitMQ - Configure for event publishing
+// MassTransit with RabbitMQ - Configure for event publishing with Outbox pattern
 builder.Services.AddMassTransit(x =>
 {
     // Publish events in kebab-case by default
     x.SetKebabCaseEndpointNameFormatter();
+
+    // ✅ Configure MassTransit Outbox with EF Core
+    // This ensures events are saved to database before being published to RabbitMQ
+    // If service crashes, events remain in outbox and are published when service restarts
+    x.AddEntityFrameworkOutbox<SaleDbContext>(o =>
+    {
+        // Use database transport to read from outbox
+        o.UsePostgres();  // or o.UseSqlite() if using SQLite
+
+        // Configure how often to check for outbox messages
+        o.QueryDelay = TimeSpan.FromSeconds(3);
+    });
 
     // Configure RabbitMQ as the transport
     x.UsingRabbitMq((context, cfg) =>
@@ -160,28 +185,107 @@ builder.Services.AddMassTransit(x =>
 });
 
 // Register gRPC clients for inter-service communication
+// Debug: Print all security-api related config and env vars
+Console.WriteLine("[Sale.API] === Security Service Discovery Debug ===");
+Console.WriteLine("[Sale.API] --- Environment Variables with 'security' ---");
+foreach (var ev in Environment.GetEnvironmentVariables().Cast<System.Collections.DictionaryEntry>()
+    .Where(x => x.Key.ToString()!.Contains("security", StringComparison.OrdinalIgnoreCase)))
+{
+    Console.WriteLine($"[Sale.API] EnvVar: {ev.Key} = {ev.Value}");
+}
+Console.WriteLine("[Sale.API] --- Configuration with 'security' ---");
+foreach (var kv in builder.Configuration.AsEnumerable().Where(x => x.Key.Contains("security", StringComparison.OrdinalIgnoreCase)))
+{
+    Console.WriteLine($"[Sale.API] Config: {kv.Key} = {kv.Value}");
+}
+Console.WriteLine("[Sale.API] === End Config Dump ===");
+
+// Try explicit config override first
+var securityGrpcUrl = builder.Configuration["SecurityService:GrpcUrl"];
+
+// Try Aspire-injected service endpoints (various formats)
+var discoveredSecurityUrl = builder.Configuration["services:security-api:http:0"]
+    ?? builder.Configuration["services:security-api:https:0"]
+    ?? builder.Configuration.GetConnectionString("security-api");
+
+// Resolve final address
+Uri securityGrpcAddress;
+if (!string.IsNullOrWhiteSpace(securityGrpcUrl))
+{
+    securityGrpcAddress = new Uri(securityGrpcUrl);
+    Console.WriteLine($"[Sale.API] Using explicit config: {securityGrpcAddress}");
+}
+else if (!string.IsNullOrWhiteSpace(discoveredSecurityUrl))
+{
+    securityGrpcAddress = new Uri(discoveredSecurityUrl);
+    Console.WriteLine($"[Sale.API] Using Aspire-discovered URL: {securityGrpcAddress}");
+}
+else
+{
+    // Hardcoded fallback for local development (matches Security.API appsettings.Development.json)
+    securityGrpcAddress = new Uri("http://127.0.0.1:5001");
+    Console.WriteLine($"[Sale.API] Using hardcoded fallback: {securityGrpcAddress}");
+}
+
+// Log resolved address at startup for debugging
+Console.WriteLine($"[Sale.API] Security gRPC address FINAL: {securityGrpcAddress}");
+
 builder.Services.AddGrpcClient<Security.API.Grpc.SignatureService.SignatureServiceClient>(o =>
 {
-    // Aspire service discovery will automatically resolve "security-api" hostname
-    o.Address = new Uri("http://security-api:8080");
+    o.Address = securityGrpcAddress;
 })
-.ConfigureChannel(o =>
+.ConfigurePrimaryHttpMessageHandler(() =>
 {
-    o.HttpHandler = new SocketsHttpHandler
+    // For unencrypted HTTP/2 (gRPC over plain HTTP), we need to configure the handler
+    return new SocketsHttpHandler
     {
         KeepAlivePingDelay = TimeSpan.FromSeconds(60),
         KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-        UseDnsCache = true
+        EnableMultipleHttp2Connections = true
     };
+})
+.ConfigureChannel(o =>
+{
+    // Force HTTP/2 for unencrypted gRPC connections
+    o.HttpVersion = new Version(2, 0);
+    o.HttpVersionPolicy = HttpVersionPolicy.RequestVersionExact;
 });
 
 var app = builder.Build();
 
-// Auto-migrate database on startup
+// Auto-migrate database on startup with retry logic
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<SaleDbContext>();
-    await dbContext.Database.MigrateAsync();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    // Retry database migration up to 10 times with exponential backoff
+    var maxRetries = 10;
+    var retryDelay = TimeSpan.FromSeconds(2);
+
+    for (int attempt = 1; attempt <= maxRetries; attempt++)
+    {
+        try
+        {
+            logger.LogInformation("Attempting database migration (attempt {Attempt}/{MaxRetries})...", attempt, maxRetries);
+            await dbContext.Database.MigrateAsync();
+            logger.LogInformation("Database migration completed successfully");
+            break;
+        }
+        catch (Npgsql.PostgresException ex) when (ex.SqlState == "57P03") // Database starting up
+        {
+            if (attempt == maxRetries)
+            {
+                logger.LogError(ex, "Failed to connect to database after {MaxRetries} attempts", maxRetries);
+                throw;
+            }
+
+            logger.LogWarning("Database is starting up. Waiting {Delay} seconds before retry {Attempt}/{MaxRetries}...",
+                retryDelay.TotalSeconds, attempt, maxRetries);
+            await Task.Delay(retryDelay);
+            retryDelay = TimeSpan.FromSeconds(retryDelay.TotalSeconds * 1.5); // Exponential backoff
+        }
+    }
 }
 
 // Use global exception handling

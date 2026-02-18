@@ -48,12 +48,12 @@ builder.Services.AddMassTransit(x =>
 });
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// builder.Services.AddSwaggerGen(); // Commented out - not using Swagger
 
 var app = builder.Build();
 
-app.UseSwagger();
-app.UseSwaggerUI();
+// app.UseSwagger();            // Commented out - not using Swagger
+// app.UseSwaggerUI();           // Commented out - not using Swagger
 app.UseHttpsRedirection();
 
 // Health checks

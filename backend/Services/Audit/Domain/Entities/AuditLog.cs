@@ -53,6 +53,9 @@ public class AuditLog
   [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
   public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+  // TODO: Move factory method to Application layer mapper - Domain should not reference Application
+  // Violates Clean Architecture: Domain → Application dependency
+  /*
   /// <summary>
   ///     Factory method for creating audit log from integration event
   /// </summary>
@@ -74,4 +77,5 @@ public class AuditLog
       ErrorMessage = @event.ErrorMessage
     };
   }
+  */
 }

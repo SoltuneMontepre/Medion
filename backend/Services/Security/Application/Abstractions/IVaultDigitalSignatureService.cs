@@ -1,5 +1,3 @@
-using Sale.Domain.Identifiers;
-
 namespace Security.Application.Abstractions;
 
 /// <summary>
@@ -43,4 +41,4 @@ public sealed record DigitalSignaturePayload(
 /// <summary>
 ///     Strongly typed Id for customer signatures.
 /// </summary>
-public sealed record CustomerSignatureId(Guid Value) : IStronglyTypedId;
+public sealed record CustomerSignatureId(Guid Value);

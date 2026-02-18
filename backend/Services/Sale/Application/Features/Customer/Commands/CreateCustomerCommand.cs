@@ -10,20 +10,12 @@ namespace Sale.Application.Features.Customer.Commands;
 ///     The CreatedByUserId is captured for non-repudiation, ensuring accountability
 ///     in customer creation operations.
 ///
-///     NOTE: This is a record to enable immutable data passing through MediatR pipeline.
-///     The TransactionSigningBehavior will create a new command instance via "with" pattern
-///     to attach the signature before passing to handler.
+///     NOTE: This record is PURE APPLICATION LOGIC - it does NOT reference HTTP or Infrastructure.
+///     Signature is retrieved from scoped TransactionContext, not from this command.
 /// </summary>
 public record CreateCustomerCommand(
     string FirstName,
     string LastName,
     string Address,
     string PhoneNumber,
-    UserId CreatedByUserId) : IRequest<ApiResult<CustomerDto>>, IRequireDigitalSignature
-{
-    /// <summary>
-    ///     Digital signature hash - attached by TransactionSigningBehavior after gRPC validation.
-    ///     This property enables clean architecture: signature is attached BEFORE reaching the handler.
-    /// </summary>
-    public string? SignatureHash { get; init; }
-}
+    UserId CreatedByUserId) : IRequest<ApiResult<Sale.Application.Common.DTOs.CustomerDto>>, IRequireDigitalSignature;

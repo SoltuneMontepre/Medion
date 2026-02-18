@@ -1,4 +1,7 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
+using Security.Application.Abstractions;
+using Security.Domain;
 using Security.Domain.Identifiers;
 
 namespace Security.Application.Features.Signature.Commands;

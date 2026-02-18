@@ -21,10 +21,11 @@ public static class DependencyInjection
 
         // Register MediatR with Pipeline Behaviors
         // Order matters: Signing -> Validation -> Handler -> Audit Logging
+        // Note: TransactionSigningBehavior moved to Sale.API layer (needs gRPC client types)
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssembly(typeof(CreateCustomerCommand).Assembly);
-            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(TransactionSigningBehavior<,>));
+            // TransactionSigningBehavior registered in Sale.API Program.cs
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(AuditLoggingBehavior<,>));
         });

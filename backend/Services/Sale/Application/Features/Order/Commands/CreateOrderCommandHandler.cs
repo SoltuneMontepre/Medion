@@ -8,11 +8,12 @@ using ServiceDefaults.ApiResponses;
 
 namespace Sale.Application.Features.Order.Commands;
 
+// TODO: LEGACY PIN-based signing temporarily disabled pending migration to transaction password-based signing via TransactionSigningBehavior
 public class CreateOrderCommandHandler(
     ICustomerRepository customerRepository,
     IOrderRepository orderRepository,
-    IProductRepository productRepository,
-    IDigitalSignatureService digitalSignatureService)
+    IProductRepository productRepository)
+    // IDigitalSignatureService digitalSignatureService) // Commented out - no longer registered
     : IRequestHandler<CreateOrderCommand, ApiResult<OrderDto>>
 {
     public async Task<ApiResult<OrderDto>> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
@@ -63,6 +64,9 @@ public class CreateOrderCommandHandler(
             order.AddItem(orderItem);
         }
 
+        // LEGACY: PIN-based signing logic - temporarily commented out
+        // TODO: Replace with TransactionSigningBehavior using transaction passwords
+        /*
         var payload = BuildSignaturePayload(order, request.Items);
         DigitalSignatureResult signature;
         try
@@ -86,6 +90,10 @@ public class CreateOrderCommandHandler(
             return ApiResult<OrderDto>.InternalServerError(signatureException.Message);
         }
         order.MarkSigned(request.SalesStaffId, signature.Signature, signature.PublicKey, DateTime.UtcNow);
+        */
+
+        // Temporary: Skip signing until migration is complete
+        // order.MarkSigned(...) - commented out
         order.CreatedAt = DateTime.UtcNow;
         order.CreatedBy = request.SalesStaffId;
 

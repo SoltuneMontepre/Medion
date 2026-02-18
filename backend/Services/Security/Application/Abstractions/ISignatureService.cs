@@ -1,11 +1,9 @@
-using Sale.Domain.Identifiers;
-
 namespace Security.Application.Abstractions;
 
 public interface ISignatureService
 {
-    Task<bool> CheckPinAsync(UserId userId, string pin, CancellationToken cancellationToken = default);
-    Task<DigitalSignatureResult> VerifyAndSignAsync(UserId userId, string pin, string payload,
+    Task<bool> CheckPinAsync(Guid userId, string pin, CancellationToken cancellationToken = default);
+    Task<DigitalSignatureResult> VerifyAndSignAsync(Guid userId, string pin, string payload,
         CancellationToken cancellationToken = default);
 }
 

@@ -29,8 +29,23 @@ public class AuditLogIntegrationEventConsumer(
           @event.EntityId,
           @event.UserId);
 
-      // Create domain entity from event
-      var auditLog = Domain.Entities.AuditLog.FromIntegrationEvent(@event);
+      // Create domain entity from event (manual mapping - factory method removed from Domain layer)
+      var auditLog = new Domain.Entities.AuditLog
+      {
+        EventId = @event.EventId,
+        OccurredAt = @event.OccurredAt,
+        ServiceName = @event.ServiceName,
+        UserId = @event.UserId,
+        Action = @event.Action,
+        EntityType = @event.EntityType,
+        EntityId = @event.EntityId,
+        Payload = @event.Payload,
+        SignatureHash = @event.SignatureHash,
+        IpAddress = @event.IpAddress,
+        StatusCode = @event.StatusCode,
+        ErrorMessage = @event.ErrorMessage,
+        CreatedAt = DateTime.UtcNow
+      };
 
       // Persist to MongoDB
       await repository.InsertAsync(auditLog, context.CancellationToken);

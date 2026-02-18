@@ -14,13 +14,6 @@
         <PackageReference Include="Npgsql"/>
         <PackageReference Include="MassTransit"/>
         <PackageReference Include="MassTransit.RabbitMQ"/>
-        <PackageReference Include="Grpc.Net.Client"/>
-        <PackageReference Include="Grpc.Net.ClientFactory"/>
-        <PackageReference Include="Google.Protobuf"/>
-        <PackageReference Include="Grpc.Tools" PrivateAssets="All"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Protobuf Include="$(GrpcProtoRoot)/security/signature.proto" GrpcServices="Client"/>
+        <PackageReference Include="MassTransit.EntityFrameworkCore"/>
     </ItemGroup>
 </Project>

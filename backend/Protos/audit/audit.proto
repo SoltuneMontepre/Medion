@@ -6,6 +6,7 @@ option java_package = "com.medion.audit.contracts";
 
 package medion.audit.v1;
 
+// Provides audit log queries and signature verification for compliance.
 service AuditService {
   // Verifies a digital signature against the original payload using Vault Transit Engine.
   // Used by other services or admin dashboards to verify that audit logs haven't been tampered with.

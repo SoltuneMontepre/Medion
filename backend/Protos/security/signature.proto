@@ -4,8 +4,11 @@ package medion.security.v1;
 
 option csharp_namespace = "Security.API.Grpc";
 
+// Provides transaction signing and signature verification for sensitive operations.
 service SignatureService {
+  // Signs a transaction payload using the user's transaction password.
   rpc SignTransaction(SignRequest) returns (SignResponse);
+  // Verifies a previously generated signature against its payload.
   rpc VerifySignature(VerifyRequest) returns (VerifyResponse);
 }
 
@@ -31,5 +34,4 @@ message VerifyRequest {
 message VerifyResponse {
   bool is_valid = 1;
   string error_message = 2;
-}
 }

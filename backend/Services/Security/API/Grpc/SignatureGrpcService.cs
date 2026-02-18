@@ -105,24 +105,3 @@ public class SignatureGrpcService(
         }
     }
 }
-
-        if (string.IsNullOrWhiteSpace(request.Pin))
-            throw new RpcException(new Status(StatusCode.InvalidArgument, "PIN is required."));
-
-        var isValid = await signatureService.CheckPinAsync(userId, request.Pin, context.CancellationToken);
-        return new PinResponse { IsValid = isValid };
-    }
-
-    private static bool TryParseUserId(string value, out UserId userId)
-{
-    userId = UserId.Empty;
-    if (string.IsNullOrWhiteSpace(value))
-        return false;
-
-    if (!Guid.TryParse(value, out var guid))
-        return false;
-
-    userId = new UserId(guid);
-    return true;
-}
-}

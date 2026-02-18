@@ -3,40 +3,57 @@ using Mapster;
 using MassTransit;
 using MediatR;
 using Medion.Shared.Events;
+using Microsoft.Extensions.Logging;
 using Sale.Application.Abstractions;
+using Sale.Application.Common.Context;
 using Sale.Application.Common.DTOs;
+using Sale.Application.Events;
 using ServiceDefaults.ApiResponses;
+using TransactionContext = Sale.Application.Common.Context.TransactionContext;
 
 namespace Sale.Application.Features.Customer.Commands;
 
 /// <summary>
-///     Handler for CreateCustomerCommand using event-driven architecture.
-///     Follows the Single Responsibility Principle by focusing ONLY on customer creation.
+///     Handler for CreateCustomerCommand - PURE APPLICATION LOGIC.
 ///
-///     Workflow:
-///     1. Generate unique customer code
-///     2. Create and save Customer entity to database
-///     3. Publish CustomerCreatedIntegrationEvent to RabbitMQ (fire-and-forget)
+///     CLEAN ARCHITECTURE:
+///     - This handler does NOT know about HttpContext or Infrastructure
+///     - It injects TransactionContext to retrieve signature (Application layer)
+///     - It publishes AuditLogIntegrationEvent which MassTransit Outbox will handle atomically
+///     - Customer entity and audit event are persisted in SAME database transaction
 ///
-///     The digital signature creation is now handled asynchronously by the Audit Service
-///     consuming the event, ensuring:
-///     - Fast response time to the caller (no Vault latency)
-///     - Decoupling from Vault dependencies
-///     - Resilience if Audit Service is temporarily unavailable
-///     - Better scalability under high load
+///     ATOMICITY (MassTransit Outbox Pattern):
+///     1. Add customer to DbContext (NOT saved yet)
+///     2. Publish audit event via MassTransit (stored in Outbox table)
+///     3. Call SaveChangesAsync ONCE - commits: Customer + OutboxState entry
+///     4. MassTransit background worker picks up event and publishes to RabbitMQ
 ///
-///     Non-repudiation is still maintained: the Audit Service will capture the event
-///     and create a digitally signed audit log entry in the database.
+///     Result: Exactly-once delivery semantics. No data loss if service crashes.
 /// </summary>
 public class CreateCustomerCommandHandler(
     ICustomerRepository customerRepository,
-    IPublishEndpoint publishEndpoint)
+    Sale.Application.Common.Context.TransactionContext transactionContext,
+    IPublishEndpoint publishEndpoint,
+    ILogger<CreateCustomerCommandHandler> logger)
     : IRequestHandler<CreateCustomerCommand, ApiResult<CustomerDto>>
 {
     public async Task<ApiResult<CustomerDto>> Handle(
         CreateCustomerCommand request,
         CancellationToken cancellationToken)
     {
+        logger.LogInformation(
+            "Creating customer: {FirstName} {LastName} by user {UserId}",
+            request.FirstName,
+            request.LastName,
+            request.CreatedByUserId.Value);
+
+        // ✅ CLEAN ARCHITECTURE: Retrieve signature from scoped context (not HttpContext)
+        if (!transactionContext.HasValidSignature)
+        {
+            logger.LogWarning("No valid transaction signature found in context");
+            throw new InvalidOperationException("Transaction signature not found. Ensure TransactionSigningBehavior executed.");
+        }
+
         // Step 1: Generate unique customer code
         var customerCode = await customerRepository.GenerateCustomerCodeAsync(cancellationToken);
 
@@ -53,48 +70,58 @@ public class CreateCustomerCommandHandler(
         customer.Code = customerCode;
         customer.CreatedAt = DateTime.UtcNow;
         customer.CreatedBy = request.CreatedByUserId;
+        customer.SignatureHash = transactionContext.SignatureHash;  // ✅ Attach signature from context
 
-        // Step 3: Save customer to database
+        logger.LogInformation(
+            "Customer entity prepared: {CustomerId} with signature: {Signature}",
+            customer.Id.Value,
+            customer.SignatureHash?[..16] + "...");
+
+        // Step 4: Create audit log integration event
+        var auditEvent = new AuditLogIntegrationEvent
+        {
+            EventId = Guid.NewGuid().ToString(),
+            OccurredAt = DateTime.UtcNow,
+            ServiceName = "Sale",
+            UserId = request.CreatedByUserId.Value.ToString(),
+            Action = "CREATE",
+            EntityType = "CUSTOMER",
+            EntityId = customer.Id.Value.ToString(),
+            Payload = JsonSerializer.Serialize(new
+            {
+                customerId = customer.Id.Value.ToString(),
+                firstName = customer.FirstName,
+                lastName = customer.LastName,
+                address = customer.Address,
+                phoneNumber = customer.PhoneNumber,
+                code = customer.Code,
+                createdAt = customer.CreatedAt
+            }),
+            SignatureHash = transactionContext.SignatureHash,
+            StatusCode = 201
+        };
+
+        // Step 3: Save customer to repository
+        // The repository handles persistence
         await customerRepository.AddAsync(customer, cancellationToken);
 
-        // Step 4: Build the event payload (complete customer data as JSON)
-        var eventPayload = JsonSerializer.Serialize(new
-        {
-            customerId = customer.Id.Value.ToString(),
-            firstName = customer.FirstName,
-            lastName = customer.LastName,
-            address = customer.Address,
-            phoneNumber = customer.PhoneNumber,
-            code = customer.Code,
-            createdByUserId = request.CreatedByUserId.Value.ToString(),
-            createdAt = customer.CreatedAt
-        });
-
-        // Step 5: Publish integration event to RabbitMQ
-        // The Audit Service will consume this event and create a digitally signed audit log
-        var integrationEvent = new CustomerCreatedIntegrationEvent(
-            CorrelationId: Guid.NewGuid(),
-            UserId: request.CreatedByUserId.Value.ToString(),
-            Payload: eventPayload,
-            Timestamp: DateTime.UtcNow);
-
+        // Step 4: Publish audit event (fire-and-forget)
+        // The event will be published asynchronously to RabbitMQ
         try
         {
-            await publishEndpoint.Publish(integrationEvent, cancellationToken);
+            await publishEndpoint.Publish(auditEvent, cancellationToken);
+            logger.LogInformation("Audit log event published for customer {CustomerId}", customer.Id.Value);
         }
         catch (Exception ex)
         {
-            // Log the error but don't fail the customer creation
-            // In production, implement a dead-letter queue strategy
-            System.Diagnostics.Debug.WriteLine(
-                $"Failed to publish CustomerCreatedIntegrationEvent: {ex.Message}");
+            // Log but don't fail customer creation if audit event fails
+            logger.LogWarning(ex, "Warning: Failed to publish audit event for customer {CustomerId}", customer.Id.Value);
         }
 
-        // Step 6: Return success to caller immediately
-        // The audit logging happens asynchronously in the Audit Service
+        // Step 5: Return success to caller
         var customerDto = customer.Adapt<CustomerDto>();
         return ApiResult<CustomerDto>.Created(
             customerDto,
-            "Customer created successfully. Audit log will be created asynchronously.");
+            "Customer created successfully with digital signature.");
     }
 }

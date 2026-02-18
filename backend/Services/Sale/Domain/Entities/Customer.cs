@@ -20,4 +20,9 @@ public sealed class Customer : BaseEntity<CustomerId>
     public string LastName { get; set; } = null!;
     public string Address { get; set; } = null!;
     public string PhoneNumber { get; set; } = null!;
+
+    /// <summary>
+    /// Digital signature hash for non-repudiation
+    /// </summary>
+    public string? SignatureHash { get; set; }
 }

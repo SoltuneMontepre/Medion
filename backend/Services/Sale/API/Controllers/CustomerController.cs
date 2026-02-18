@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sale.API.Attributes;
 using Sale.Application.Common.DTOs;
 using Sale.Application.Features.Customer.Commands;
 using Sale.Application.Features.Customer.Queries;
@@ -64,6 +65,7 @@ public class CustomerController(IMediator mediator) : ApiControllerBase
     /// <summary>
     ///     Create a new customer
     /// </summary>
+    [RequiresTransactionPassword]
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ApiResult<CustomerDto>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -75,7 +77,12 @@ public class CustomerController(IMediator mediator) : ApiControllerBase
                     ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
                     ?? throw new InvalidOperationException("User ID not found in token claims. Ensure Keycloak is configured to include 'sub' claim.");
 
-        var command = new CreateCustomerCommand(request, new UserId(Guid.Parse(userId)));
+        var command = new CreateCustomerCommand(
+            request.FirstName,
+            request.LastName,
+            request.Address,
+            request.PhoneNumber,
+            new UserId(Guid.Parse(userId)));
         var result = await mediator.Send(command, cancellationToken);
 
         if (result.IsSuccess && result.Data != null)

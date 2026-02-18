@@ -4,8 +4,11 @@ option csharp_namespace = "Services.Sale.Contracts";
 
 package services.sale.contracts;
 
+// Handles order operations for the Sale service.
 service Sale {
+  // Retrieves an order by ID.
   rpc GetOrder (GetOrderRequest) returns (OrderReply);
+  // Creates a new order for a customer.
   rpc CreateOrder (CreateOrderRequest) returns (OrderReply);
 }
 

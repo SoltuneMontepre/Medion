@@ -1,29 +1,32 @@
+using System.Security.Claims;
 using System.Text.Json;
 using Grpc.Core;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Sale.Application.Common.Attributes;
-using Sale.Application.Features.Customer.Commands;
+using Sale.Application.Common.Context;
 using Security.API.Grpc;
+using TransactionContext = Sale.Application.Common.Context.TransactionContext;
 
-namespace Sale.Application.Common.Behaviors;
+namespace Sale.API.Behaviors;
 
 /// <summary>
 ///     MediatR Pipeline Behavior that intercepts commands requiring digital signature.
-///     
-///     ARCHITECTURE NOTE: This behavior resides in Application layer and accesses HttpContext.
-///     This is acceptable because:
-///     1. Behaviors are infrastructure-aware by design (they sit at layer boundary)
-///     2. The signature is attached to the COMMAND object (immutable record)
-///     3. The HANDLER only reads from command properties - it never touches HttpContext
-///     
-///     This maintains clean architecture: Application → Domain dependency only.
-///     HTTP concerns end with the command construction.
+///
+///     CLEAN ARCHITECTURE DESIGN:
+///     1. This behavior sits at the layer boundary (HTTP concerns)
+///     2. Reads HttpContext to extract password (infrastructure concern)
+///     3. Calls gRPC to validate and sign
+///     4. Stores signature in Application-level TransactionContext (scoped)
+///     5. Handler injects TransactionContext - NOT HttpContext
+///
+///     Result: Application → Domain dependency only. Handler is pure application logic.
 /// </summary>
 public class TransactionSigningBehavior<TRequest, TResponse>(
     IHttpContextAccessor httpContextAccessor,
     SignatureService.SignatureServiceClient grpcClient,
+    TransactionContext transactionContext,
     ILogger<TransactionSigningBehavior<TRequest, TResponse>> logger)
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>, IRequireDigitalSignature
@@ -54,7 +57,8 @@ public class TransactionSigningBehavior<TRequest, TResponse>(
 
         // Extract user ID from claims
         var userIdClaim = httpContext.User.FindFirst("sub")
-                          ?? httpContext.User.FindFirst("NameIdentifier")
+                  ?? httpContext.User.FindFirst("sid")
+                  ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier)
                           ?? throw new UnauthorizedAccessException("User ID claim not found");
 
         var userId = userIdClaim.Value;
@@ -100,11 +104,17 @@ public class TransactionSigningBehavior<TRequest, TResponse>(
                 "Transaction successfully signed. Signature hash: {Hash}",
                 grpcResponse.SignatureHash[..16] + "...");
 
-            // ✅ CLEAN ARCHITECTURE: Attach signature to command via immutable record "with" pattern
-            // The created command is then passed to next() - the handler only reads from properties
-            var signedCommand = (dynamic)request with { SignatureHash = grpcResponse.SignatureHash };
+            // ✅ CLEAN ARCHITECTURE: Store signature in Application-level scoped context
+            // Handler will inject TransactionContext to retrieve it - NOT HttpContext
+            transactionContext.SignatureHash = grpcResponse.SignatureHash;
+            transactionContext.TimestampUtc = grpcResponse.TimestampUtc;
+            transactionContext.OperationType = operationType;
+            transactionContext.UserId = userId;
 
-            // Continue to next handler with the signature-bearing command
+            logger.LogInformation(
+                "Signature stored in TransactionContext. Ready for handler to consume.");
+
+            // Continue to next handler - signature is available via scoped context
             return await next();
         }
         catch (RpcException rpcEx)
@@ -119,44 +129,4 @@ public class TransactionSigningBehavior<TRequest, TResponse>(
         }
     }
 }
-      var grpcResponse = await grpcClient.SignTransactionAsync(grpcRequest, cancellationToken: cancellationToken);
 
-      if (!grpcResponse.Success)
-      {
-        logger.LogWarning(
-            "Transaction signing failed: {ErrorMessage}",
-            grpcResponse.ErrorMessage);
-        throw new UnauthorizedAccessException(
-            $"Transaction validation failed: {grpcResponse.ErrorMessage}");
-      }
-
-      logger.LogInformation(
-          "Transaction successfully signed. Signature hash: {Hash}",
-          grpcResponse.SignatureHash[..16] + "...");
-
-      // Attach signature to HttpContext for downstream handlers
-      var signatureDto = new TransactionSignatureDto
-      {
-        SignatureHash = grpcResponse.SignatureHash,
-        TimestampUtc = grpcResponse.TimestampUtc,
-        OperationType = operationType,
-        UserId = userId
-      };
-
-      httpContext.Items[SignatureContextKey] = signatureDto;
-
-      // Continue to next handler
-      return await next();
-    }
-    catch (RpcException rpcEx)
-    {
-      logger.LogError(
-          rpcEx,
-          "gRPC error during transaction signing. Status: {Status}",
-          rpcEx.Status);
-      throw new InvalidOperationException(
-          $"Security service unavailable: {rpcEx.Status.Detail}",
-          rpcEx);
-    }
-  }
-}
