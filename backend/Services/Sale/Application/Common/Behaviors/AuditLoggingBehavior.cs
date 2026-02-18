@@ -1,10 +1,10 @@
 using System.Text.Json;
 using MassTransit;
 using MediatR;
+using Medion.Shared.Events;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Sale.Application.Common.Context;
-using Sale.Application.Events;
 using TransactionContext = Sale.Application.Common.Context.TransactionContext;
 
 namespace Sale.Application.Common.Behaviors;

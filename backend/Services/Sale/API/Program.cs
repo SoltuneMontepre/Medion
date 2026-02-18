@@ -180,6 +180,9 @@ builder.Services.AddMassTransit(x =>
             });
         }
 
+        // Align exchange name with Audit.API consumer
+        cfg.Message<AuditLogIntegrationEvent>(x => x.SetEntityName("audit-log-events"));
+
         cfg.ConfigureEndpoints(context);
     });
 });

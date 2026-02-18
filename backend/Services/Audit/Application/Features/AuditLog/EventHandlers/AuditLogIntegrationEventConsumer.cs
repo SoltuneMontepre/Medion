@@ -1,7 +1,7 @@
-using Audit.Application.Common.Events;
 using Audit.Application.Common.Repositories;
 using Audit.Domain.Entities;
 using MassTransit;
+using Medion.Shared.Events;
 using Microsoft.Extensions.Logging;
 
 namespace Audit.Application.Features.AuditLog.EventHandlers;

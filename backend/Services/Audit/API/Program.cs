@@ -37,7 +37,7 @@ builder.Services.AddMassTransit(x =>
         cfg.ConfigureEndpoints(context);
 
         // Configure exchange and queue for audit events
-        cfg.Message<Audit.Application.Common.Events.AuditLogIntegrationEvent>(
+        cfg.Message<Medion.Shared.Events.AuditLogIntegrationEvent>(
             x => x.SetEntityName("audit-log-events"));
 
         cfg.ReceiveEndpoint("audit-log-consumer", e =>

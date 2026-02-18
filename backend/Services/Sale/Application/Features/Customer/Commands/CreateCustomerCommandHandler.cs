@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using Sale.Application.Abstractions;
 using Sale.Application.Common.Context;
 using Sale.Application.Common.DTOs;
-using Sale.Application.Events;
 using ServiceDefaults.ApiResponses;
 using TransactionContext = Sale.Application.Common.Context.TransactionContext;
 
