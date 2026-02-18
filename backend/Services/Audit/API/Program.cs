@@ -1,96 +1,65 @@
-using Audit.API.Grpc;
-using Audit.Application;
-using Audit.Infrastructure;
-using Audit.Infrastructure.Data;
+using Audit.Application.Common.Repositories;
+using Audit.Application.Features.AuditLog.EventHandlers;
+using Audit.Infrastructure.Persistence.Repositories;
 using MassTransit;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using MongoDB.Driver;
 using ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-// Add gRPC services
-builder.Services.AddGrpc(o => { o.EnableDetailedErrors = true; }).AddJsonTranscoding();
-builder.Services.AddGrpcReflection();
-builder.Services.AddHealthChecks();
+// MongoDB configuration - Aspire provides "mongodb" connection string
+var mongoConnectionString = builder.Configuration.GetConnectionString("mongodb")
+                            ?? throw new InvalidOperationException("MongoDB connection string not found");
 
-// Add application layer services
-builder.Services.AddAuditApplicationServices();
+var mongoUrl = MongoUrl.Create(mongoConnectionString);
+var mongoClient = new MongoClient(mongoUrl);
+var database = mongoClient.GetDatabase("medion_audit");
 
-// Add infrastructure services (database, repositories, Vault client)
-builder.Services.AddAuditInfrastructureServices(builder.Configuration);
+builder.Services.AddSingleton<IMongoDatabase>(database);
+builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 
-// Configure MassTransit with RabbitMQ for event consumption
+// MassTransit with RabbitMQ
 builder.Services.AddMassTransit(x =>
 {
-    // Register the consumer for CustomerCreatedIntegrationEvent
-    x.AddConsumer<Audit.Application.IntegrationEvents.Consumers.CustomerCreatedAuditConsumer>();
+    x.AddConsumer<AuditLogIntegrationEventConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        // Get connection string from configuration
-        var configuration = context.GetService<IConfiguration>();
-        var connectionString = configuration?.GetConnectionString("rabbitmq");
+        var connectionString = builder.Configuration.GetConnectionString("rabbitmq")
+                               ?? "amqp://guest:guest@localhost:5672";
 
-        if (!string.IsNullOrEmpty(connectionString))
-        {
-            var uri = new Uri(connectionString);
-            cfg.Host(uri);
-        }
-        else
-        {
-            // Local development fallback
-            cfg.Host("localhost", h =>
-            {
-              h.Username("guest");
-              h.Password("guest");
-          });
-        }
-
-        // Configure the customer-created audit consumer
-        cfg.ReceiveEndpoint("audit-customer-created", e =>
-        {
-            // Bind consumer to this endpoint
-            e.ConfigureConsumer<Audit.Application.IntegrationEvents.Consumers.CustomerCreatedAuditConsumer>(context);
-
-            // Retry policy: retry up to 5 times with incremental backoff
-            e.UseRetry(r => r.Incremental(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1)));
-
-            // Concurrency: process up to 10 messages in parallel
-            e.PrefetchCount = 10;
-
-            // Instance ID for distributed tracing
-            e.InstanceId = "audit-01";
-        });
+        var uri = new Uri(connectionString);
+        cfg.Host(uri);
 
         cfg.ConfigureEndpoints(context);
+
+        // Configure exchange and queue for audit events
+        cfg.Message<Audit.Application.Common.Events.AuditLogIntegrationEvent>(
+            x => x.SetEntityName("audit-log-events"));
+
+        cfg.ReceiveEndpoint("audit-log-consumer", e =>
+        {
+            e.ConfigureConsumer<AuditLogIntegrationEventConsumer>(context);
+        });
     });
 });
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
 
-// Database initialization
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<AuditDbContext>();
-    var hasMigrations = dbContext.Database.GetMigrations().Any();
-    if (hasMigrations)
-        await dbContext.Database.MigrateAsync();
-    else
-        await dbContext.Database.EnsureCreatedAsync();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
+app.UseHttpsRedirection();
 
-app.UseDefaultExceptionHandler();
+// Health checks
 app.MapDefaultEndpoints();
 
-// Map gRPC services
-app.MapGrpcService<AuditGrpcService>();
-app.MapGrpcReflectionService();
-
-// Health check and info endpoints
-app.MapGet("/", () => new { name = "Audit.API", grpc = "/medion.audit.v1.AuditService" });
-app.MapHealthChecks("/health");
+// Simple health endpoint
+app.MapGet("/", () => new { service = "Audit.API", version = "1.0" });
 
 await app.RunAsync();
-

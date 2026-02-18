@@ -19,11 +19,14 @@ public static class DependencyInjection
         // Register FluentValidation
         services.AddValidatorsFromAssembly(typeof(CreateCustomerCommand).Assembly);
 
-        // Register MediatR with Validation Pipeline Behavior
+        // Register MediatR with Pipeline Behaviors
+        // Order matters: Signing -> Validation -> Handler -> Audit Logging
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssembly(typeof(CreateCustomerCommand).Assembly);
+            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(TransactionSigningBehavior<,>));
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(AuditLoggingBehavior<,>));
         });
 
         // Register Mapster

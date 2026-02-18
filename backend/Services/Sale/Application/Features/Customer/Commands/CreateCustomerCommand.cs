@@ -1,5 +1,5 @@
 using MediatR;
-using Sale.Application.Common.DTOs;
+using Sale.Application.Common.Attributes;
 using Sale.Domain.Identifiers;
 using ServiceDefaults.ApiResponses;
 
@@ -9,29 +9,21 @@ namespace Sale.Application.Features.Customer.Commands;
 ///     Command to create a new customer with digital signature support.
 ///     The CreatedByUserId is captured for non-repudiation, ensuring accountability
 ///     in customer creation operations.
+///     
+///     NOTE: This is a record to enable immutable data passing through MediatR pipeline.
+///     The TransactionSigningBehavior will create a new command instance via "with" pattern
+///     to attach the signature before passing to handler.
 /// </summary>
-public class CreateCustomerCommand : IRequest<ApiResult<CustomerDto>>
+public record CreateCustomerCommand(
+    string FirstName,
+    string LastName,
+    string Address,
+    string PhoneNumber,
+    UserId CreatedByUserId) : IRequest<ApiResult<CustomerDto>>, IRequireDigitalSignature
 {
-    public CreateCustomerCommand()
-    {
-    }
-
-    public CreateCustomerCommand(CreateCustomerDto dto, UserId createdByUserId)
-    {
-        FirstName = dto.FirstName;
-        LastName = dto.LastName;
-        Address = dto.Address;
-        PhoneNumber = dto.PhoneNumber;
-        CreatedByUserId = createdByUserId;
-    }
-
-    public string FirstName { get; set; } = null!;
-    public string LastName { get; set; } = null!;
-    public string Address { get; set; } = null!;
-    public string PhoneNumber { get; set; } = null!;
-
     /// <summary>
-    ///     The ID of the user creating the customer (for non-repudiation).
+    ///     Digital signature hash - attached by TransactionSigningBehavior after gRPC validation.
+    ///     This property enables clean architecture: signature is attached BEFORE reaching the handler.
     /// </summary>
-    public UserId CreatedByUserId { get; set; }
+    public string? SignatureHash { get; init; }
 }

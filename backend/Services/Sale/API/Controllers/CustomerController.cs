@@ -71,8 +71,9 @@ public class CustomerController(IMediator mediator) : ApiControllerBase
     {
         // Extract the authenticated user ID from the current principal
         var userId = User.FindFirst("sub")?.Value
+                    ?? User.FindFirst("sid")?.Value
                     ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-                    ?? throw new InvalidOperationException("User ID not found in claims.");
+                    ?? throw new InvalidOperationException("User ID not found in token claims. Ensure Keycloak is configured to include 'sub' claim.");
 
         var command = new CreateCustomerCommand(request, new UserId(Guid.Parse(userId)));
         var result = await mediator.Send(command, cancellationToken);

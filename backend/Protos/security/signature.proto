@@ -2,30 +2,34 @@ syntax = "proto3";
 
 package medion.security.v1;
 
-option csharp_namespace = "Medion.Security.Contracts";
+option csharp_namespace = "Security.API.Grpc";
 
 service SignatureService {
-    rpc VerifyAndSign (SignRequest) returns (SignResponse);
-    rpc CheckPin (PinRequest) returns (PinResponse);
+  rpc SignTransaction(SignRequest) returns (SignResponse);
+  rpc VerifySignature(VerifyRequest) returns (VerifyResponse);
 }
 
 message SignRequest {
-    string user_id = 1;
-    string payload = 2;
-    string pin = 3;
+  string payload = 1; // JSON payload to sign
+  string transaction_password = 2;
+  string user_id = 3;
+  string operation_type = 4; // e.g., "CREATE_CUSTOMER"
 }
 
 message SignResponse {
-    bytes signature = 1;
-    string public_key = 2;
-    bool is_success = 3;
+  bool success = 1;
+  string signature_hash = 2; // SHA256 hash with timestamp
+  string error_message = 3;
+  int64 timestamp_utc = 4;
 }
 
-message PinRequest {
-    string user_id = 1;
-    string pin = 2;
+message VerifyRequest {
+  string payload = 1;
+  string signature_hash = 2;
 }
 
-message PinResponse {
-    bool is_valid = 1;
+message VerifyResponse {
+  bool is_valid = 1;
+  string error_message = 2;
+}
 }

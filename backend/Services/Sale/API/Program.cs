@@ -159,6 +159,22 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
+// Register gRPC clients for inter-service communication
+builder.Services.AddGrpcClient<Security.API.Grpc.SignatureService.SignatureServiceClient>(o =>
+{
+    // Aspire service discovery will automatically resolve "security-api" hostname
+    o.Address = new Uri("http://security-api:8080");
+})
+.ConfigureChannel(o =>
+{
+    o.HttpHandler = new SocketsHttpHandler
+    {
+        KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+        KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+        UseDnsCache = true
+    };
+});
+
 var app = builder.Build();
 
 // Auto-migrate database on startup
