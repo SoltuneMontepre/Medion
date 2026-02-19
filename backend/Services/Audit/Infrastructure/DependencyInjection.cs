@@ -24,7 +24,7 @@ public static class DependencyInjection
         IConfiguration config)
     {
         // Database configuration
-        var connectionString = config.GetConnectionString("postgres-audit")
+        var connectionString = config.GetConnectionString("postgres_audit")
                                ?? "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=audit";
 
         services.AddDbContext<AuditDbContext>(options =>

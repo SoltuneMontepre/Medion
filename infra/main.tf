@@ -69,9 +69,9 @@ module "approval_service" {
 
 
   environment_variables = {
-    ASPNETCORE_ENVIRONMENT      = "Production"
-    CONNECTIONSTRINGS__POSTGRES = local.approval_db_url
-    CONNECTIONSTRINGS__RABBITMQ = local.rabbitmq_connection_string
+    ASPNETCORE_ENVIRONMENT               = "Production"
+    CONNECTIONSTRINGS__POSTGRES_APPROVAL = local.approval_db_url
+    CONNECTIONSTRINGS__RABBITMQ          = local.rabbitmq_connection_string
   }
 }
 
@@ -86,10 +86,10 @@ module "sale_service" {
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
 
   environment_variables = {
-    ASPNETCORE_ENVIRONMENT      = "Production"
-    CONNECTIONSTRINGS__POSTGRES = local.sale_db_url
-    CONNECTIONSTRINGS__RABBITMQ = local.rabbitmq_connection_string
-    R2_ACCOUNT_ID               = local.r2_account_id
+    ASPNETCORE_ENVIRONMENT           = "Production"
+    CONNECTIONSTRINGS__POSTGRES_SALE = local.sale_db_url
+    CONNECTIONSTRINGS__RABBITMQ      = local.rabbitmq_connection_string
+    R2_ACCOUNT_ID                    = local.r2_account_id
     R2_ACCESS_KEY               = local.r2_access_key
     R2_SECRET_KEY               = local.r2_secret_key
     R2_BUCKET_NAME              = local.r2_bucket_name
@@ -109,9 +109,9 @@ module "payroll_service" {
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
 
   environment_variables = {
-    ASPNETCORE_ENVIRONMENT      = "Production"
-    CONNECTIONSTRINGS__POSTGRES = local.payroll_db_url
-    CONNECTIONSTRINGS__RABBITMQ = local.rabbitmq_connection_string
+    ASPNETCORE_ENVIRONMENT              = "Production"
+    CONNECTIONSTRINGS__POSTGRES_PAYROLL = local.payroll_db_url
+    CONNECTIONSTRINGS__RABBITMQ         = local.rabbitmq_connection_string
   }
 }
 
@@ -126,9 +126,9 @@ module "inventory_service" {
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
 
   environment_variables = {
-    ASPNETCORE_ENVIRONMENT      = "Production"
-    CONNECTIONSTRINGS__POSTGRES = local.inventory_db_url
-    CONNECTIONSTRINGS__RABBITMQ = local.rabbitmq_connection_string
+    ASPNETCORE_ENVIRONMENT                = "Production"
+    CONNECTIONSTRINGS__POSTGRES_INVENTORY = local.inventory_db_url
+    CONNECTIONSTRINGS__RABBITMQ           = local.rabbitmq_connection_string
   }
 }
 
@@ -142,9 +142,9 @@ module "manufacture_service" {
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
   environment_variables = {
-    ASPNETCORE_ENVIRONMENT      = "Production"
-    CONNECTIONSTRINGS__POSTGRES = local.manufacture_db_url
-    CONNECTIONSTRINGS__RABBITMQ = local.rabbitmq_connection_string
+    ASPNETCORE_ENVIRONMENT                  = "Production"
+    CONNECTIONSTRINGS__POSTGRES_MANUFACTURE = local.manufacture_db_url
+    CONNECTIONSTRINGS__RABBITMQ             = local.rabbitmq_connection_string
   }
 }
 
@@ -160,9 +160,15 @@ module "security_service" {
 
 
   environment_variables = {
+<<<<<<< HEAD
     ASPNETCORE_ENVIRONMENT         = "Production"
     CONNECTIONSTRINGS__POSTGRES    = local.security_db_url
     JwtSettings__Secret            = local.jwt_secret
+=======
+    ASPNETCORE_ENVIRONMENT               = "Production"
+    CONNECTIONSTRINGS__POSTGRES_SECURITY = local.security_db_url
+    JwtSettings__Secret                  = local.jwt_secret
+>>>>>>> 1f54c3a (feat: add Audit and Security services with PostgreSQL and RabbitMQ configurations)
     JwtSettings__Issuer            = local.jwt_issuer
     JwtSettings__Audience          = local.jwt_audience
     JwtSettings__ExpirationMinutes = local.jwt_expiration_minutes

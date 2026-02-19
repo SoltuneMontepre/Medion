@@ -19,7 +19,11 @@ locals {
   inventory_db_url   = data.doppler_secrets.this.map.INVENTORY_DB_URL
   manufacture_db_url = data.doppler_secrets.this.map.MANUFACTURE_DB_URL
   sale_db_url        = data.doppler_secrets.this.map.SALE_DB_URL
+<<<<<<< HEAD
   security_db_url    = data.doppler_secrets.this.map.IDENTITY_DB_URL  # TODO: Rename to SECURITY_DB_URL in Doppler
+=======
+  security_db_url    = data.doppler_secrets.this.map.IDENTITY_DB_URL
+>>>>>>> 1f54c3a (feat: add Audit and Security services with PostgreSQL and RabbitMQ configurations)
 
   ## Message Queue
   rabbitmq_connection_string = data.doppler_secrets.this.map.RABBITMQ_URL

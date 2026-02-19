@@ -19,7 +19,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration config)
     {
-        var connectionString = config.GetConnectionString("postgres-sale")
+        var connectionString = config.GetConnectionString("postgres_sale")
                                ?? "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=sale";
 
         services.AddDbContext<SaleDbContext>(options =>
