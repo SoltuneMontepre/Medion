@@ -32,7 +32,9 @@ jobs:
           sparse-checkout: |
             backend/ServiceDefaults
             backend/Services/Security
+            backend/Services/Sale/Domain
             backend/Services/SharedStorage
+            backend/Shared
             backend/Protos
             backend/Directory.Build.props
             backend/Directory.Packages.props
