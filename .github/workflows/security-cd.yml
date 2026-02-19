@@ -1,0 +1,69 @@
+name: security-cd
+
+permissions:
+  id-token: write
+  contents: read
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/Services/Security/**.cs"
+      - "backend/ServiceDefaults/**.cs"
+      - "backend/Services/SharedStorage/**.cs"
+      - ".github/workflows/security-cd.yml"
+      - "backend/Services/Security/**.csproj"
+      - "backend/ServiceDefaults/**.csproj"
+      - "backend/Services/SharedStorage/**.csproj"
+      - "backend/Services/Security/API/Dockerfile"
+      - "backend/Protos/security/**.proto"
+  workflow_dispatch:
+
+jobs:
+  security-cd:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            backend/ServiceDefaults
+            backend/Services/Security
+            backend/Services/Sale/Domain
+            backend/Services/SharedStorage
+            backend/Shared
+            backend/Protos
+            backend/Directory.Build.props
+            backend/Directory.Packages.props
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v5.1.1
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ECR_ROLE_ARN }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push docker image to Amazon ECR
+        working-directory: backend
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ secrets.PROJECT_NAME }}-security-api
+        run: |
+          docker build --provenance=false -f Services/Security/API/Dockerfile -t $REGISTRY/$REPOSITORY:latest .
+          docker push $REGISTRY/$REPOSITORY:latest
+
+      - name: Update Lambda Function
+        env:
+          FUNCTION_NAME: ${{ secrets.PROJECT_NAME }}-security
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ secrets.PROJECT_NAME }}-security-api
+        run: |
+          aws lambda update-function-code \
+            --function-name $FUNCTION_NAME \
+            --image-uri $REGISTRY/$REPOSITORY:latest

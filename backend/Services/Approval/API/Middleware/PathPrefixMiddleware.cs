@@ -10,10 +10,7 @@ public class PathPrefixMiddleware(RequestDelegate next, string prefix)
         {
             context.Request.Path = path[prefix.Length..];
 
-            if (string.IsNullOrEmpty(context.Request.Path.Value))
-            {
-                context.Request.Path = "/";
-            }
+            if (string.IsNullOrEmpty(context.Request.Path.Value)) context.Request.Path = "/";
         }
 
         await next(context);

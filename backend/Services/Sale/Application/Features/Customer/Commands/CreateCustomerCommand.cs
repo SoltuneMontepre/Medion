@@ -1,28 +1,21 @@
 using MediatR;
+using Sale.Application.Common.Attributes;
 using Sale.Application.Common.DTOs;
+using Sale.Domain.Identifiers;
 using ServiceDefaults.ApiResponses;
 
 namespace Sale.Application.Features.Customer.Commands;
 
 /// <summary>
-///     Command to create a new customer
+///     Command to create a new customer with digital signature support.
+///     The CreatedByUserId is captured for non-repudiation, ensuring accountability
+///     in customer creation operations.
+///     NOTE: This record is PURE APPLICATION LOGIC - it does NOT reference HTTP or Infrastructure.
+///     Signature is retrieved from scoped TransactionContext, not from this command.
 /// </summary>
-public class CreateCustomerCommand : IRequest<ApiResult<CustomerDto>>
-{
-    public CreateCustomerCommand()
-    {
-    }
-
-    public CreateCustomerCommand(CreateCustomerDto dto)
-    {
-        FirstName = dto.FirstName;
-        LastName = dto.LastName;
-        Address = dto.Address;
-        PhoneNumber = dto.PhoneNumber;
-    }
-
-    public string FirstName { get; set; } = null!;
-    public string LastName { get; set; } = null!;
-    public string Address { get; set; } = null!;
-    public string PhoneNumber { get; set; } = null!;
-}
+public record CreateCustomerCommand(
+    string FirstName,
+    string LastName,
+    string Address,
+    string PhoneNumber,
+    UserId CreatedByUserId) : IRequest<ApiResult<CustomerDto>>, IRequireDigitalSignature;

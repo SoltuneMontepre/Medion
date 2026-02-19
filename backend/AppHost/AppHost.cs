@@ -23,11 +23,23 @@ var approvalPostgres = postgres.AddDatabase("postgres-approval");
 var payrollPostgres = postgres.AddDatabase("postgres-payroll");
 var inventoryPostgres = postgres.AddDatabase("postgres-inventory");
 var manufacturePostgres = postgres.AddDatabase("postgres-manufacture");
+var securityPostgres = postgres.AddDatabase("postgres-security");
+
+// MongoDB - For Audit Logs
+var mongodb = builder.AddMongoDB("mongodb")
+    .WithImageTag("6.0")
+    .WithDataVolume("medion-mongo-data-v4")
+    .WithArgs("--wiredTigerCacheSizeGB", "0.25");
 
 // Services
+var securityApi = builder.AddProject<Security_API>("security-api")
+    .WithReference(securityPostgres)
+    .WithReference(rabbitmq);
+
 var saleApi = builder.AddProject<Sale_API>("sale-api")
     .WithReference(salePostgres)
-    .WithReference(rabbitmq);
+    .WithReference(rabbitmq)
+    .WithReference(securityApi); // gRPC dependency for signing
 
 var approvalApi = builder.AddProject<Approval_API>("approval-api")
     .WithReference(approvalPostgres)
@@ -45,13 +57,20 @@ var manufactureApi = builder.AddProject<Manufacture_API>("manufacture-api")
     .WithReference(manufacturePostgres)
     .WithReference(rabbitmq);
 
+// Audit API - consumes events and writes to MongoDB
+var auditApi = builder.AddProject<Audit_API>("audit-api")
+    .WithReference(mongodb)
+    .WithReference(rabbitmq);
+
 // Gateway
 builder.AddProject<YarpGateway>("gateway")
     .WithReference(saleApi)
     .WithReference(approvalApi)
     .WithReference(payrollApi)
     .WithReference(inventoryApi)
-    .WithReference(manufactureApi);
+    .WithReference(manufactureApi)
+    .WithReference(securityApi)
+    .WithReference(auditApi);
 
 var app = builder.Build();
 

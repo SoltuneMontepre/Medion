@@ -1,5 +1,5 @@
 using MediatR;
-using Sale.Domain.Repositories;
+using Sale.Application.Abstractions;
 using ServiceDefaults.ApiResponses;
 
 namespace Sale.Application.Features.Customer.Commands;

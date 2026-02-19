@@ -30,25 +30,49 @@ run = "dotnet clean Backend.slnx"
 description = "Update database migration cho Sale service"
 run = "dotnet ef database update --project Services/Sale/Infrastructure/Sale.Infrastructure.csproj --startup-project Services/Sale/API/Sale.API.csproj"
 
+[tasks.db-add-migration-sale]
+description = "Create migration cho Sale service (set MIGRATION_NAME)"
+run = "dotnet ef migrations add $MIGRATION_NAME --project Services/Sale/Infrastructure/Sale.Infrastructure.csproj --startup-project Services/Sale/API/Sale.API.csproj"
+
 [tasks.db-update-identity]
 description = "Update database migration cho Identity service"
 run = "dotnet ef database update --project Services/Identity/Infrastructure/Identity.Infrastructure.csproj --startup-project Services/Identity/API/Identity.API.csproj"
+
+[tasks.db-add-migration-identity]
+description = "Create migration cho Identity service (set MIGRATION_NAME)"
+run = "dotnet ef migrations add $MIGRATION_NAME --project Services/Identity/Infrastructure/Identity.Infrastructure.csproj --startup-project Services/Identity/API/Identity.API.csproj"
 
 [tasks.db-update-inventory]
 description = "Update database migration cho Inventory service"
 run = "dotnet ef database update --project Services/Inventory/Infrastructure/Inventory.Infrastructure.csproj --startup-project Services/Inventory/API/Inventory.API.csproj"
 
+[tasks.db-add-migration-inventory]
+description = "Create migration cho Inventory service (set MIGRATION_NAME)"
+run = "dotnet ef migrations add $MIGRATION_NAME --project Services/Inventory/Infrastructure/Inventory.Infrastructure.csproj --startup-project Services/Inventory/API/Inventory.API.csproj"
+
 [tasks.db-update-approval]
 description = "Update database migration cho Approval service"
 run = "dotnet ef database update --project Services/Approval/Infrastructure/Approval.Infrastructure.csproj --startup-project Services/Approval/API/Approval.API.csproj"
+
+[tasks.db-add-migration-approval]
+description = "Create migration cho Approval service (set MIGRATION_NAME)"
+run = "dotnet ef migrations add $MIGRATION_NAME --project Services/Approval/Infrastructure/Approval.Infrastructure.csproj --startup-project Services/Approval/API/Approval.API.csproj"
 
 [tasks.db-update-payroll]
 description = "Update database migration cho Payroll service"
 run = "dotnet ef database update --project Services/Payroll/Infrastructure/Payroll.Infrastructure.csproj --startup-project Services/Payroll/API/Payroll.API.csproj"
 
+[tasks.db-add-migration-payroll]
+description = "Create migration cho Payroll service (set MIGRATION_NAME)"
+run = "dotnet ef migrations add $MIGRATION_NAME --project Services/Payroll/Infrastructure/Payroll.Infrastructure.csproj --startup-project Services/Payroll/API/Payroll.API.csproj"
+
 [tasks.db-update-manufacture]
 description = "Update database migration cho Manufacture service"
 run = "dotnet ef database update --project Services/Manufacture/Infrastructure/Manufacture.Infrastructure.csproj --startup-project Services/Manufacture/API/Manufacture.API.csproj"
+
+[tasks.db-add-migration-manufacture]
+description = "Create migration cho Manufacture service (set MIGRATION_NAME)"
+run = "dotnet ef migrations add $MIGRATION_NAME --project Services/Manufacture/Infrastructure/Manufacture.Infrastructure.csproj --startup-project Services/Manufacture/API/Manufacture.API.csproj"
 
 # Docker
 [tasks.docker-up]

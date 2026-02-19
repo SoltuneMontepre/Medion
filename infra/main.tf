@@ -24,7 +24,7 @@ module "ecr" {
       lifecycle_policy_keep = 3
       lifecycle_expire_days = 7
     }
-    identity-api = {
+    security-api = {
       image_tag_mutability  = "MUTABLE"
       scan_on_push          = true
       lifecycle_policy_keep = 3
@@ -148,20 +148,20 @@ module "manufacture_service" {
   }
 }
 
-module "identity_service" {
+module "security_service" {
   source = "./modules/microservice"
 
-  service_name              = "identity"
+  service_name              = "security"
   project_name              = local.project_name
   lambda_role_arn           = module.iam.lambda_execution_role.arn
-  ecr_repository            = module.ecr.repository_urls["identity-api"]
+  ecr_repository            = module.ecr.repository_urls["security-api"]
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
 
 
   environment_variables = {
     ASPNETCORE_ENVIRONMENT         = "Production"
-    CONNECTIONSTRINGS__POSTGRES    = local.identity_db_url
+    CONNECTIONSTRINGS__POSTGRES    = local.security_db_url
     JwtSettings__Secret            = local.jwt_secret
     JwtSettings__Issuer            = local.jwt_issuer
     JwtSettings__Audience          = local.jwt_audience

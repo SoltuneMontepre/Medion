@@ -24,5 +24,7 @@ public sealed class StronglyTypedIdJsonConverter<TId> : JsonConverter<TId>
     }
 
     public override void Write(Utf8JsonWriter writer, TId value, JsonSerializerOptions options)
-        => writer.WriteStringValue(value.Value);
+    {
+        writer.WriteStringValue(value.Value);
+    }
 }

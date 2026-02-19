@@ -1,6 +1,6 @@
 using MediatR;
 using Sale.Application.Common.DTOs;
-using Sale.Domain.Identifiers;
+using Sale.Domain.Identifiers.Id;
 using ServiceDefaults.ApiResponses;
 
 namespace Sale.Application.Features.Customer.Commands;

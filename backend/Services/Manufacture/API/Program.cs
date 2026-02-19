@@ -12,9 +12,7 @@ var authSection = builder.Configuration.GetSection("Auth");
 var authority = authSection["Authority"];
 var audience = authSection["Audience"];
 if (string.IsNullOrWhiteSpace(authority) || string.IsNullOrWhiteSpace(audience))
-{
     throw new InvalidOperationException("Auth configuration is missing. Expected Auth:Authority and Auth:Audience.");
-}
 
 builder.Services.AddGrpc().AddJsonTranscoding();
 

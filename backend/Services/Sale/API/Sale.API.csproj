@@ -32,6 +32,7 @@
 
     <ItemGroup>
         <Protobuf Include="$(GrpcProtoRoot)/sale/sale.proto" GrpcServices="Server" AdditionalImportDirs="$(PkgGoogle_Api_CommonProtos)\content\protos"/>
+        <Protobuf Include="$(GrpcProtoRoot)/security/signature.proto" GrpcServices="Client" AdditionalImportDirs="$(PkgGoogle_Api_CommonProtos)\content\protos"/>
     </ItemGroup>
 
 </Project>

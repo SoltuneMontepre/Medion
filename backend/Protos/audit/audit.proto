@@ -1,0 +1,158 @@
+syntax = "proto3";
+
+option csharp_namespace = "Medion.Audit.Contracts";
+option java_multiple_files = true;
+option java_package = "com.medion.audit.contracts";
+
+package medion.audit.v1;
+
+// Provides audit log queries and signature verification for compliance.
+service AuditService {
+  // Verifies a digital signature against the original payload using Vault Transit Engine.
+  // Used by other services or admin dashboards to verify that audit logs haven't been tampered with.
+  rpc VerifySignature (VerifySignatureRequest) returns (VerifySignatureResponse);
+
+  // Retrieves an audit log entry by its ID.
+  rpc GetAuditLog (GetAuditLogRequest) returns (GetAuditLogResponse);
+
+  // Retrieves all audit logs for a specific user (for compliance and action tracking).
+  rpc GetAuditsByUser (GetAuditsByUserRequest) returns (GetAuditsByUserResponse);
+
+  // Retrieves all audit logs for a specific aggregate type and action.
+  rpc GetAuditsByAggregateType (GetAuditsByAggregateTypeRequest) returns (GetAuditsByAggregateTypeResponse);
+}
+
+// Request to verify a signature
+message VerifySignatureRequest {
+  // The base64-encoded payload that was signed
+  string base64_payload = 1;
+
+  // The digital signature to verify (from Vault, format: vault:v1:{base64})
+  string signature = 2;
+
+  // The audit log ID for audit trail purposes
+  string audit_log_id = 3;
+}
+
+// Response to verify signature request
+message VerifySignatureResponse {
+  // Whether the signature is valid
+  bool is_valid = 1;
+
+  // Error message if verification failed
+  string error_message = 2;
+
+  // Timestamp of verification
+  string verified_at = 3;
+}
+
+// Request to get audit log
+message GetAuditLogRequest {
+  // The ID of the audit log to retrieve
+  string id = 1;
+}
+
+// Single audit log entry
+message AuditLogEntry {
+  // Unique identifier
+  string id = 1;
+
+  // Correlation ID for tracing related events
+  string correlation_id = 2;
+
+  // Type of aggregate (e.g., "Customer")
+  string aggregate_type = 3;
+
+  // Action performed (e.g., "CREATE")
+  string action = 4;
+
+  // JSON payload of the data
+  string payload = 5;
+
+  // User ID who initiated the action
+  string user_id = 6;
+
+  // Digital signature
+  string digital_signature = 7;
+
+  // When the action was performed
+  string action_timestamp = 8;
+
+  // When the audit log was created
+  string created_at = 9;
+
+  // Whether it has been verified
+  bool is_verified = 10;
+
+  // When it was verified (if applicable)
+  string verified_at = 11;
+}
+
+// Response containing an audit log
+message GetAuditLogResponse {
+  // Success indicator
+  bool success = 1;
+
+  // Error message if failed
+  string error_message = 2;
+
+  // The audit log entry
+  AuditLogEntry audit_log = 3;
+}
+
+// Request to get audits by user
+message GetAuditsByUserRequest {
+  // The user ID to search for
+  string user_id = 1;
+
+  // Maximum number of results to return
+  int32 limit = 2;
+
+  // Page number for pagination
+  int32 page = 3;
+}
+
+// Response containing audit logs by user
+message GetAuditsByUserResponse {
+  // Success indicator
+  bool success = 1;
+
+  // Error message if failed
+  string error_message = 2;
+
+  // List of audit log entries
+  repeated AuditLogEntry audit_logs = 3;
+
+  // Total count of results
+  int32 total_count = 4;
+}
+
+// Request to get audits by aggregate type
+message GetAuditsByAggregateTypeRequest {
+  // The aggregate type (e.g., "Customer")
+  string aggregate_type = 1;
+
+  // The action (e.g., "CREATE"), optional
+  string action = 2;
+
+  // Maximum number of results to return
+  int32 limit = 3;
+
+  // Page number for pagination
+  int32 page = 4;
+}
+
+// Response containing audit logs by aggregate type
+message GetAuditsByAggregateTypeResponse {
+  // Success indicator
+  bool success = 1;
+
+  // Error message if failed
+  string error_message = 2;
+
+  // List of audit log entries
+  repeated AuditLogEntry audit_logs = 3;
+
+  // Total count of results
+  int32 total_count = 4;
+}

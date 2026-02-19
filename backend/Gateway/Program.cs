@@ -1,6 +1,9 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using ServiceDefaults;
+
+// Enable HTTP/2 without TLS so Gateway can communicate with h2c-only services (e.g. Security API)
+AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,9 +11,7 @@ builder.AddServiceDefaults();
 
 var authority = builder.Configuration["Auth:Authority"];
 if (string.IsNullOrWhiteSpace(authority))
-{
     throw new InvalidOperationException("Auth configuration is missing. Expected Auth:Authority.");
-}
 var audience = builder.Configuration["Auth:Audience"];
 var requireHttpsMetadata = builder.Configuration.GetValue("Auth:RequireHttpsMetadata",
     !builder.Environment.IsDevelopment());
@@ -21,7 +22,7 @@ builder.Services
     {
         options.Authority = authority;
         options.RequireHttpsMetadata = requireHttpsMetadata;
-        options.TokenValidationParameters = new()
+        options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateAudience = true,
             ValidAudience = audience
@@ -121,6 +122,7 @@ app.UseSwaggerUI(options =>
     options.SwaggerEndpoint("/swagger-docs/payroll-api/v1/swagger.json", "Payroll API");
     options.SwaggerEndpoint("/swagger-docs/inventory-api/v1/swagger.json", "Inventory API");
     options.SwaggerEndpoint("/swagger-docs/manufacture-api/v1/swagger.json", "Manufacture API");
+    options.SwaggerEndpoint("/swagger-docs/security-api/v1/swagger.json", "Security API");
 
     options.RoutePrefix = "swagger";
     options.ConfigObject.PersistAuthorization = true;
@@ -137,13 +139,16 @@ app.UseSwaggerUI(options =>
 app.MapGet("/", () => new { name = "API Gateway", version = 1 });
 
 // Swagger aggregation endpoints - proxy swagger.json from services
+// Services using h2c (HTTP/2 without TLS) require explicit HTTP/2 requests
+var h2cServices = new HashSet<string> { "security-api" };
 var services = new[]
 {
     ("sale-api", "Sale API"),
     ("approval-api", "Approval API"),
     ("payroll-api", "Payroll API"),
     ("inventory-api", "Inventory API"),
-    ("manufacture-api", "Manufacture API")
+    ("manufacture-api", "Manufacture API"),
+    ("security-api", "Security API")
 };
 
 foreach (var (serviceName, label) in services)
@@ -153,7 +158,14 @@ foreach (var (serviceName, label) in services)
         {
             var client = httpFactory.CreateClient("AspireClient");
 
-            var response = await client.GetAsync($"http://{serviceName}/swagger/v1/swagger.json");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"http://{serviceName}/swagger/v1/swagger.json");
+            if (h2cServices.Contains(serviceName))
+            {
+                request.Version = new Version(2, 0);
+                request.VersionPolicy = HttpVersionPolicy.RequestVersionExact;
+            }
+
+            var response = await client.SendAsync(request);
 
             if (!response.IsSuccessStatusCode) return Results.StatusCode((int)response.StatusCode);
             var json = await response.Content.ReadAsStringAsync();
