@@ -9,7 +9,7 @@ export async function onRequest(context) {
 		method: request.method,
 		headers: request.headers,
 		body: request.body,
-		redirect: 'follow',
+		redirect: 'manual',
 	})
 	return fetch(newRequest)
 }
