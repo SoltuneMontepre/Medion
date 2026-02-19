@@ -6,16 +6,18 @@ ENV ASPNETCORE_URLS=http://+:8080
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-COPY Directory.Build.props ./
-COPY Directory.Packages.props ./
-COPY Protos ./Protos
-COPY Shared/ ./Shared/
-COPY ServiceDefaults/ ./ServiceDefaults/
-COPY Services/SharedStorage/ ./Services/SharedStorage/
-COPY Services/Sale/Domain/ ./Services/Sale/Domain/
-COPY Services/Sale/Application/ ./Services/Sale/Application/
-COPY Services/Sale/Infrastructure/ ./Services/Sale/Infrastructure/
-COPY Services/Sale/API/ ./Services/Sale/API/
+# If GitHub Actions runs from repo root, use backend/ prefix
+# If it runs from backend/ dir, remove backend/ prefix from all paths below
+COPY backend/Directory.Build.props ./
+COPY backend/Directory.Packages.props ./
+COPY backend/Protos/ ./Protos/
+COPY backend/Shared/ ./Shared/
+COPY backend/ServiceDefaults/ ./ServiceDefaults/
+COPY backend/Services/SharedStorage/ ./Services/SharedStorage/
+COPY backend/Services/Sale/Domain/ ./Services/Sale/Domain/
+COPY backend/Services/Sale/Application/ ./Services/Sale/Application/
+COPY backend/Services/Sale/Infrastructure/ ./Services/Sale/Infrastructure/
+COPY backend/Services/Sale/API/ ./Services/Sale/API/
 WORKDIR /src/Services/Sale/API
 RUN dotnet restore
 RUN dotnet publish -c Release -o /out /p:UseAppHost=false

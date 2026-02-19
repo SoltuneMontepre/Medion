@@ -1,4 +1,4 @@
-name: identity-cd
+name: security-cd
 
 permissions:
   id-token: write
@@ -9,19 +9,19 @@ on:
     branches:
       - main
     paths:
-      - "backend/Services/Identity/**.cs"
+      - "backend/Services/Security/**.cs"
       - "backend/ServiceDefaults/**.cs"
       - "backend/Services/SharedStorage/**.cs"
-      - ".github/workflows/identity-cd.yml"
-      - "backend/Services/Identity/**.csproj"
+      - ".github/workflows/security-cd.yml"
+      - "backend/Services/Security/**.csproj"
       - "backend/ServiceDefaults/**.csproj"
       - "backend/Services/SharedStorage/**.csproj"
-      - "backend/Services/Identity/API/Dockerfile"
-      - "backend/Protos/identity.proto"
+      - "backend/Services/Security/API/Dockerfile"
+      - "backend/Protos/security/**.proto"
   workflow_dispatch:
 
 jobs:
-  identity-cd:
+  security-cd:
     runs-on: ubuntu-latest
 
     steps:
@@ -31,7 +31,7 @@ jobs:
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             backend/ServiceDefaults
-            backend/Services/Identity
+            backend/Services/Security
             backend/Services/SharedStorage
             backend/Protos
             backend/Directory.Build.props
@@ -51,16 +51,16 @@ jobs:
         working-directory: backend
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: ${{ secrets.PROJECT_NAME }}-identity-api
+          REPOSITORY: ${{ secrets.PROJECT_NAME }}-security-api
         run: |
-          docker build --provenance=false -f Services/Identity/API/Dockerfile -t $REGISTRY/$REPOSITORY:latest .
+          docker build --provenance=false -f Services/Security/API/Dockerfile -t $REGISTRY/$REPOSITORY:latest .
           docker push $REGISTRY/$REPOSITORY:latest
 
       - name: Update Lambda Function
         env:
-          FUNCTION_NAME: ${{ secrets.PROJECT_NAME }}-identity
+          FUNCTION_NAME: ${{ secrets.PROJECT_NAME }}-security
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: ${{ secrets.PROJECT_NAME }}-identity-api
+          REPOSITORY: ${{ secrets.PROJECT_NAME }}-security-api
         run: |
           aws lambda update-function-code \
             --function-name $FUNCTION_NAME \
