@@ -92,6 +92,7 @@ var app = builder.Build();
 app.UseDefaultExceptionHandler();
 
 app.UseSwagger();
+app.UseSwaggerUI();
 app.UsePathPrefixRewrite("/api/approval");
 app.UseAuthentication();
 app.UseAuthorization();

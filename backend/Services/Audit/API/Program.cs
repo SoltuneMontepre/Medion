@@ -28,7 +28,7 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        var connectionString = builder.Configuration.GetConnectionString("rabbitmq")
+        var connectionString = builder.Configuration.GetConnectionString("rabbitMq")
                                ?? "amqp://guest:guest@localhost:5672";
 
         var uri = new Uri(connectionString);
@@ -48,12 +48,12 @@ builder.Services.AddMassTransit(x =>
 });
 
 builder.Services.AddEndpointsApiExplorer();
-// builder.Services.AddSwaggerGen(); // Commented out - not using Swagger
+// builder.Services.AddSwaggerGen(); // Swagger JSON only - UI provided by Gateway
 
 var app = builder.Build();
 
-// app.UseSwagger();            // Commented out - not using Swagger
-// app.UseSwaggerUI();           // Commented out - not using Swagger
+// app.UseSwagger();            // Swagger JSON only - UI provided by Gateway
+// app.UseSwaggerUI();           // Swagger JSON only - UI provided by Gateway
 app.UseHttpsRedirection();
 
 // Health checks

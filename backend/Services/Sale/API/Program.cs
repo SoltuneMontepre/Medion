@@ -167,7 +167,7 @@ builder.Services.AddMassTransit(x =>
     {
         // Get connection string from configuration (injected by Aspire)
         var configuration = context.GetService<IConfiguration>();
-        var connectionString = configuration?.GetConnectionString("rabbitmq");
+        var connectionString = configuration?.GetConnectionString("rabbitMq");
 
         if (!string.IsNullOrEmpty(connectionString))
         {
@@ -293,6 +293,7 @@ using (var scope = app.Services.CreateScope())
 app.UseDefaultExceptionHandler();
 
 app.UseSwagger();
+app.UseSwaggerUI();
 app.UsePathPrefixRewrite("/api/sale");
 app.UseAuthentication();
 app.UseAuthorization();

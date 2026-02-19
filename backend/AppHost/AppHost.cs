@@ -18,12 +18,12 @@ var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "25
 var postgres = builder.AddPostgres("postgres")
     .WithDataVolume();
 
-var salePostgres = postgres.AddDatabase("postgres-sale");
-var approvalPostgres = postgres.AddDatabase("postgres-approval");
-var payrollPostgres = postgres.AddDatabase("postgres-payroll");
-var inventoryPostgres = postgres.AddDatabase("postgres-inventory");
-var manufacturePostgres = postgres.AddDatabase("postgres-manufacture");
-var securityPostgres = postgres.AddDatabase("postgres-security");
+var salePostgres = postgres.AddDatabase("postgresSale");
+var approvalPostgres = postgres.AddDatabase("postgresApproval");
+var payrollPostgres = postgres.AddDatabase("postgresPayroll");
+var inventoryPostgres = postgres.AddDatabase("postgresInventory");
+var manufacturePostgres = postgres.AddDatabase("postgresManufacture");
+var securityPostgres = postgres.AddDatabase("postgresSecurity");
 
 // MongoDB - For Audit Logs
 var mongodb = builder.AddMongoDB("mongodb")

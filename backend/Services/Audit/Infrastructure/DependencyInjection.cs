@@ -24,8 +24,8 @@ public static class DependencyInjection
         IConfiguration config)
     {
         // Database configuration
-        var connectionString = config.GetConnectionString("postgres_audit")
-                               ?? "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=audit";
+        var connectionString = config.GetConnectionString("postgresAudit")
+                               ?? throw new InvalidOperationException("Connection string 'postgresAudit' not found. Ensure it's provided by Aspire or set in configuration.");
 
         services.AddDbContext<AuditDbContext>(options =>
             options.UseNpgsql(connectionString, npgsqlOptions =>

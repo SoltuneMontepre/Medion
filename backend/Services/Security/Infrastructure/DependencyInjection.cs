@@ -14,8 +14,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration config)
     {
-        var connectionString = config.GetConnectionString("postgres_security")
-                               ?? "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=security";
+        var connectionString = config.GetConnectionString("postgresSecurity")
+                               ?? throw new InvalidOperationException("Connection string 'postgresSecurity' not found. Ensure it's provided by Aspire or set in configuration.");
 
         services.AddDbContext<SecurityDbContext>(options =>
             options.UseNpgsql(connectionString, npgsqlOptions =>

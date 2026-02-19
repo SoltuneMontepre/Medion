@@ -90,6 +90,7 @@ var app = builder.Build();
 app.UseDefaultExceptionHandler();
 
 app.UseSwagger();
+app.UseSwaggerUI();
 app.UsePathPrefixRewrite("/api/manufacture");
 app.UseAuthentication();
 app.UseAuthorization();
