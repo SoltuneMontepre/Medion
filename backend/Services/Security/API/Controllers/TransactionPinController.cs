@@ -18,8 +18,8 @@ public class TransactionPinController(IMediator mediator) : ControllerBase
     {
         // Lấy userId từ JWT claims
         var userIdClaim = User.FindFirst("sub")
-                          ?? User.FindFirst(ClaimTypes.NameIdentifier)
-                          ?? User.FindFirst("preferred_username");
+                            ?? User.FindFirst(ClaimTypes.NameIdentifier)
+                            ?? User.FindFirst("preferred_username");
 
         if (userIdClaim == null)
         {
