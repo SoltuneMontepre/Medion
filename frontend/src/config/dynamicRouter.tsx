@@ -1,8 +1,13 @@
+import React from 'react'
 import { createBrowserRouter } from 'react-router'
 import type { ComponentType } from 'react'
+import ProtectedRoute from '../components/ProtectedRoute'
+import PublicRoute from '../components/PublicRoute'
 
 type PageModule = { default: ComponentType<Record<string, unknown>> }
 type GlobImport = Record<string, () => Promise<PageModule>>
+
+const PUBLIC_PATHS = ['/']
 
 const pageLoaders = import.meta.glob('../pages/**/page.tsx') as GlobImport
 const layoutLoaders = import.meta.glob('../pages/**/layout.tsx') as GlobImport
@@ -55,6 +60,15 @@ const routes = Object.keys(pageLoaders).map(pageKey => {
 						</Layout>
 					)
 				}
+
+				const isPublic = PUBLIC_PATHS.includes(path)
+				const AuthWrapper = isPublic ? PublicRoute : ProtectedRoute
+				const WrappedPage = PageComponent
+				PageComponent = () => (
+					<AuthWrapper>
+						<WrappedPage />
+					</AuthWrapper>
+				)
 
 				return PageComponent
 			},
