@@ -2,6 +2,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using ServiceDefaults;
 
+// Enable HTTP/2 without TLS so Gateway can communicate with h2c-only services (e.g. Security API)
+AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
@@ -136,6 +139,8 @@ app.UseSwaggerUI(options =>
 app.MapGet("/", () => new { name = "API Gateway", version = 1 });
 
 // Swagger aggregation endpoints - proxy swagger.json from services
+// Services using h2c (HTTP/2 without TLS) require explicit HTTP/2 requests
+var h2cServices = new HashSet<string> { "security-api" };
 var services = new[]
 {
     ("sale-api", "Sale API"),
@@ -153,7 +158,14 @@ foreach (var (serviceName, label) in services)
         {
             var client = httpFactory.CreateClient("AspireClient");
 
-            var response = await client.GetAsync($"http://{serviceName}/swagger/v1/swagger.json");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"http://{serviceName}/swagger/v1/swagger.json");
+            if (h2cServices.Contains(serviceName))
+            {
+                request.Version = new Version(2, 0);
+                request.VersionPolicy = HttpVersionPolicy.RequestVersionExact;
+            }
+
+            var response = await client.SendAsync(request);
 
             if (!response.IsSuccessStatusCode) return Results.StatusCode((int)response.StatusCode);
             var json = await response.Content.ReadAsStringAsync();

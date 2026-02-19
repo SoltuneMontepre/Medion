@@ -21,6 +21,9 @@ using ServiceDefaults;
 using SharedStorage;
 using TransactionContext = Sale.Application.Common.Context.TransactionContext;
 
+// Enable HTTP/2 without TLS for gRPC client calls (required for development)
+AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
@@ -205,7 +208,7 @@ Console.WriteLine("[Sale.API] === End Config Dump ===");
 // Try explicit config override first
 var securityGrpcUrl = builder.Configuration["SecurityService:GrpcUrl"];
 
-// Try Aspire-injected service endpoints (various formats)
+// Try Aspire-injected service endpoints
 var discoveredSecurityUrl = builder.Configuration["services:security-api:http:0"]
                             ?? builder.Configuration["services:security-api:https:0"]
                             ?? builder.Configuration.GetConnectionString("security-api");
@@ -224,8 +227,8 @@ else if (!string.IsNullOrWhiteSpace(discoveredSecurityUrl))
 }
 else
 {
-    // Hardcoded fallback for local development (matches Security.API appsettings.Development.json)
-    securityGrpcAddress = new Uri("http://127.0.0.1:5001");
+    // Hardcoded fallback for local development (Security.API gRPC-only port)
+    securityGrpcAddress = new Uri("http://127.0.0.1:5201");
     Console.WriteLine($"[Sale.API] Using hardcoded fallback: {securityGrpcAddress}");
 }
 
