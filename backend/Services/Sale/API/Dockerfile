@@ -9,6 +9,7 @@ WORKDIR /src
 COPY Directory.Build.props ./
 COPY Directory.Packages.props ./
 COPY Protos ./Protos
+COPY Shared/ ./Shared/
 COPY ServiceDefaults/ ./ServiceDefaults/
 COPY Services/SharedStorage/ ./Services/SharedStorage/
 COPY Services/Sale/Domain/ ./Services/Sale/Domain/
