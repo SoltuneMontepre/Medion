@@ -1,83 +1,52 @@
-import React, { useState } from 'react'
+import React, { useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router'
-import { Button, Card, CardBody, CardHeader, Input } from '@heroui/react'
-import type { ApiResult } from '../services/apiResult'
-import { useLogin, useGetMe } from '../services/Identity/identityApi'
+import { Button, Spinner } from '@heroui/react'
 import useAuth from '../hooks/useAuth'
-import type { AuthToken, LoginRequest, User } from '../services/Identity/types'
+import { useKeycloak } from '../contexts/KeycloakContext'
 
+/** True when URL is the OAuth callback (do not trigger login() or we lose the code). */
+function isKeycloakCallback(search: string): boolean {
+	return search.includes('code=') || search.includes('state=')
+}
+
+/**
+ * Entry page when not authenticated. Redirects to Keycloak login
+ * or shows a sign-in button if Keycloak is not ready yet.
+ */
 const LoginPage = (): React.JSX.Element => {
 	const navigate = useNavigate()
 	const location = useLocation()
-	const { setToken, setUser } = useAuth()
-	const from = (location.state as { from?: { pathname: string } })?.from
-		?.pathname
-	const [form, setForm] = useState<LoginRequest>({
-		userNameOrEmail: '',
-		password: '',
-	})
+	const { isAuthenticated } = useAuth()
+	const { isReady, login } = useKeycloak()
+	const isCallback = isKeycloakCallback(location.search ?? '')
 
-	const login = useLogin()
-	const { refetch: getMe } = useGetMe({ enabled: false })
+	useEffect(() => {
+		if (!isReady) return
+		if (isAuthenticated) {
+			navigate('/dashboard', { replace: true })
+			return
+		}
+		// Do not redirect to Keycloak if we're on the callback URL (let init process the code)
+		if (isCallback) return
+		// Redirect back to / so callback always lands on this public route (avoids ProtectedRoute seeing callback)
+		login({ redirectUri: window.location.origin + '/' })
+	}, [isReady, isAuthenticated, isCallback, login, navigate])
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault()
-		const result = (await login.mutateAsync(form)) as ApiResult<AuthToken>
-		if (!result.isSuccess || !result.data?.accessToken) return
-		setToken(result.data.accessToken)
-		const { data: meResult } = await getMe()
-		if (meResult?.isSuccess && meResult.data) setUser(meResult.data as User)
-		navigate(from ?? '/dashboard', { replace: true })
+	if (!isReady || isCallback) {
+		return (
+			<div className='min-h-screen flex items-center justify-center bg-content2'>
+				<Spinner size='lg' label={isCallback ? 'Signing in…' : 'Loading…'} />
+			</div>
+		)
 	}
 
 	return (
-		<div className='min-h-screen center bg-content2'>
-			<Card className='w-full max-w-sm' shadow='lg'>
-				<CardHeader className='flex flex-col gap-1 px-8 pt-8 pb-0'>
-					<h1 className='text-xl font-semibold'>Sign in</h1>
-					<p className='text-small text-default-500'>
-						Sign in with your username or email
-					</p>
-				</CardHeader>
-				<CardBody className='gap-4 px-8 pb-8 pt-6'>
-					<form onSubmit={handleSubmit} className='flex flex-col gap-4'>
-						<Input
-							label='Username or email'
-							placeholder='Enter username or email'
-							value={form.userNameOrEmail}
-							onValueChange={v =>
-								setForm(prev => ({ ...prev, userNameOrEmail: v }))
-							}
-							isRequired
-							autoComplete='username'
-							isInvalid={!!login.data?.errors?.userNameOrEmail}
-							errorMessage={login.data?.errors?.userNameOrEmail?.[0]}
-						/>
-						<Input
-							label='Password'
-							placeholder='Enter password'
-							type='password'
-							value={form.password}
-							onValueChange={v => setForm(prev => ({ ...prev, password: v }))}
-							isRequired
-							autoComplete='current-password'
-							isInvalid={!!login.data?.errors?.password}
-							errorMessage={login.data?.errors?.password?.[0]}
-						/>
-						{login.data && !login.data.isSuccess && login.data.message && (
-							<p className='text-small text-danger'>{login.data.message}</p>
-						)}
-						<Button
-							type='submit'
-							color='primary'
-							isLoading={login.isPending}
-							className='w-full'
-						>
-							Sign in
-						</Button>
-					</form>
-				</CardBody>
-			</Card>
+		<div className='min-h-screen flex flex-col items-center justify-center gap-4 bg-content2'>
+			<Spinner size='lg' />
+			<p className='text-default-500'>Redirecting to sign in…</p>
+			<Button color='primary' onPress={() => login()}>
+				Sign in with Keycloak
+			</Button>
 		</div>
 	)
 }

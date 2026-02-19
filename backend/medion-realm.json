@@ -2,12 +2,7 @@
   "realm": "medion",
   "enabled": true,
   "defaultDefaultClientScopes": ["web-origins", "roles", "profile", "email"],
-  "defaultOptionalClientScopes": [
-    "address",
-    "phone",
-    "offline_access",
-    "microprofile-jwt"
-  ],
+  "defaultOptionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"],
   "clientScopes": [
     {
       "name": "medion-audience",
@@ -55,13 +50,35 @@
         "pkce.supported": "true",
         "pkce.code.challenge.method": "S256"
       },
-      "defaultClientScopes": [
-        "web-origins",
-        "roles",
-        "profile",
-        "email",
-        "medion-audience"
-      ]
+      "defaultClientScopes": ["web-origins", "roles", "profile", "email", "medion-audience"]
+    },
+    {
+      "clientId": "medion-web",
+      "name": "Medion SPA",
+      "description": "React frontend (Vite dev and production)",
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "http://localhost:5174/*",
+        "http://127.0.0.1:5173/*",
+        "http://127.0.0.1:5174/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*##http://localhost:5174/*##http://127.0.0.1:5173/*##http://127.0.0.1:5174/*"
+      },
+      "defaultClientScopes": ["web-origins", "roles", "profile", "email", "medion-audience"]
     }
   ]
 }
