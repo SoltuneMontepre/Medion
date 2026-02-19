@@ -19,7 +19,7 @@ locals {
   inventory_db_url   = data.doppler_secrets.this.map.INVENTORY_DB_URL
   manufacture_db_url = data.doppler_secrets.this.map.MANUFACTURE_DB_URL
   sale_db_url        = data.doppler_secrets.this.map.SALE_DB_URL
-  identity_db_url    = data.doppler_secrets.this.map.IDENTITY_DB_URL
+  security_db_url    = data.doppler_secrets.this.map.IDENTITY_DB_URL  # TODO: Rename to SECURITY_DB_URL in Doppler
 
   ## Message Queue
   rabbitmq_connection_string = data.doppler_secrets.this.map.RABBITMQ_URL
