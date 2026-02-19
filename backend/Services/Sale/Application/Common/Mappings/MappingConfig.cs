@@ -14,6 +14,18 @@ public class MappingConfig : IRegister
         // Customer -> CustomerDto (default mapping works)
         config.NewConfig<Customer, CustomerDto>();
 
+        // Product -> ProductDto
+        config.NewConfig<Product, ProductDto>();
+
+        // Product -> ProductDetailDto
+        config.NewConfig<Product, ProductDetailDto>();
+
+        // Order -> OrderDto
+        config.NewConfig<Order, OrderDto>();
+
+        // OrderItem -> OrderItemDto
+        config.NewConfig<OrderItem, OrderItemDto>();
+
 #pragma warning disable CS8603 // Possible null reference return - Mapster's Ignore() method signature issue
         // CreateCustomerDto -> Customer
         config.NewConfig<CreateCustomerDto, Customer>()
@@ -28,6 +40,28 @@ public class MappingConfig : IRegister
 
         // UpdateCustomerDto -> Customer (partial update)
         config.NewConfig<UpdateCustomerDto, Customer>()
+            .Ignore(dest => dest.Id)
+            .Ignore(dest => dest.CreatedAt)
+            .Ignore(dest => dest.UpdatedAt)
+            .Ignore(dest => dest.CreatedBy)
+            .Ignore(dest => dest.UpdatedBy)
+            .Ignore(dest => dest.IsDeleted)
+            .Ignore(dest => dest.DeletedAt)
+            .Ignore(dest => dest.DeletedBy);
+
+        // CreateProductDto -> Product
+        config.NewConfig<CreateProductDto, Product>()
+            .Ignore(dest => dest.Id)
+            .Ignore(dest => dest.CreatedAt)
+            .Ignore(dest => dest.UpdatedAt)
+            .Ignore(dest => dest.CreatedBy)
+            .Ignore(dest => dest.UpdatedBy)
+            .Ignore(dest => dest.IsDeleted)
+            .Ignore(dest => dest.DeletedAt)
+            .Ignore(dest => dest.DeletedBy);
+
+        // UpdateProductDto -> Product
+        config.NewConfig<UpdateProductDto, Product>()
             .Ignore(dest => dest.Id)
             .Ignore(dest => dest.CreatedAt)
             .Ignore(dest => dest.UpdatedAt)

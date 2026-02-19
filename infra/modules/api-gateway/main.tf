@@ -19,3 +19,30 @@ resource "aws_apigatewayv2_stage" "default" {
   name        = "$default"
   auto_deploy = true
 }
+
+resource "aws_apigatewayv2_integration" "auth_http" {
+  count = var.auth_integration_uri != null ? 1 : 0
+
+  api_id                 = aws_apigatewayv2_api.api_gateway.id
+  integration_type       = "HTTP_PROXY"
+  integration_method     = "ANY"
+  integration_uri        = var.auth_integration_uri
+  payload_format_version = "1.0"
+  connection_type        = "INTERNET"
+}
+
+resource "aws_apigatewayv2_route" "auth" {
+  count = var.auth_integration_uri != null ? 1 : 0
+
+  api_id    = aws_apigatewayv2_api.api_gateway.id
+  route_key = "ANY /api/auth"
+  target    = "integrations/${aws_apigatewayv2_integration.auth_http[0].id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_proxy" {
+  count = var.auth_integration_uri != null ? 1 : 0
+
+  api_id    = aws_apigatewayv2_api.api_gateway.id
+  route_key = "ANY /api/auth/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.auth_http[0].id}"
+}

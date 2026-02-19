@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package medion.security.v1;
+
+option csharp_namespace = "Security.API.Grpc";
+
+// Provides transaction signing and signature verification for sensitive operations.
+service SignatureService {
+  // Signs a transaction payload using the user's transaction password.
+  rpc SignTransaction(SignRequest) returns (SignResponse);
+  // Verifies a previously generated signature against its payload.
+  rpc VerifySignature(VerifyRequest) returns (VerifyResponse);
+}
+
+message SignRequest {
+  string payload = 1; // JSON payload to sign
+  string transaction_password = 2;
+  string user_id = 3;
+  string operation_type = 4; // e.g., "CREATE_CUSTOMER"
+}
+
+message SignResponse {
+  bool success = 1;
+  string signature_hash = 2; // SHA256 hash with timestamp
+  string error_message = 3;
+  int64 timestamp_utc = 4;
+}
+
+message VerifyRequest {
+  string payload = 1;
+  string signature_hash = 2;
+}
+
+message VerifyResponse {
+  bool is_valid = 1;
+  string error_message = 2;
+}

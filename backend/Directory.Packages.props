@@ -9,6 +9,7 @@
         <PackageVersion Include="Aspire.AppHost.Sdk" Version="13.1.0"/>
         <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.1.0"/>
         <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="13.1.0"/>
+        <PackageVersion Include="Aspire.Hosting.MongoDB" Version="13.1.0"/>
     </ItemGroup>
 
     <ItemGroup Label="Microsoft Extensions">
@@ -31,6 +32,9 @@
 
     <ItemGroup Label="gRPC">
         <PackageVersion Include="Grpc.AspNetCore" Version="2.71.0"/>
+        <PackageVersion Include="Grpc.Net.Client" Version="2.71.0"/>
+        <PackageVersion Include="Grpc.Net.ClientFactory" Version="2.71.0"/>
+        <PackageVersion Include="Google.Protobuf" Version="3.33.0"/>
         <PackageVersion Include="Microsoft.AspNetCore.Grpc.JsonTranscoding" Version="9.0.0"/>
         <PackageVersion Include="Microsoft.AspNetCore.Grpc.Swagger" Version="0.9.1"/>
         <PackageVersion Include="Google.Api.CommonProtos" Version="2.17.0"/>
@@ -44,6 +48,7 @@
     <ItemGroup Label="MassTransit">
         <PackageVersion Include="MassTransit" Version="8.3.1"/>
         <PackageVersion Include="MassTransit.RabbitMQ" Version="8.3.1"/>
+        <PackageVersion Include="MassTransit.EntityFrameworkCore" Version="8.3.1"/>
     </ItemGroup>
 
     <ItemGroup Label="EntityFramework + Npgsql">
@@ -82,6 +87,19 @@
 
     <ItemGroup Label="AWS">
         <PackageVersion Include="AWSSDK.S3" Version="3.7.400.3"/>
+    </ItemGroup>
+
+    <ItemGroup Label="Vault">
+        <PackageVersion Include="VaultSharp" Version="1.17.5"/>
+    </ItemGroup>
+
+    <ItemGroup Label="Security">
+        <PackageVersion Include="BCrypt.Net-Next" Version="4.0.3"/>
+    </ItemGroup>
+
+    <ItemGroup Label="MongoDB">
+        <PackageVersion Include="MongoDB.Driver" Version="3.5.0"/>
+        <PackageVersion Include="MongoDB.Bson" Version="3.5.0"/>
     </ItemGroup>
 
     <ItemGroup Label="Serilog">

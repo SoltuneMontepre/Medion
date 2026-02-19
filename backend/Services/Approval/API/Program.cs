@@ -1,10 +1,22 @@
 using Approval.API.Middleware;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+
+var authSection = builder.Configuration.GetSection("Auth");
+var authority = authSection["Authority"];
+var audience = authSection["Audience"];
+var publicAuthority = authSection["PublicAuthority"];
+var tokenIssuer = authSection["TokenIssuer"];
+var swaggerAuthority = string.IsNullOrWhiteSpace(publicAuthority) ? authority : publicAuthority;
+if (string.IsNullOrWhiteSpace(authority) || string.IsNullOrWhiteSpace(audience))
+    throw new InvalidOperationException("Auth configuration is missing. Expected Auth:Authority and Auth:Audience.");
+if (string.IsNullOrWhiteSpace(tokenIssuer)) tokenIssuer = authority;
 builder.Services.AddGrpc().AddJsonTranscoding();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -21,14 +33,24 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Approval API"
     });
 
-    // JWT Bearer authentication
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    var authorizationUrl = new Uri($"{swaggerAuthority}/protocol/openid-connect/auth");
+    var tokenUrl = new Uri($"{swaggerAuthority}/protocol/openid-connect/token");
+
+    c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
     {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        Description = "Enter the JWT token without 'Bearer ' prefix. Example: eyJhbGc..."
+        Type = SecuritySchemeType.OAuth2,
+        Flows = new OpenApiOAuthFlows
+        {
+            AuthorizationCode = new OpenApiOAuthFlow
+            {
+                AuthorizationUrl = authorizationUrl,
+                TokenUrl = tokenUrl,
+                Scopes = new Dictionary<string, string>
+                {
+                    { "openid", "OpenID" }
+                }
+            }
+        }
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -39,13 +61,30 @@ builder.Services.AddSwaggerGen(c =>
                 Reference = new OpenApiReference
                 {
                     Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
+                    Id = "oauth2"
                 }
             },
-            Array.Empty<string>()
+            new[] { "openid" }
         }
     });
 });
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = authority;
+        options.Audience = audience;
+        options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidIssuer = tokenIssuer,
+            NameClaimType = "preferred_username",
+            RoleClaimType = "roles"
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -53,7 +92,10 @@ var app = builder.Build();
 app.UseDefaultExceptionHandler();
 
 app.UseSwagger();
+app.UseSwaggerUI();
 app.UsePathPrefixRewrite("/api/approval");
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapGet("/", () => new { name = "Approval.API" });
 

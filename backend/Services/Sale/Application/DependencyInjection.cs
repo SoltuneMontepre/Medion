@@ -19,11 +19,15 @@ public static class DependencyInjection
         // Register FluentValidation
         services.AddValidatorsFromAssembly(typeof(CreateCustomerCommand).Assembly);
 
-        // Register MediatR with Validation Pipeline Behavior
+        // Register MediatR with Pipeline Behaviors
+        // Order matters: Signing -> Validation -> Handler -> Audit Logging
+        // Note: TransactionSigningBehavior moved to Sale.API layer (needs gRPC client types)
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssembly(typeof(CreateCustomerCommand).Assembly);
+            // TransactionSigningBehavior registered in Sale.API Program.cs
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(AuditLoggingBehavior<,>));
         });
 
         // Register Mapster

@@ -3,12 +3,12 @@ provider "doppler" {
 
 provider "aws" {
   region     = var.aws_region
-  access_key = local.aws_access_key_id
-  secret_key = local.aws_secret_access_key
+  access_key = local.awsAccessKeyId
+  secret_key = local.awsSecretAccessKey
 
   default_tags {
     tags = {
-      Project   = local.project_name
+      Project   = local.projectName
       ManagedBy = "Terraform"
     }
   }

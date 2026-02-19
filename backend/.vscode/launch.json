@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "🚀 Mise: Dev (Fast)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "echo 'Mise dev đã sẵn sàng!'",
+      "preLaunchTask": "run-mise-dev",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

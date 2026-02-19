@@ -1,9 +1,13 @@
+using System.Security.Claims;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sale.API.Attributes;
 using Sale.Application.Common.DTOs;
 using Sale.Application.Features.Customer.Commands;
 using Sale.Application.Features.Customer.Queries;
 using Sale.Domain.Identifiers;
+using Sale.Domain.Identifiers.Id;
 using ServiceDefaults.ApiResponses;
 
 namespace Sale.API.Controllers;
@@ -13,7 +17,7 @@ namespace Sale.API.Controllers;
 ///     Handles CRUD operations for customers
 /// </summary>
 [ApiController]
-[Route("[controller]")]
+[Route("customers")]
 public class CustomerController(IMediator mediator) : ApiControllerBase
 {
     /// <summary>
@@ -24,6 +28,21 @@ public class CustomerController(IMediator mediator) : ApiControllerBase
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var query = new GetAllCustomersQuery();
+        var customers = await mediator.Send(query, cancellationToken);
+        return Ok(customers, "Customers retrieved successfully");
+    }
+
+    /// <summary>
+    ///     Search customers by code, name, or phone
+    /// </summary>
+    [HttpGet("search")]
+    [Authorize(Roles = "Sale Admin")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResult<IReadOnlyList<CustomerDto>>))]
+    public async Task<IActionResult> Search([FromQuery] string term, [FromQuery] int? limit,
+        CancellationToken cancellationToken)
+    {
+        var effectiveLimit = limit is > 0 and <= 50 ? limit.Value : 20;
+        var query = new SearchCustomersQuery(term, effectiveLimit);
         var customers = await mediator.Send(query, cancellationToken);
         return Ok(customers, "Customers retrieved successfully");
     }
@@ -48,12 +67,25 @@ public class CustomerController(IMediator mediator) : ApiControllerBase
     /// <summary>
     ///     Create a new customer
     /// </summary>
+    [RequiresTransactionPassword]
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ApiResult<CustomerDto>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateCustomerDto request, CancellationToken cancellationToken)
     {
-        var command = new CreateCustomerCommand(request);
+        // Extract the authenticated user ID from the current principal
+        var userId = User.FindFirst("sub")?.Value
+                     ?? User.FindFirst("sid")?.Value
+                     ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                     ?? throw new InvalidOperationException(
+                         "User ID not found in token claims. Ensure Keycloak is configured to include 'sub' claim.");
+
+        var command = new CreateCustomerCommand(
+            request.FirstName,
+            request.LastName,
+            request.Address,
+            request.PhoneNumber,
+            new UserId(Guid.Parse(userId)));
         var result = await mediator.Send(command, cancellationToken);
 
         if (result.IsSuccess && result.Data != null)
@@ -69,7 +101,8 @@ public class CustomerController(IMediator mediator) : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResult<CustomerDto>))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Update(CustomerId id, [FromBody] UpdateCustomerDto request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(CustomerId id, [FromBody] UpdateCustomerDto request,
+        CancellationToken cancellationToken)
     {
         var command = new UpdateCustomerCommand
         {

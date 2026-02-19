@@ -1,5 +1,5 @@
-using Sale.Domain.Identifiers;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Sale.Domain.Identifiers;
 
 namespace Sale.Infrastructure.Persistence.Converters;
 
@@ -8,7 +8,7 @@ public sealed class StronglyTypedIdValueConverter<TId> : ValueConverter<TId, Gui
 {
     public StronglyTypedIdValueConverter()
         : base(id => id.Value, value => (TId)Activator.CreateInstance(typeof(TId), value)!,
-            new ConverterMappingHints(size: 36))
+            new ConverterMappingHints(36))
     {
     }
 }
@@ -19,7 +19,7 @@ public sealed class NullableStronglyTypedIdValueConverter<TId> : ValueConverter<
     public NullableStronglyTypedIdValueConverter()
         : base(id => id.HasValue ? id.Value.Value : null,
             value => value.HasValue ? (TId)Activator.CreateInstance(typeof(TId), value.Value)! : null,
-            new ConverterMappingHints(size: 36))
+            new ConverterMappingHints(36))
     {
     }
 }

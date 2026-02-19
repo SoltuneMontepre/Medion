@@ -33,6 +33,7 @@ jobs:
             backend/ServiceDefaults
             backend/Services/Sale
             backend/Services/SharedStorage
+            backend/Shared
             backend/Protos
             backend/Directory.Build.props
             backend/Directory.Packages.props

@@ -46,6 +46,8 @@ public static class Extensions
     {
         var isLambda = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AWS_LAMBDA_FUNCTION_NAME"));
 
+        builder.Logging.ClearProviders();
+
         builder.Services.AddSerilog((services, loggerConfiguration) =>
         {
             loggerConfiguration
@@ -136,10 +138,7 @@ public static class Extensions
             // Lightweight HTTP client config for Lambda
             builder.Services.ConfigureHttpClientDefaults(http =>
             {
-                http.ConfigureHttpClient(client =>
-                {
-                    client.Timeout = TimeSpan.FromSeconds(30);
-                });
+                http.ConfigureHttpClient(client => { client.Timeout = TimeSpan.FromSeconds(30); });
             });
         }
 
