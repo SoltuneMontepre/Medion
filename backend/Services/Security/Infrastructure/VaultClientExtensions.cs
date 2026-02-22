@@ -1,10 +1,3 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using VaultSharp;
-using VaultSharp.V1.AuthMethods;
-using VaultSharp.V1.AuthMethods.AppRole;
-using VaultSharp.V1.AuthMethods.Token;
-
 namespace Security.Infrastructure;
 
 public static class VaultClientExtensions

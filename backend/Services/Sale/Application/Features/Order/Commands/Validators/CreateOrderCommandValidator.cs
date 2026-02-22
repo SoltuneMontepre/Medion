@@ -1,5 +1,3 @@
-using FluentValidation;
-
 namespace Sale.Application.Features.Order.Commands.Validators;
 
 public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>

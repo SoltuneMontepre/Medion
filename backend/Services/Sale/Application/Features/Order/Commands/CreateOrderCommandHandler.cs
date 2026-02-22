@@ -1,6 +1,3 @@
-using System.Text;
-using Mapster;
-using MediatR;
 using Sale.Application.Abstractions;
 using Sale.Application.Common.DTOs;
 using Sale.Domain.Entities;

@@ -1,5 +1,3 @@
-using Grpc.Core;
-using MediatR;
 using Security.Application.Abstractions;
 using Security.Application.Common.Abstractions;
 using Security.Application.Features.Signature.Commands;

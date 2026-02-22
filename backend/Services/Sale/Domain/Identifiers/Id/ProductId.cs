@@ -1,5 +1,3 @@
-using System.ComponentModel;
-
 namespace Sale.Domain.Identifiers.Id;
 
 [TypeConverter(typeof(StronglyTypedIdTypeConverter<ProductId>))]

@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Security.Domain.Entities;
 using Security.Domain.Identifiers;
 using Security.Domain.ValueObjects;

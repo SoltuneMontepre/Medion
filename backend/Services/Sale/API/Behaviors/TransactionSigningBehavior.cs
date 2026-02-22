@@ -1,7 +1,3 @@
-using System.Security.Claims;
-using System.Text.Json;
-using Grpc.Core;
-using MediatR;
 using Sale.Application.Common.Attributes;
 using Security.API.Grpc;
 using TransactionContext = Sale.Application.Common.Context.TransactionContext;

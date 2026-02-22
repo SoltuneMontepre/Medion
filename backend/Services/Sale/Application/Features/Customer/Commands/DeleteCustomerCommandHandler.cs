@@ -1,4 +1,3 @@
-using MediatR;
 using Sale.Application.Abstractions;
 using ServiceDefaults.ApiResponses;
 

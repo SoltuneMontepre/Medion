@@ -1,5 +1,3 @@
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using ServiceDefaults;
 
 // Enable HTTP/2 without TLS so Gateway can communicate with h2c-only services (e.g. Security API)

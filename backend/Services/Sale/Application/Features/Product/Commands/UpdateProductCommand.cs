@@ -1,4 +1,3 @@
-using MediatR;
 using Sale.Application.Common.DTOs;
 using Sale.Domain.Identifiers.Id;
 using ServiceDefaults.ApiResponses;

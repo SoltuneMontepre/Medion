@@ -1,7 +1,5 @@
-using MediatR;
 using Sale.Application.Abstractions;
 using Sale.Application.Common.DTOs;
-using Sale.Domain.Identifiers.Id;
 
 namespace Sale.Application.Features.Order.Queries;
 

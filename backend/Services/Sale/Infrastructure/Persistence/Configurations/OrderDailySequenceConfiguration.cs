@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Sale.Domain.Entities;
 
 namespace Sale.Infrastructure.Persistence.Configurations;

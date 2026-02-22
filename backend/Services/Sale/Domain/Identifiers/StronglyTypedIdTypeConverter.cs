@@ -1,6 +1,3 @@
-using System.ComponentModel;
-using System.Globalization;
-
 namespace Sale.Domain.Identifiers;
 
 public sealed class StronglyTypedIdTypeConverter<TId> : TypeConverter
@@ -19,12 +16,12 @@ public sealed class StronglyTypedIdTypeConverter<TId> : TypeConverter
 
     public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
     {
-        if (value is string stringValue)
-            return CreateId(Guid.Parse(stringValue));
-        if (value is Guid guidValue)
-            return CreateId(guidValue);
-
-        return base.ConvertFrom(context, culture, value);
+        return value switch
+        {
+            string stringValue => CreateId(Guid.Parse(stringValue)),
+            Guid guidValue => CreateId(guidValue),
+            _ => base.ConvertFrom(context, culture, value)
+        };
     }
 
     public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value,

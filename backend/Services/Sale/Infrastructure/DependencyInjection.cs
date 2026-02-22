@@ -1,9 +1,5 @@
 // using Medion.Security.Contracts; // LEGACY: Old proto namespace, removed
 
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Sale.Application.Abstractions;
 using Sale.Infrastructure.Persistence;
 using Sale.Infrastructure.Persistence.Repositories;
@@ -20,7 +16,8 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration config)
     {
         var connectionString = config.GetConnectionString("postgresSale")
-                               ?? throw new InvalidOperationException("Connection string 'postgresSale' not found. Ensure it's provided by Aspire or set in configuration.");
+                               ?? throw new InvalidOperationException(
+                                   "Connection string 'postgresSale' not found. Ensure it's provided by Aspire or set in configuration.");
 
         services.AddDbContext<SaleDbContext>(options =>
         {

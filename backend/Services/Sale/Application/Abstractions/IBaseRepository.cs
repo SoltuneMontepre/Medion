@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using Sale.Domain.Abstractions;
 using Sale.Domain.Identifiers;
 

@@ -1,0 +1,11 @@
+global using System.Linq.Expressions;
+global using System.Text;
+global using System.Text.Json;
+global using FluentValidation;
+global using Mapster;
+global using MapsterMapper;
+global using MassTransit;
+global using MediatR;
+global using Microsoft.AspNetCore.Http;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;

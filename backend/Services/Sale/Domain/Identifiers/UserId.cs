@@ -1,5 +1,3 @@
-using System.ComponentModel;
-
 namespace Sale.Domain.Identifiers;
 
 [TypeConverter(typeof(StronglyTypedIdTypeConverter<UserId>))]

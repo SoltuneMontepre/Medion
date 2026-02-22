@@ -1,7 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Security.Application.Common.Abstractions;
 
 namespace Security.Infrastructure.Services;
