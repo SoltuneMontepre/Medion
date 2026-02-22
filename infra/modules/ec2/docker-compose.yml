@@ -1,0 +1,41 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    command: start --proxy-headers=xforwarded
+    deploy:
+      resources:
+        limits:
+          memory: 750m
+    environment:
+      KC_CACHE: local
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL:
+      KC_DB_USERNAME:
+      KC_HOSTNAME:
+      KC_DB_PASSWORD:
+      KC_HEALTH_ENABLED: "true"
+      KC_HTTP_ENABLED: "true"
+      JAVA_OPTS_KC_HEAP: "-XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=50"
+    networks:
+      - keycloak-network
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - keycloak
+    networks:
+      - keycloak-network
+    restart: unless-stopped
+
+networks:
+  keycloak-network:
+    driver: bridge

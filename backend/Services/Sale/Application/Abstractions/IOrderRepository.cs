@@ -8,5 +8,7 @@ public interface IOrderRepository : IBaseRepository<Order, OrderId>
     Task<Order?> GetTodayOrderForCustomerAsync(CustomerId customerId, DateOnly date,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<Order>> GetOrdersByDateAsync(DateOnly date, CancellationToken cancellationToken = default);
+
     Task<string> GenerateOrderNumberAsync(DateOnly date, CancellationToken cancellationToken = default);
 }

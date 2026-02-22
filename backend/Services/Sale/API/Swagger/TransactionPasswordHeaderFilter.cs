@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.OpenApi.Models;
 using Sale.API.Attributes;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -12,9 +13,13 @@ public class TransactionPasswordHeaderFilter : IOperationFilter
 {
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
-        // Check if the controller action has the [RequiresTransactionPassword] attribute
-        var requiresSignature = context.MethodInfo
-            .GetCustomAttributes(typeof(RequiresTransactionPasswordAttribute), false).Any();
+        // Get the action method (ControllerActionDescriptor is more reliable than context.MethodInfo for controllers)
+        var methodInfo = context.ApiDescription.ActionDescriptor is ControllerActionDescriptor controllerAction
+            ? controllerAction.MethodInfo
+            : context.MethodInfo;
+
+        var requiresSignature = methodInfo?
+            .GetCustomAttributes(typeof(RequiresTransactionPasswordAttribute), false).Any() ?? false;
 
         if (requiresSignature)
         {

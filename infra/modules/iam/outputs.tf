@@ -23,3 +23,16 @@ output "github_oidc_provider_arn" {
   description = "ARN of the GitHub Actions OIDC provider"
   value       = aws_iam_openid_connect_provider.github_actions.arn
 }
+
+output "grafana_cloudwatch_role" {
+  description = "ARN and name of the role Grafana can assume"
+  value = {
+    arn  = aws_iam_role.grafana_cloudwatch_access.arn
+    name = aws_iam_role.grafana_cloudwatch_access.name
+  }
+}
+
+output "grafana_cloudwatch_role_arn" {
+  description = "ARN of the Grafana assume role (for pasting into Grafana UI)"
+  value       = aws_iam_role.grafana_cloudwatch_access.arn
+}

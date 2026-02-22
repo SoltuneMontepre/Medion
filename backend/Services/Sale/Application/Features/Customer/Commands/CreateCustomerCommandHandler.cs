@@ -43,14 +43,6 @@ public class CreateCustomerCommandHandler(
             request.LastName,
             request.CreatedByUserId.Value);
 
-        // ✅ CLEAN ARCHITECTURE: Retrieve signature from scoped context (not HttpContext)
-        if (!transactionContext.HasValidSignature)
-        {
-            logger.LogWarning("No valid transaction signature found in context");
-            throw new InvalidOperationException(
-                "Transaction signature not found. Ensure TransactionSigningBehavior executed.");
-        }
-
         // Step 1: Generate unique customer code
         var customerCode = await customerRepository.GenerateCustomerCodeAsync(cancellationToken);
 
@@ -67,12 +59,12 @@ public class CreateCustomerCommandHandler(
         customer.Code = customerCode;
         customer.CreatedAt = DateTime.UtcNow;
         customer.CreatedBy = request.CreatedByUserId;
-        customer.SignatureHash = transactionContext.SignatureHash; // ✅ Attach signature from context
+        if (transactionContext.HasValidSignature)
+            customer.SignatureHash = transactionContext.SignatureHash;
 
         logger.LogInformation(
-            "Customer entity prepared: {CustomerId} with signature: {Signature}",
-            customer.Id.Value,
-            customer.SignatureHash?[..16] + "...");
+            "Customer entity prepared: {CustomerId}",
+            customer.Id.Value);
 
         // Step 4: Create audit log integration event
         // NOTE: TraceId and UserAgent are not available in this handler (no HttpContext access)
