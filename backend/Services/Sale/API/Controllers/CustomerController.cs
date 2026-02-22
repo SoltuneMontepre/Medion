@@ -35,7 +35,7 @@ public class CustomerController(IMediator mediator) : ApiControllerBase
     ///     Search customers by code, name, or phone
     /// </summary>
     [HttpGet("search")]
-    [Authorize(Roles = "Sale Admin")]
+    [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResult<IReadOnlyList<CustomerDto>>))]
     public async Task<IActionResult> Search([FromQuery] string term, [FromQuery] int? limit,
         CancellationToken cancellationToken)

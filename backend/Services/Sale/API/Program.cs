@@ -1,5 +1,8 @@
 using System.Collections;
+using System.Security.Claims;
+using System.Text.Json;
 using MassTransit;
+using Microsoft.IdentityModel.JsonWebTokens;
 using MediatR;
 using Medion.Shared.Events;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -133,9 +136,34 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidIssuer = authority,
             NameClaimType = "preferred_username",
             RoleClaimType = "roles"
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                if (context.Principal?.Identity is not ClaimsIdentity identity
+                    || context.SecurityToken is not JsonWebToken jwt)
+                    return Task.CompletedTask;
+
+                var roleClaimType = identity.RoleClaimType;
+
+                if (jwt.TryGetPayloadValue<JsonElement>("realm_access", out var realmAccess)
+                    && realmAccess.TryGetProperty("roles", out var realmRoles))
+                    foreach (var role in realmRoles.EnumerateArray())
+                        if (role.GetString() is { } r)
+                            identity.AddClaim(new Claim(roleClaimType, r));
+
+                if (jwt.TryGetPayloadValue<JsonElement>("resource_access", out var resourceAccess))
+                    foreach (var client in resourceAccess.EnumerateObject())
+                        if (client.Value.TryGetProperty("roles", out var clientRoles))
+                            foreach (var role in clientRoles.EnumerateArray())
+                                if (role.GetString() is { } r)
+                                    identity.AddClaim(new Claim(roleClaimType, r));
+
+                return Task.CompletedTask;
+            }
         };
     });
 

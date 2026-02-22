@@ -78,7 +78,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidIssuer = authority,
             NameClaimType = "preferred_username",
             RoleClaimType = "roles"
         };

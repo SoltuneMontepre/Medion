@@ -53,7 +53,7 @@ function isApiResultShape<T>(value: unknown): value is ApiResult<T> {
  * - On network/other errors: returns failure result.
  */
 export async function apiCall<T>(
-	request: () => Promise<{ data: unknown; status: number }>
+	request: () => Promise<{ data: ApiResult<T>; status: number }>
 ): Promise<ApiResult<T>> {
 	try {
 		const response = await request()
@@ -61,7 +61,7 @@ export async function apiCall<T>(
 
 		if (isApiResultShape<T>(body)) return body
 
-		return success(body as T, undefined, response.status)
+		return success(body as unknown as T, undefined, response.status)
 	} catch (err: unknown) {
 		if (err && typeof err === 'object' && 'response' in err) {
 			const ax = err as { response?: { data?: unknown; status?: number } }

@@ -277,14 +277,20 @@ const defaultNavGroups: SidebarNavGroup[] = [
 				href: '/orders',
 				icon: <IconOrder />,
 			},
-			{
-				key: 'order-summary',
-				label: 'Tổng hợp đơn hàng',
-				href: '/orders/summary',
-				icon: <IconListSummary />,
-			},
-		],
-	},
+		{
+			key: 'order-summary',
+			label: 'Tổng hợp đơn hàng',
+			href: '/orders/summary',
+			icon: <IconListSummary />,
+		},
+		{
+			key: 'products',
+			label: 'Sản phẩm',
+			href: '/products',
+			icon: <IconInventory />,
+		},
+	],
+},
 	{
 		key: 'production',
 		label: 'Sản xuất',

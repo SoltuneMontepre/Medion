@@ -7,12 +7,12 @@ import { KeycloakProvider } from './contexts/KeycloakContext'
 
 registerGSAPPlugins()
 
-const App = (): React.ReactNode => {
-	const client = new QueryClient()
+const queryClient = new QueryClient()
 
+const App = (): React.ReactNode => {
 	return (
 		<KeycloakProvider>
-			<QueryClientProvider client={client}>
+			<QueryClientProvider client={queryClient}>
 				<RouterProvider router={router} />
 			</QueryClientProvider>
 		</KeycloakProvider>
