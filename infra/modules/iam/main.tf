@@ -13,6 +13,27 @@ resource "aws_iam_role" "lambda_execution" {
   })
 }
 
+resource "aws_iam_role" "grafana_cloudwatch_access" {
+  name = "${var.project_name}-grafana-cloudwatch-access"
+
+  # cross-account trust for Grafana (external ID required)
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        AWS = "arn:aws:iam::${var.grafana_account_id}:root"
+      }
+      Action = "sts:AssumeRole"
+      Condition = {
+        StringEquals = {
+          "sts:ExternalId" = var.grafana_external_id
+        }
+      }
+    }]
+  })
+}
+
 resource "aws_iam_role_policy_attachment" "lambda_basic" {
   role       = aws_iam_role.lambda_execution.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"

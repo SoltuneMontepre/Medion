@@ -15,3 +15,15 @@ variable "github_repo" {
   type        = string
   default     = "*"
 }
+
+variable "grafana_account_id" {
+  description = "AWS account ID that will assume the Grafana role"
+  type        = string
+  default     = "008923505280"
+}
+
+variable "grafana_external_id" {
+  description = "External ID to require when Grafana assumes the role"
+  type        = string
+  default     = "1289231"
+}

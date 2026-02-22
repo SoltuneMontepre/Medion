@@ -160,11 +160,11 @@ module "security_service" {
 
 
   environment_variables = {
-    aspnetcoreEnvironment      = "Production"
-    postgresSecurity           = local.securityDbUrl
-    jwtSettingsSecret          = local.jwtSecret
-    jwtSettingsIssuer          = local.jwtIssuer
-    jwtSettingsAudience        = local.jwtAudience
+    aspnetcoreEnvironment        = "Production"
+    postgresSecurity             = local.securityDbUrl
+    jwtSettingsSecret            = local.jwtSecret
+    jwtSettingsIssuer            = local.jwtIssuer
+    jwtSettingsAudience          = local.jwtAudience
     jwtSettingsExpirationMinutes = local.jwtExpirationMinutes
   }
 }

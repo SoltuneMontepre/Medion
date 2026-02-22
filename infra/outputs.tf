@@ -47,3 +47,8 @@ output "api_gateway_id" {
   description = "ID of the API Gateway"
   value       = module.api_gateway.api_gateway_id
 }
+
+output "grafana_cloudwatch_role_arn" {
+  description = "ARN of the Grafana assume role (for pasting into Grafana UI)"
+  value       = module.iam.grafana_cloudwatch_role_arn
+}
