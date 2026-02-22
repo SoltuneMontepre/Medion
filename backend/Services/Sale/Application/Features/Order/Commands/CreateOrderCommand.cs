@@ -12,10 +12,13 @@ public class CreateOrderCommand : IRequest<ApiResult<OrderDto>>
     {
     }
 
-    public CreateOrderCommand(CreateOrderDto dto)
+    /// <summary>
+    ///     Creates the command with salesStaffId from the authenticated user (JWT).
+    /// </summary>
+    public CreateOrderCommand(CreateOrderDto dto, UserId salesStaffId)
     {
         CustomerId = dto.CustomerId;
-        SalesStaffId = dto.SalesStaffId;
+        SalesStaffId = salesStaffId;
         Pin = dto.Pin;
         Items = dto.Items ?? [];
     }

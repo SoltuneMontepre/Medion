@@ -1,8 +1,11 @@
+using System.Security.Claims;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sale.Application.Common.DTOs;
 using Sale.Application.Features.Order.Commands;
 using Sale.Application.Features.Order.Queries;
+using Sale.Domain.Identifiers;
 using Sale.Domain.Identifiers.Id;
 using ServiceDefaults.ApiResponses;
 
@@ -13,10 +16,11 @@ namespace Sale.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("orders")]
+[Authorize]
 public class OrderController(IMediator mediator) : ApiControllerBase
 {
     /// <summary>
-    ///     Create and sign a new order
+    ///     Create and sign a new order. Sales staff is the currently authenticated user (from JWT).
     /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ApiResult<OrderDto>))]
@@ -26,7 +30,25 @@ public class OrderController(IMediator mediator) : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Create([FromBody] CreateOrderDto request, CancellationToken cancellationToken)
     {
-        var command = new CreateOrderCommand(request);
+        var userIdClaim = User.FindFirst("sub")
+                          ?? User.FindFirst(ClaimTypes.NameIdentifier)
+                          ?? User.FindFirst("preferred_username");
+
+        if (userIdClaim == null)
+            return Unauthorized(new
+            {
+                error = "User ID not found in token. Authenticate with a user account to create an order.",
+                hint = "Token must contain 'sub' or name identifier claim."
+            });
+
+        if (!Guid.TryParse(userIdClaim.Value, out var userId))
+            return BadRequest(new
+            {
+                error = $"User ID from claim '{userIdClaim.Type}' is not a valid GUID."
+            });
+
+        var salesStaffId = new UserId(userId);
+        var command = new CreateOrderCommand(request, salesStaffId);
         var result = await mediator.Send(command, cancellationToken);
         return ApiResponse(result);
     }
