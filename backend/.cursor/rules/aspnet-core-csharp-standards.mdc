@@ -1,0 +1,81 @@
+---
+description: ASP.NET Core 10 & C# 14 development standards (SOLID, Clean Architecture, API, EF Core, observability, Aspire)
+globs: "**/*.cs"
+alwaysApply: false
+---
+
+# ASP.NET Core 10 & C# 14 Development Standards
+
+## 1. Language & Syntax (C# 14 Focus)
+
+- **C# Version:** Always use the latest C# 14 features.
+- **Explicit Typing:** Favor explicit typing over `var` for clarity.
+  - *Exception:* Use `var` only when the type is redundant/evident on the same line (e.g. `var logger = new Logger<T>()`).
+  - *Preference:* Use target-typed `new()` where possible: `List<string> items = new();`.
+- **Primary Constructors:** Use primary constructors for dependency injection in services, use cases, and controllers.
+- **Null Checks:** Use `is null` and `is not null` instead of `== null` or `!= null`.
+- **Immutable Data:** Prefer `record` or `record struct` for DTOs, Events, and Value Objects.
+- **Type Safety:** Make types `internal sealed` by default. Only open them (public/abstract) when explicitly required.
+- **Modern Params:** Utilize C# 13/14 `params` enhancements (Span, IEnumerable) to reduce allocations.
+
+**Example — primary constructor & explicit typing:**
+
+```csharp
+// ✅ GOOD
+internal sealed class OrderService(IOrderRepository repository, ILogger<OrderService> logger) : IOrderService
+{
+    public async Task<OrderResult> GetByIdAsync(OrderId id, CancellationToken cancellationToken = default)
+    {
+        if (id is null) throw new ArgumentNullException(nameof(id));
+        Order? entity = await repository.FindByIdAsync(id, cancellationToken);
+        return entity is null ? OrderResult.NotFound() : OrderResult.Success(entity);
+    }
+}
+```
+
+## 2. Architecture & Design
+
+- **Principles:** Strictly follow SOLID, DRY, and KISS.
+- **Clean Architecture:** Maintain clear separation between Domain, Application, Infrastructure, and API layers.
+- **Dependency Injection:** Implement DI for loose coupling. Avoid Service Locator pattern.
+- **Strongly-typed IDs:** Use strongly-typed IDs (records or Vogen) to prevent primitive obsession.
+- **Identifiers:** Use **UUID v7** via `Guid.CreateVersion7()` for primary keys (time-ordered, better index performance).
+
+## 3. API & Web
+
+- **Minimal APIs vs Controllers:**
+  - Use **Minimal APIs** for high-performance and **Native AOT** compatibility.
+  - Use **Controllers** only for legacy or complex OData-heavy implementations.
+- **Versioning:** Implement mandatory API versioning (Header or Media Type based).
+- **Documentation:** Use Swagger/OpenAPI (`Microsoft.AspNetCore.OpenApi`) with meaningful summaries and response types.
+- **CORS & Security:** Strict CORS policies and enforce HTTPS everywhere.
+- **Model Validation:** Use **FluentValidation** for complex business rules; Data Annotations only for simple schema constraints.
+
+## 4. Data & Persistence
+
+- **EF Core:** Use Entity Framework Core for database operations.
+- **Performance:**
+  - Use `AsNoTracking()` for read-only queries.
+  - Use Compiled Queries or Query Filters where appropriate.
+- **Migrations:** Keep migrations clean and documented. Always test "Down" scripts.
+- **Resilience:** Use **Polly v8+** Resilience Pipelines for database retries and circuit breakers.
+
+## 5. Errors & Observability
+
+- **Exception Handling:** Use a Global Exception Handler (`IExceptionHandler`) returning **RFC 7807 Problem Details**.
+- **Logging:** Use **Structured Logging** (Serilog or OpenTelemetry). Never log sensitive data (PII).
+- **Observability:** Integrate **OpenTelemetry** for Traces, Metrics, and Logs.
+- **Health Checks:** Implement liveness, readiness, and startup probes for all infrastructure dependencies.
+
+## 6. Testing & Quality
+
+- **Unit Tests:** Mandatory for business logic and Domain services (xUnit + FluentAssertions).
+- **Integration Tests:** Use `WebApplicationFactory` for API endpoints and database flows.
+- **Mocking:** Use **NSubstitute** or **Moq** for external dependencies.
+- **Environment:** Use environment-specific configuration (`appsettings.Development.json`, etc.).
+
+## 7. Cloud Native (.NET Aspire)
+
+- **Orchestration:** Use **.NET Aspire** for local development and service orchestration.
+- **Configuration:** Use the `IOptions` pattern with validation for all settings.
+- **AOT Readiness:** Keep code trimming-compatible; avoid heavy reflection for Native AOT deployment.
