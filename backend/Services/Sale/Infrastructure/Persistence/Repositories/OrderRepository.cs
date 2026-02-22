@@ -31,6 +31,19 @@ public class OrderRepository(SaleDbContext dbContext) : BaseRepository<Order, Or
                 cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Order>> GetOrdersByDateAsync(DateOnly date,
+        CancellationToken cancellationToken = default)
+    {
+        var start = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        var end = date.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc);
+
+        return await Queryable
+            .Include(o => o.Items)
+            .Where(o => o.OrderDate >= start && o.OrderDate <= end)
+            .OrderBy(o => o.OrderNumber)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<string> GenerateOrderNumberAsync(DateOnly date, CancellationToken cancellationToken = default)
     {
         var nextValue = await GetNextSequenceValueAsync(date, cancellationToken);

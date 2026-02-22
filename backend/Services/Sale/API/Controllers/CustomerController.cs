@@ -2,7 +2,6 @@ using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Sale.API.Attributes;
 using Sale.Application.Common.DTOs;
 using Sale.Application.Features.Customer.Commands;
 using Sale.Application.Features.Customer.Queries;
@@ -65,9 +64,8 @@ public class CustomerController(IMediator mediator) : ApiControllerBase
     }
 
     /// <summary>
-    ///     Create a new customer
+    ///     Create a new customer (no transaction password required).
     /// </summary>
-    [RequiresTransactionPassword]
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ApiResult<CustomerDto>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

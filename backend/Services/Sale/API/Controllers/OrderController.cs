@@ -57,6 +57,21 @@ public class OrderController(IMediator mediator) : ApiControllerBase
     }
 
     /// <summary>
+    ///     Tổng hợp đơn đặt hàng trong ngày: gộp tất cả đơn theo ngày, nhóm theo sản phẩm, trả về bảng STT, Mã SP, Tên SP, Quy cách, Dạng, Đóng gói, Tổng số lượng.
+    ///     Tham số date (tùy chọn): định dạng yyyy-MM-dd (ví dụ: 2026-02-22). Nếu không truyền thì dùng ngày hiện tại (UTC).
+    /// </summary>
+    [HttpGet("daily-summary")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResult<IReadOnlyList<DailyOrderSummaryItemDto>>))]
+    public async Task<IActionResult> GetDailyOrderSummary(
+        [FromQuery] DateOnly? date,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetDailyOrderSummaryQuery(date);
+        var summary = await mediator.Send(query, cancellationToken);
+        return Ok(summary, "Daily order summary");
+    }
+
+    /// <summary>
     ///     Check if the customer has an order today
     /// </summary>
     [HttpGet("customer/{customerId}/today")]
