@@ -2,6 +2,7 @@ using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sale.API.Attributes;
 using Sale.Application.Common.DTOs;
 using Sale.Application.Features.Order.Commands;
 using Sale.Application.Features.Order.Queries;
@@ -21,7 +22,9 @@ public class OrderController(IMediator mediator) : ApiControllerBase
 {
     /// <summary>
     ///     Create and sign a new order. Sales staff is the currently authenticated user (from JWT).
+    ///     Requires X-Transaction-Password header (same as POST /customers).
     /// </summary>
+    [RequiresTransactionPassword]
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ApiResult<OrderDto>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

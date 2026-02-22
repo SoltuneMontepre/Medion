@@ -14,12 +14,6 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
             .Must(id => !id.IsEmpty)
             .WithMessage("SalesStaffId is required");
 
-        RuleFor(x => x.Pin)
-            .NotEmpty()
-            .WithMessage("PIN is required")
-            .MaximumLength(12)
-            .WithMessage("PIN must be at most 12 characters");
-
         RuleFor(x => x.Items)
             .NotEmpty()
             .WithMessage("At least one product is required");
