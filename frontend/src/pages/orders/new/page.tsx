@@ -22,12 +22,15 @@ import { addToast } from '@heroui/react'
 import {
 	fetchProductDetail,
 	useCreateOrder,
+	useGetOrderById,
 	useGetTodayOrderByCustomer,
 	useSearchCustomers,
 	useSearchProducts,
+	useUpdateOrder,
 } from '../../../services/Sale/saleApi'
 import type {
 	Customer,
+	Order,
 	OrderSummary,
 	Product,
 	ProductDetail,
@@ -106,7 +109,6 @@ const NewOrderPage = (): React.JSX.Element => {
 	const [productRows, setProductRows] = useState<ProductRow[]>([])
 	const [confirmModalOpen, setConfirmModalOpen] = useState(false)
 	const [pinValue, setPinValue] = useState('')
-	const [viewTodayOrderModalOpen, setViewTodayOrderModalOpen] = useState(false)
 
 	const { data: customerSearchResult } = useSearchCustomers(
 		{ term: customerSearchTerm.trim(), limit: 20 },
@@ -124,7 +126,17 @@ const NewOrderPage = (): React.JSX.Element => {
 			: null
 	const customerHasOrderToday = !!todayOrder
 
+	const { data: existingOrderResult } = useGetOrderById(todayOrder?.id ?? '', {
+		enabled: !!todayOrder?.id,
+	})
+	const existingOrder: Order | null =
+		existingOrderResult?.isSuccess && existingOrderResult?.data
+			? existingOrderResult.data
+			: null
+	const isUpdating = customerHasOrderToday
+
 	const createOrder = useCreateOrder()
+	const updateOrder = useUpdateOrder()
 
 	// AC1: Autofocus customer search
 	useEffect(() => {
@@ -143,10 +155,12 @@ const NewOrderPage = (): React.JSX.Element => {
 	useEffect(() => {
 		if (selectedCustomer && !customerHasOrderToday) {
 			setOrderNumber(generateOrderNumber())
+		} else if (todayOrder) {
+			setOrderNumber(todayOrder.orderNumber)
 		} else {
 			setOrderNumber(null)
 		}
-	}, [selectedCustomer, customerHasOrderToday])
+	}, [selectedCustomer, customerHasOrderToday, todayOrder])
 
 	const addProductRow = useCallback(() => {
 		setProductRows(prev => [
@@ -219,7 +233,6 @@ const NewOrderPage = (): React.JSX.Element => {
 
 	const canSave =
 		!!selectedCustomer &&
-		!customerHasOrderToday &&
 		productRows.length > 0 &&
 		productRows.every(
 			r =>
@@ -261,21 +274,33 @@ const NewOrderPage = (): React.JSX.Element => {
 				productId: r.productId,
 				quantity: parseQuantity(r.quantity)!,
 			}))
-		const result = (await createOrder.mutateAsync({
-			customerId: selectedCustomer.id,
-			items,
-			pin: pinValue.trim(),
-		})) as ApiResult<unknown>
+
+		let result: ApiResult<unknown>
+		if (isUpdating && todayOrder) {
+			result = (await updateOrder.mutateAsync({
+				orderId: todayOrder.id,
+				items,
+				pin: pinValue.trim(),
+			})) as ApiResult<unknown>
+		} else {
+			result = (await createOrder.mutateAsync({
+				customerId: selectedCustomer.id,
+				items,
+				pin: pinValue.trim(),
+			})) as ApiResult<unknown>
+		}
+
 		if (result.isSuccess) {
 			addToast({
-				title: 'Lưu và ký đơn hàng thành công',
+				title: isUpdating
+					? 'Thêm sản phẩm vào đơn hàng thành công'
+					: 'Lưu và ký đơn hàng thành công',
 				color: 'success',
 			})
 			setConfirmModalOpen(false)
 			navigate(ORDERS_PATH, { replace: true })
 			return
 		}
-		// Trường hợp hệ thống lỗi (AC4)
 		const isSystemError =
 			(result as ApiResult<unknown>).statusCode >= 500 ||
 			(result as ApiResult<unknown>).statusCode === 0
@@ -288,14 +313,13 @@ const NewOrderPage = (): React.JSX.Element => {
 		})
 	}
 
-	const openViewTodayOrderModal = () => setViewTodayOrderModalOpen(true)
-	const closeViewTodayOrderModal = () => setViewTodayOrderModalOpen(false)
-
 	return (
 		<div className='p-6 max-w-5xl'>
 			<Card>
 				<CardHeader>
-					<h1 className='text-xl font-semibold'>Đơn đặt hàng mới</h1>
+					<h1 className='text-xl font-semibold'>
+						{isUpdating ? 'Thêm sản phẩm vào đơn hàng' : 'Đơn đặt hàng mới'}
+					</h1>
 				</CardHeader>
 				<CardBody className='flex flex-col gap-6'>
 					{/* AC1: Ngày tạo đơn - read-only, DD/MM/YYYY HH:mm */}
@@ -378,31 +402,50 @@ const NewOrderPage = (): React.JSX.Element => {
 								/>
 							</div>
 
-							{/* Case 1: already has order today */}
 							{customerHasOrderToday && todayOrder && (
-								<div className='rounded-medium border border-danger bg-danger/10 p-4'>
-									<p className='text-danger font-medium'>
-										Khách hàng này đã có đơn hàng hôm nay
+								<div className='rounded-medium border border-warning bg-warning/10 p-4'>
+									<p className='text-warning font-medium'>
+										Khách hàng này đã có đơn hàng hôm nay (
+										{todayOrder.orderNumber}). Sản phẩm mới sẽ được thêm vào đơn
+										hàng hiện tại.
 									</p>
-									<Button
-										size='sm'
-										variant='flat'
-										color='primary'
-										className='mt-2'
-										onPress={openViewTodayOrderModal}
-									>
-										Xem đơn hàng của khách
-									</Button>
 								</div>
+							)}
+
+							{existingOrder?.items && existingOrder.items.length > 0 && (
+								<>
+									<h2 className='text-lg font-medium'>
+										Sản phẩm hiện tại trong đơn
+									</h2>
+									<Table aria-label='Sản phẩm hiện tại'>
+										<TableHeader>
+											<TableColumn width={40}>STT</TableColumn>
+											<TableColumn>Mã SP</TableColumn>
+											<TableColumn>Tên SP</TableColumn>
+											<TableColumn width={100}>Số Lượng</TableColumn>
+										</TableHeader>
+										<TableBody>
+											{existingOrder.items.map((item, idx) => (
+												<TableRow key={item.id ?? idx}>
+													<TableCell>{idx + 1}</TableCell>
+													<TableCell>{item.productCode}</TableCell>
+													<TableCell>{item.productName}</TableCell>
+													<TableCell>{item.quantity}</TableCell>
+												</TableRow>
+											))}
+										</TableBody>
+									</Table>
+								</>
 							)}
 						</>
 					)}
 
-					{/* AC3: Product rows - only when customer valid (no order today) */}
-					{selectedCustomer && !customerHasOrderToday && (
+					{selectedCustomer && (
 						<>
 							<div className='flex items-center justify-between gap-4 flex-wrap'>
-								<h2 className='text-lg font-medium'>Danh sách sản phẩm</h2>
+								<h2 className='text-lg font-medium'>
+									{isUpdating ? 'Thêm sản phẩm mới' : 'Danh sách sản phẩm'}
+								</h2>
 								<Button color='primary' onPress={addProductRow}>
 									Thêm Sản Phẩm
 								</Button>
@@ -522,14 +565,13 @@ const NewOrderPage = (): React.JSX.Element => {
 						</>
 					)}
 
-					{/* AC1: Lưu Đơn disabled by default; AC3 Case 1: disable when quantity invalid */}
 					<div className='flex justify-end pt-4'>
 						<Button
 							color='primary'
 							onPress={handleSaveClick}
 							isDisabled={!canSave}
 						>
-							Lưu Đơn
+							{isUpdating ? 'Thêm Vào Đơn' : 'Lưu Đơn'}
 						</Button>
 					</div>
 				</CardBody>
@@ -542,7 +584,11 @@ const NewOrderPage = (): React.JSX.Element => {
 				size='2xl'
 			>
 				<ModalContent>
-					<ModalHeader>Xác nhận ký số đơn hàng</ModalHeader>
+					<ModalHeader>
+						{isUpdating
+							? 'Xác nhận thêm sản phẩm vào đơn hàng'
+							: 'Xác nhận ký số đơn hàng'}
+					</ModalHeader>
 					<ModalBody>
 						{selectedCustomer && (
 							<>
@@ -551,7 +597,24 @@ const NewOrderPage = (): React.JSX.Element => {
 									{selectedCustomer.code} - {fullName(selectedCustomer)} -{' '}
 									{selectedCustomer.phoneNumber}
 								</p>
-								<p className='font-medium mt-4'>Danh sách sản phẩm</p>
+								{isUpdating && existingOrder?.items?.length ? (
+									<>
+										<p className='font-medium mt-4'>
+											Sản phẩm hiện tại trong đơn
+										</p>
+										<ul className='list-disc list-inside text-sm text-default-500'>
+											{existingOrder.items.map((item, idx) => (
+												<li key={item.id ?? idx}>
+													{item.productCode} - {item.productName} x{' '}
+													{item.quantity}
+												</li>
+											))}
+										</ul>
+									</>
+								) : null}
+								<p className='font-medium mt-4'>
+									{isUpdating ? 'Sản phẩm mới thêm vào' : 'Danh sách sản phẩm'}
+								</p>
 								<ul className='list-disc list-inside text-sm text-default-600'>
 									{productRows
 										.filter(
@@ -586,39 +649,10 @@ const NewOrderPage = (): React.JSX.Element => {
 							color='primary'
 							onPress={handleConfirmSubmit}
 							isDisabled={!pinValue.trim()}
-							isLoading={createOrder.isPending}
+							isLoading={createOrder.isPending || updateOrder.isPending}
 						>
-							Xác nhận ký số
+							{isUpdating ? 'Xác nhận thêm' : 'Xác nhận ký số'}
 						</Button>
-					</ModalFooter>
-				</ModalContent>
-			</Modal>
-
-			{/* View today order modal */}
-			<Modal
-				isOpen={viewTodayOrderModalOpen}
-				onOpenChange={setViewTodayOrderModalOpen}
-			>
-				<ModalContent>
-					<ModalHeader>Đơn hàng của khách hôm nay</ModalHeader>
-					<ModalBody>
-						{todayOrder && (
-							<div className='space-y-2 text-sm'>
-								<p>
-									<strong>Số đơn:</strong> {todayOrder.orderNumber}
-								</p>
-								<p>
-									<strong>Ngày:</strong> {todayOrder.orderDate}
-								</p>
-								<p>
-									<strong>Trạng thái:</strong>{' '}
-									{todayOrder.status === 'Signed' ? 'Đã ký' : 'Nháp'}
-								</p>
-							</div>
-						)}
-					</ModalBody>
-					<ModalFooter>
-						<Button onPress={closeViewTodayOrderModal}>Đóng</Button>
 					</ModalFooter>
 				</ModalContent>
 			</Modal>

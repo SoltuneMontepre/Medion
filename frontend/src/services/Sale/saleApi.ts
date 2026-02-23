@@ -13,6 +13,7 @@ import type {
 	Product,
 	ProductDetail,
 	UpdateCustomerRequest,
+	UpdateOrderRequest,
 	UpdateProductRequest,
 } from './types'
 
@@ -28,6 +29,7 @@ export const saleQueryKeys = {
 		['sale', 'customers', 'search', term, limit] as const,
 	todayOrderByCustomer: (customerId: string) =>
 		['sale', 'orders', 'customer', customerId, 'today'] as const,
+	order: (orderId: string) => ['sale', 'orders', orderId] as const,
 	dailyOrderSummary: (date: string | undefined) =>
 		['sale', 'orders', 'daily-summary', date] as const,
 	allProducts: ['sale', 'products'] as const,
@@ -190,6 +192,52 @@ export function useCreateOrder() {
 		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({
 				queryKey: saleQueryKeys.todayOrderByCustomer(variables.customerId),
+			})
+			queryClient.invalidateQueries({
+				queryKey: saleQueryKeys.dailyOrderSummary(undefined),
+			})
+		},
+	})
+}
+
+/** Get an order by id (with items). */
+export function useGetOrderById(
+	orderId: string,
+	options?: { enabled?: boolean }
+) {
+	return useQuery({
+		queryKey: saleQueryKeys.order(orderId),
+		queryFn: () =>
+			apiCall(() =>
+				axiosInstance.get<ApiResult<Order>>(`${ORDER_BASE}/${orderId}`)
+			),
+		enabled: (options?.enabled ?? true) && !!orderId,
+	})
+}
+
+/** Update an existing order's items. Sends X-Transaction-Password header. */
+export function useUpdateOrder() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: (params: {
+			orderId: string
+			items: UpdateOrderRequest['items']
+			pin: string
+		}) =>
+			apiCall(() =>
+				axiosInstance.put<ApiResult<Order>>(
+					`${ORDER_BASE}/${params.orderId}`,
+					{ items: params.items },
+					{
+						headers: {
+							'X-Transaction-Password': params.pin,
+						},
+					}
+				)
+			),
+		onSuccess: (_, variables) => {
+			queryClient.invalidateQueries({
+				queryKey: saleQueryKeys.order(variables.orderId),
 			})
 			queryClient.invalidateQueries({
 				queryKey: saleQueryKeys.dailyOrderSummary(undefined),

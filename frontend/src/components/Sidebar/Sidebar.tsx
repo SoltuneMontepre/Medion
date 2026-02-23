@@ -277,20 +277,20 @@ const defaultNavGroups: SidebarNavGroup[] = [
 				href: '/orders',
 				icon: <IconOrder />,
 			},
-		{
-			key: 'order-summary',
-			label: 'Tổng hợp đơn hàng',
-			href: '/orders/summary',
-			icon: <IconListSummary />,
-		},
-		{
-			key: 'products',
-			label: 'Sản phẩm',
-			href: '/products',
-			icon: <IconInventory />,
-		},
-	],
-},
+			{
+				key: 'order-summary',
+				label: 'Tổng hợp đơn hàng',
+				href: '/orders/summary',
+				icon: <IconListSummary />,
+			},
+			{
+				key: 'products',
+				label: 'Sản phẩm',
+				href: '/products',
+				icon: <IconInventory />,
+			},
+		],
+	},
 	{
 		key: 'production',
 		label: 'Sản xuất',
@@ -366,7 +366,7 @@ const defaultNavGroups: SidebarNavGroup[] = [
 ]
 
 const SIDEBAR_WIDTH_EXPANDED = 256
-const SIDEBAR_WIDTH_COLLAPSED = 64
+const SIDEBAR_WIDTH_COLLAPSED = 80
 
 type SidebarProps = {
 	navGroups?: SidebarNavGroup[]

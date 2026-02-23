@@ -87,6 +87,11 @@ export interface CreateOrderRequest {
 	items: CreateOrderItemRequest[]
 }
 
+/** Request body for updating an existing order's items. */
+export interface UpdateOrderRequest {
+	items: CreateOrderItemRequest[]
+}
+
 // --- Product ---
 
 /** Product list item as returned by the Sale API. */

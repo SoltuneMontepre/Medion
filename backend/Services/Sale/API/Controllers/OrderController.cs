@@ -53,6 +53,58 @@ public class OrderController(IMediator mediator) : ApiControllerBase
     }
 
     /// <summary>
+    ///     Update an existing order's items. Requires X-Transaction-Password header.
+    /// </summary>
+    [RequiresTransactionPassword]
+    [HttpPut("{orderId}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResult<OrderDto>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Update(OrderId orderId, [FromBody] UpdateOrderDto request,
+        CancellationToken cancellationToken)
+    {
+        var userIdClaim = User.FindFirst("sub")
+                          ?? User.FindFirst(ClaimTypes.NameIdentifier)
+                          ?? User.FindFirst("preferred_username");
+
+        if (userIdClaim == null)
+            return Unauthorized(new
+            {
+                error = "User ID not found in token. Authenticate with a user account to update an order.",
+                hint = "Token must contain 'sub' or name identifier claim."
+            });
+
+        if (!Guid.TryParse(userIdClaim.Value, out var userId))
+            return BadRequest(new
+            {
+                error = $"User ID from claim '{userIdClaim.Type}' is not a valid GUID."
+            });
+
+        var salesStaffId = new UserId(userId);
+        var command = new UpdateOrderCommand(orderId, request, salesStaffId);
+        var result = await mediator.Send(command, cancellationToken);
+        return ApiResponse(result);
+    }
+
+    /// <summary>
+    ///     Get an order by id including its items.
+    /// </summary>
+    [HttpGet("{orderId}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResult<OrderDto>))]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetById(OrderId orderId, CancellationToken cancellationToken)
+    {
+        var query = new GetOrderByIdQuery(orderId);
+        var order = await mediator.Send(query, cancellationToken);
+
+        if (order == null)
+            return NotFound<OrderDto>("Order not found");
+
+        return Ok(order, "Order found");
+    }
+
+    /// <summary>
     ///     Tổng hợp đơn đặt hàng trong ngày: gộp tất cả đơn theo ngày, nhóm theo sản phẩm, trả về bảng STT, Mã SP, Tên SP, Quy
     ///     cách, Dạng, Đóng gói, Tổng số lượng.
     ///     Tham số date (tùy chọn): định dạng yyyy-MM-dd (ví dụ: 2026-02-22). Nếu không truyền thì dùng ngày hiện tại (UTC).

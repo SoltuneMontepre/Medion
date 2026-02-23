@@ -48,6 +48,17 @@ public class OrderRepository(SaleDbContext dbContext) : BaseRepository<Order, Or
         return $"DH{date:yyyyMMdd}-{nextValue:D3}";
     }
 
+    public async Task UpdateOrderWithNewItemsAsync(Order order, CancellationToken cancellationToken = default)
+    {
+        foreach (var item in order.Items)
+        {
+            if (DbContext.Entry(item).State == EntityState.Detached)
+                DbContext.Entry(item).State = EntityState.Added;
+        }
+
+        await DbContext.SaveChangesAsync(cancellationToken);
+    }
+
     private async Task<int> GetNextSequenceValueAsync(DateOnly date, CancellationToken cancellationToken)
     {
         var connection = DbContext.Database.GetDbConnection();
