@@ -58,11 +58,16 @@ public class CustomerRepository(SaleDbContext dbContext) : BaseRepository<Custom
         return $"{prefix}{nextNumber:D6}";
     }
 
+    /// <summary>
+    ///     Search by Code, FirstName, LastName, or PhoneNumber (ILIKE %term%).
+    ///     Requires migration AddCustomerSearchGinTrigramIndexes: pg_trgm extension and GIN trigram indexes
+    ///     on Customers so that leading-wildcard search uses index instead of full table scan.
+    /// </summary>
     public async Task<IEnumerable<Customer>> SearchAsync(string term, int limit,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(term))
-            return Array.Empty<Customer>();
+            return [];
 
         var normalized = term.Trim();
 

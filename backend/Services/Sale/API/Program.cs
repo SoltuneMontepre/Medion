@@ -185,18 +185,6 @@ builder.Services.AddMassTransit(x =>
 });
 
 // Register gRPC clients for inter-service communication
-// Debug: Print all security-api related config and env vars
-Console.WriteLine("[Sale.API] === Security Service Discovery Debug ===");
-Console.WriteLine("[Sale.API] --- Environment Variables with 'security' ---");
-foreach (var ev in Environment.GetEnvironmentVariables().Cast<DictionaryEntry>()
-             .Where(x => x.Key.ToString()!.Contains("security", StringComparison.OrdinalIgnoreCase)))
-    Console.WriteLine($"[Sale.API] EnvVar: {ev.Key} = {ev.Value}");
-Console.WriteLine("[Sale.API] --- Configuration with 'security' ---");
-foreach (var kv in builder.Configuration.AsEnumerable()
-             .Where(x => x.Key.Contains("security", StringComparison.OrdinalIgnoreCase)))
-    Console.WriteLine($"[Sale.API] Config: {kv.Key} = {kv.Value}");
-Console.WriteLine("[Sale.API] === End Config Dump ===");
-
 // Try explicit config override first
 var securityGrpcUrl = builder.Configuration["SecurityService:GrpcUrl"];
 
@@ -208,24 +196,11 @@ var discoveredSecurityUrl = builder.Configuration["services:security-api:http:0"
 // Resolve final address
 Uri securityGrpcAddress;
 if (!string.IsNullOrWhiteSpace(securityGrpcUrl))
-{
     securityGrpcAddress = new Uri(securityGrpcUrl);
-    Console.WriteLine($"[Sale.API] Using explicit config: {securityGrpcAddress}");
-}
 else if (!string.IsNullOrWhiteSpace(discoveredSecurityUrl))
-{
     securityGrpcAddress = new Uri(discoveredSecurityUrl);
-    Console.WriteLine($"[Sale.API] Using Aspire-discovered URL: {securityGrpcAddress}");
-}
 else
-{
-    // Hardcoded fallback for local development (Security.API gRPC-only port)
-    securityGrpcAddress = new Uri("http://127.0.0.1:5201");
-    Console.WriteLine($"[Sale.API] Using hardcoded fallback: {securityGrpcAddress}");
-}
-
-// Log resolved address at startup for debugging
-Console.WriteLine($"[Sale.API] Security gRPC address FINAL: {securityGrpcAddress}");
+    securityGrpcAddress = new Uri("http://127.0.0.1:5201"); // Fallback for local development
 
 builder.Services.AddGrpcClient<SignatureService.SignatureServiceClient>(o => { o.Address = securityGrpcAddress; })
     .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
