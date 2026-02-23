@@ -36,55 +36,55 @@ public class CustomerCreatedAuditConsumer(
     IVaultDigitalSignatureService digitalSignatureService)
     : IConsumer<CustomerCreatedIntegrationEvent>
 {
-  public async Task Consume(ConsumeContext<CustomerCreatedIntegrationEvent> context)
-  {
-    var @event = context.Message;
-
-    try
+    public async Task Consume(ConsumeContext<CustomerCreatedIntegrationEvent> context)
     {
-      // Step 1: Extract the payload from the event
-      if (string.IsNullOrWhiteSpace(@event.Payload))
-        throw new ArgumentException("Event payload cannot be null or empty.");
+        var @event = context.Message;
 
-      // Step 2: Base64 encode the payload for Vault Transit Engine
-      var payloadBase64 = Convert.ToBase64String(
-          System.Text.Encoding.UTF8.GetBytes(@event.Payload));
+        try
+        {
+            // Step 1: Extract the payload from the event
+            if (string.IsNullOrWhiteSpace(@event.Payload))
+                throw new ArgumentException("Event payload cannot be null or empty.");
 
-      // Step 3: Sign the payload using Vault Transit Engine
-      var signature = await digitalSignatureService.SignDataAsync(
-          payloadBase64,
-          context.CancellationToken);
+            // Step 2: Base64 encode the payload for Vault Transit Engine
+            var payloadBase64 = Convert.ToBase64String(
+                System.Text.Encoding.UTF8.GetBytes(@event.Payload));
 
-      // Step 4: Create the GlobalAuditLog entity
-      var auditLog = new GlobalAuditLog
-      {
-        Id = GlobalAuditLogId.New(),
-        CorrelationId = @event.CorrelationId,
-        AggregateType = @event.AggregateType,
-        Action = @event.Action,
-        Payload = @event.Payload,
-        UserId = @event.UserId,
-        DigitalSignature = signature,
-        ActionTimestamp = @event.Timestamp,
-        CreatedAt = DateTime.UtcNow,
-        IsVerified = false
-      };
+            // Step 3: Sign the payload using Vault Transit Engine
+            var signature = await digitalSignatureService.SignDataAsync(
+                payloadBase64,
+                context.CancellationToken);
 
-      // Step 5: Save to audit database
-      await auditLogRepository.AddAsync(auditLog, context.CancellationToken);
+            // Step 4: Create the GlobalAuditLog entity
+            var auditLog = new GlobalAuditLog
+            {
+                Id = GlobalAuditLogId.New(),
+                CorrelationId = @event.CorrelationId,
+                AggregateType = @event.AggregateType,
+                Action = @event.Action,
+                Payload = @event.Payload,
+                UserId = @event.UserId,
+                DigitalSignature = signature,
+                ActionTimestamp = @event.Timestamp,
+                CreatedAt = DateTime.UtcNow,
+                IsVerified = false
+            };
 
-      // Step 6: Complete the message (acknowledge to RabbitMQ)
-      // If we reach here, everything succeeded and the message is consumed
+            // Step 5: Save to audit database
+            await auditLogRepository.AddAsync(auditLog, context.CancellationToken);
+
+            // Step 6: Complete the message (acknowledge to RabbitMQ)
+            // If we reach here, everything succeeded and the message is consumed
+        }
+        catch (Exception ex)
+        {
+            // Log the error so operators can investigate
+            System.Diagnostics.Debug.WriteLine(
+                $"Failed to process CustomerCreatedIntegrationEvent (CorrelationId: {@event.CorrelationId}): {ex.Message}");
+
+            // Throw the exception to trigger RabbitMQ retry/nack
+            // MassTransit's retry policy will handle retries
+            throw;
+        }
     }
-    catch (Exception ex)
-    {
-      // Log the error so operators can investigate
-      System.Diagnostics.Debug.WriteLine(
-          $"Failed to process CustomerCreatedIntegrationEvent (CorrelationId: {@event.CorrelationId}): {ex.Message}");
-
-      // Throw the exception to trigger RabbitMQ retry/nack
-      // MassTransit's retry policy will handle retries
-      throw;
-    }
-  }
 }

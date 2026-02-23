@@ -8,14 +8,14 @@ namespace Audit.Application;
 /// </summary>
 public static class DependencyInjection
 {
-  public static IServiceCollection AddAuditApplicationServices(this IServiceCollection services)
-  {
-    // Register MediatR if needed for future use cases
-    services.AddMediatR(cfg =>
+    public static IServiceCollection AddAuditApplicationServices(this IServiceCollection services)
     {
-      cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly);
-    });
+        // Register MediatR if needed for future use cases
+        services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly);
+        });
 
-    return services;
-  }
+        return services;
+    }
 }
