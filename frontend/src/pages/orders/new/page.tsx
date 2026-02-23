@@ -22,12 +22,15 @@ import { addToast } from '@heroui/react'
 import {
 	fetchProductDetail,
 	useCreateOrder,
+	useGetOrderById,
 	useGetTodayOrderByCustomer,
 	useSearchCustomers,
 	useSearchProducts,
+	useUpdateOrder,
 } from '../../../services/Sale/saleApi'
 import type {
 	Customer,
+	Order,
 	OrderSummary,
 	Product,
 	ProductDetail,
@@ -93,18 +96,19 @@ function parseQuantity(s: string): number | null {
 /** Đơn đặt hàng mới – Sale Admin (AC1–AC4) */
 const NewOrderPage = (): React.JSX.Element => {
 	const navigate = useNavigate()
-	const { user } = useAuth()
+	useAuth()
 	const customerSearchRef = useRef<HTMLInputElement>(null)
 
 	const [orderCreatedAt] = useState(() => new Date())
 	const [customerSearchTerm, setCustomerSearchTerm] = useState('')
-	const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+	const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+		null
+	)
 	const [customerDropdownOpen, setCustomerDropdownOpen] = useState(false)
 	const [orderNumber, setOrderNumber] = useState<string | null>(null)
 	const [productRows, setProductRows] = useState<ProductRow[]>([])
 	const [confirmModalOpen, setConfirmModalOpen] = useState(false)
 	const [pinValue, setPinValue] = useState('')
-	const [viewTodayOrderModalOpen, setViewTodayOrderModalOpen] = useState(false)
 
 	const { data: customerSearchResult } = useSearchCustomers(
 		{ term: customerSearchTerm.trim(), limit: 20 },
@@ -122,7 +126,17 @@ const NewOrderPage = (): React.JSX.Element => {
 			: null
 	const customerHasOrderToday = !!todayOrder
 
+	const { data: existingOrderResult } = useGetOrderById(todayOrder?.id ?? '', {
+		enabled: !!todayOrder?.id,
+	})
+	const existingOrder: Order | null =
+		existingOrderResult?.isSuccess && existingOrderResult?.data
+			? existingOrderResult.data
+			: null
+	const isUpdating = customerHasOrderToday
+
 	const createOrder = useCreateOrder()
+	const updateOrder = useUpdateOrder()
 
 	// AC1: Autofocus customer search
 	useEffect(() => {
@@ -136,15 +150,17 @@ const NewOrderPage = (): React.JSX.Element => {
 			return
 		}
 		refetchTodayOrder()
-	}, [selectedCustomer?.id, refetchTodayOrder])
+	}, [selectedCustomer, refetchTodayOrder])
 
 	useEffect(() => {
 		if (selectedCustomer && !customerHasOrderToday) {
 			setOrderNumber(generateOrderNumber())
+		} else if (todayOrder) {
+			setOrderNumber(todayOrder.orderNumber)
 		} else {
 			setOrderNumber(null)
 		}
-	}, [selectedCustomer, customerHasOrderToday])
+	}, [selectedCustomer, customerHasOrderToday, todayOrder])
 
 	const addProductRow = useCallback(() => {
 		setProductRows(prev => [
@@ -156,18 +172,23 @@ const NewOrderPage = (): React.JSX.Element => {
 		])
 	}, [])
 
-	const updateProductRow = useCallback((key: string, patch: Partial<ProductRow>) => {
-		setProductRows(prev =>
-			prev.map(r => (r.key === key ? { ...r, ...patch } : r))
-		)
-	}, [])
+	const updateProductRow = useCallback(
+		(key: string, patch: Partial<ProductRow>) => {
+			setProductRows(prev =>
+				prev.map(r => (r.key === key ? { ...r, ...patch } : r))
+			)
+		},
+		[]
+	)
 
 	const removeProductRow = useCallback((key: string) => {
 		setProductRows(prev => prev.filter(r => r.key !== key))
 	}, [])
 
 	// Product search per row: we use a single "active row" search state for simplicity (search term + which row)
-	const [productSearchRowKey, setProductSearchRowKey] = useState<string | null>(null)
+	const [productSearchRowKey, setProductSearchRowKey] = useState<string | null>(
+		null
+	)
 	const [productSearchTerm, setProductSearchTerm] = useState('')
 	const { data: productSearchResult } = useSearchProducts(
 		{ term: productSearchTerm.trim(), limit: 20 },
@@ -205,25 +226,13 @@ const NewOrderPage = (): React.JSX.Element => {
 
 	const validateQuantity = useCallback((q: string): string => {
 		const n = parseQuantity(q)
-		if (n === null) return 'Số lượng sản phẩm không hợp lệ, vui lòng nhập lại số nguyên dương'
+		if (n === null)
+			return 'Số lượng sản phẩm không hợp lệ, vui lòng nhập lại số nguyên dương'
 		return ''
 	}, [])
 
-	const validateRows = useCallback((): boolean => {
-		let valid = true
-		setProductRows(prev =>
-			prev.map(r => {
-				const err = validateQuantity(r.quantity)
-				if (err) valid = false
-				return { ...r, quantityError: err }
-			})
-		)
-		return valid
-	}, [validateQuantity])
-
 	const canSave =
 		!!selectedCustomer &&
-		!customerHasOrderToday &&
 		productRows.length > 0 &&
 		productRows.every(
 			r =>
@@ -258,100 +267,108 @@ const NewOrderPage = (): React.JSX.Element => {
 	}
 
 	const handleConfirmSubmit = async () => {
-		if (!selectedCustomer || !user?.id || !pinValue.trim()) return
+		if (!selectedCustomer || !pinValue.trim()) return
 		const items = productRows
 			.filter(r => r.productId && parseQuantity(r.quantity) !== null)
 			.map(r => ({
 				productId: r.productId,
 				quantity: parseQuantity(r.quantity)!,
 			}))
-		const result = (await createOrder.mutateAsync({
-			customerId: selectedCustomer.id,
-			salesStaffId: user.id,
-			pin: pinValue.trim(),
-			items,
-		})) as ApiResult<unknown>
+
+		let result: ApiResult<unknown>
+		if (isUpdating && todayOrder) {
+			result = (await updateOrder.mutateAsync({
+				orderId: todayOrder.id,
+				items,
+				pin: pinValue.trim(),
+			})) as ApiResult<unknown>
+		} else {
+			result = (await createOrder.mutateAsync({
+				customerId: selectedCustomer.id,
+				items,
+				pin: pinValue.trim(),
+			})) as ApiResult<unknown>
+		}
+
 		if (result.isSuccess) {
 			addToast({
-				title: 'Lưu và ký đơn hàng thành công',
+				title: isUpdating
+					? 'Thêm sản phẩm vào đơn hàng thành công'
+					: 'Lưu và ký đơn hàng thành công',
 				color: 'success',
 			})
 			setConfirmModalOpen(false)
 			navigate(ORDERS_PATH, { replace: true })
 			return
 		}
-		// Trường hợp hệ thống lỗi (AC4)
 		const isSystemError =
 			(result as ApiResult<unknown>).statusCode >= 500 ||
 			(result as ApiResult<unknown>).statusCode === 0
 		addToast({
 			title: isSystemError
 				? 'Có lỗi xảy ra, vui lòng thử lại sau'
-				: result.message ??
-					'Ký số không thành công, vui lòng kiểm tra lại thiết bị hoặc mã PIN',
+				: (result.message ??
+					'Ký số không thành công, vui lòng kiểm tra lại thiết bị hoặc mã PIN'),
 			color: 'warning',
 		})
 	}
 
-	const openViewTodayOrderModal = () => setViewTodayOrderModalOpen(true)
-	const closeViewTodayOrderModal = () => setViewTodayOrderModalOpen(false)
-
 	return (
-		<div className="p-6 max-w-5xl">
+		<div className='p-6 max-w-5xl'>
 			<Card>
 				<CardHeader>
-					<h1 className="text-xl font-semibold">Đơn đặt hàng mới</h1>
+					<h1 className='text-xl font-semibold'>
+						{isUpdating ? 'Thêm sản phẩm vào đơn hàng' : 'Đơn đặt hàng mới'}
+					</h1>
 				</CardHeader>
-				<CardBody className="flex flex-col gap-6">
+				<CardBody className='flex flex-col gap-6'>
 					{/* AC1: Ngày tạo đơn - read-only, DD/MM/YYYY HH:mm */}
-					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+					<div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
 						<Input
-							label="Ngày Tạo Đơn"
+							label='Ngày Tạo Đơn'
 							value={formatOrderDate(orderCreatedAt)}
 							isReadOnly
-							description="Định dạng: DD/MM/YYYY HH:mm"
+							description='Định dạng: DD/MM/YYYY HH:mm'
 						/>
 						{orderNumber && (
-							<Input
-								label="Số Đơn Hàng"
-								value={orderNumber}
-								isReadOnly
-							/>
+							<Input label='Số Đơn Hàng' value={orderNumber} isReadOnly />
 						)}
 					</div>
 
 					{/* AC2: Customer search - [Mã KH] - [Tên KH] - [SĐT] - [Địa chỉ] */}
-					<div className="relative">
+					<div className='relative'>
 						<Input
 							ref={customerSearchRef}
-							label="Mã Khách Hàng / Tên / SĐT"
-							placeholder="Nhập mã, tên hoặc số điện thoại..."
+							label='Mã Khách Hàng / Tên / SĐT'
+							placeholder='Nhập mã, tên hoặc số điện thoại...'
 							value={customerSearchTerm}
 							onValueChange={v => {
 								setCustomerSearchTerm(v)
 								setCustomerDropdownOpen(true)
 								if (!v.trim()) setSelectedCustomer(null)
 							}}
-							onFocus={() => customerSearchTerm && setCustomerDropdownOpen(true)}
+							onFocus={() =>
+								customerSearchTerm && setCustomerDropdownOpen(true)
+							}
 							onBlur={() =>
 								setTimeout(() => setCustomerDropdownOpen(false), 200)
 							}
 						/>
 						{customerDropdownOpen && customerSearchTerm.trim() && (
 							<ul
-								className="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-medium border border-divider bg-content1 shadow-lg py-1"
-								role="listbox"
+								className='absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-medium border border-divider bg-content1 shadow-lg py-1'
+								role='listbox'
 							>
 								{customers.length === 0 ? (
-									<li className="px-3 py-2 text-default-500 text-sm">
+									<li className='px-3 py-2 text-default-500 text-sm'>
 										Không tìm thấy khách hàng phù hợp
 									</li>
 								) : (
 									customers.map(c => (
 										<li
 											key={c.id}
-											role="option"
-											className="px-3 py-2 text-sm cursor-pointer hover:bg-content2"
+											role='option'
+											className='px-3 py-2 text-sm cursor-pointer hover:bg-content2'
 											onMouseDown={() => handleSelectCustomer(c)}
 										>
 											{c.code} - {fullName(c)} - {c.phoneNumber} -{' '}
@@ -366,61 +383,76 @@ const NewOrderPage = (): React.JSX.Element => {
 					{/* Selected customer fields (read-only) */}
 					{selectedCustomer && (
 						<>
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+							<div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+								<Input label='Mã KH' value={selectedCustomer.code} isReadOnly />
 								<Input
-									label="Mã KH"
-									value={selectedCustomer.code}
-									isReadOnly
-								/>
-								<Input
-									label="Tên KH"
+									label='Tên KH'
 									value={fullName(selectedCustomer)}
 									isReadOnly
 								/>
 								<Input
-									label="SĐT"
+									label='SĐT'
 									value={selectedCustomer.phoneNumber}
 									isReadOnly
 								/>
 								<Input
-									label="Địa chỉ"
+									label='Địa chỉ'
 									value={selectedCustomer.address || '—'}
 									isReadOnly
 								/>
 							</div>
 
-							{/* Case 1: already has order today */}
 							{customerHasOrderToday && todayOrder && (
-								<div className="rounded-medium border border-danger bg-danger/10 p-4">
-									<p className="text-danger font-medium">
-										Khách hàng này đã có đơn hàng hôm nay
+								<div className='rounded-medium border border-warning bg-warning/10 p-4'>
+									<p className='text-warning font-medium'>
+										Khách hàng này đã có đơn hàng hôm nay (
+										{todayOrder.orderNumber}). Sản phẩm mới sẽ được thêm vào đơn
+										hàng hiện tại.
 									</p>
-									<Button
-										size="sm"
-										variant="flat"
-										color="primary"
-										className="mt-2"
-										onPress={openViewTodayOrderModal}
-									>
-										Xem đơn hàng của khách
-									</Button>
 								</div>
+							)}
+
+							{existingOrder?.items && existingOrder.items.length > 0 && (
+								<>
+									<h2 className='text-lg font-medium'>
+										Sản phẩm hiện tại trong đơn
+									</h2>
+									<Table aria-label='Sản phẩm hiện tại'>
+										<TableHeader>
+											<TableColumn width={40}>STT</TableColumn>
+											<TableColumn>Mã SP</TableColumn>
+											<TableColumn>Tên SP</TableColumn>
+											<TableColumn width={100}>Số Lượng</TableColumn>
+										</TableHeader>
+										<TableBody>
+											{existingOrder.items.map((item, idx) => (
+												<TableRow key={item.id ?? idx}>
+													<TableCell>{idx + 1}</TableCell>
+													<TableCell>{item.productCode}</TableCell>
+													<TableCell>{item.productName}</TableCell>
+													<TableCell>{item.quantity}</TableCell>
+												</TableRow>
+											))}
+										</TableBody>
+									</Table>
+								</>
 							)}
 						</>
 					)}
 
-					{/* AC3: Product rows - only when customer valid (no order today) */}
-					{selectedCustomer && !customerHasOrderToday && (
+					{selectedCustomer && (
 						<>
-							<div className="flex items-center justify-between gap-4 flex-wrap">
-								<h2 className="text-lg font-medium">Danh sách sản phẩm</h2>
-								<Button color="primary" onPress={addProductRow}>
+							<div className='flex items-center justify-between gap-4 flex-wrap'>
+								<h2 className='text-lg font-medium'>
+									{isUpdating ? 'Thêm sản phẩm mới' : 'Danh sách sản phẩm'}
+								</h2>
+								<Button color='primary' onPress={addProductRow}>
 									Thêm Sản Phẩm
 								</Button>
 							</div>
 
 							{productRows.length > 0 && (
-								<Table aria-label="Sản phẩm đặt hàng">
+								<Table aria-label='Sản phẩm đặt hàng'>
 									<TableHeader>
 										<TableColumn width={40}>STT</TableColumn>
 										<TableColumn>Mã SP / Tìm kiếm</TableColumn>
@@ -429,7 +461,7 @@ const NewOrderPage = (): React.JSX.Element => {
 										<TableColumn>Dạng SP</TableColumn>
 										<TableColumn>Dạng đóng gói</TableColumn>
 										<TableColumn width={100}>Số Lượng</TableColumn>
-										<TableColumn width={60} align="center">
+										<TableColumn width={60} align='center'>
 											Thao tác
 										</TableColumn>
 									</TableHeader>
@@ -441,10 +473,10 @@ const NewOrderPage = (): React.JSX.Element => {
 													{row.productId ? (
 														row.productCode
 													) : (
-														<div className="relative">
+														<div className='relative'>
 															<Input
-																size="sm"
-																placeholder="Mã hoặc tên sản phẩm..."
+																size='sm'
+																placeholder='Mã hoặc tên sản phẩm...'
 																value={
 																	productSearchRowKey === row.key
 																		? productSearchTerm
@@ -461,30 +493,30 @@ const NewOrderPage = (): React.JSX.Element => {
 															/>
 															{productSearchRowKey === row.key &&
 																productSearchTerm.trim() && (
-																<ul
-																	className="absolute z-10 left-0 right-0 mt-1 max-h-48 overflow-auto rounded-medium border border-divider bg-content1 shadow-lg py-1"
-																	role="listbox"
-																>
-																	{productSuggestions.length === 0 ? (
-																		<li className="px-3 py-2 text-default-500 text-sm">
-																			Không tìm thấy sản phẩm phù hợp
-																		</li>
-																	) : (
-																		productSuggestions.map(p => (
-																			<li
-																				key={p.id}
-																				role="option"
-																				className="px-3 py-2 text-sm cursor-pointer hover:bg-content2"
-																				onMouseDown={() =>
-																					handleSelectProduct(row.key, p)
-																				}
-																			>
-																				{p.code} - {p.name}
+																	<ul
+																		className='absolute z-10 left-0 right-0 mt-1 max-h-48 overflow-auto rounded-medium border border-divider bg-content1 shadow-lg py-1'
+																		role='listbox'
+																	>
+																		{productSuggestions.length === 0 ? (
+																			<li className='px-3 py-2 text-default-500 text-sm'>
+																				Không tìm thấy sản phẩm phù hợp
 																			</li>
-																		))
-																	)}
-																</ul>
-															)}
+																		) : (
+																			productSuggestions.map(p => (
+																				<li
+																					key={p.id}
+																					role='option'
+																					className='px-3 py-2 text-sm cursor-pointer hover:bg-content2'
+																					onMouseDown={() =>
+																						handleSelectProduct(row.key, p)
+																					}
+																				>
+																					{p.code} - {p.name}
+																				</li>
+																			))
+																		)}
+																	</ul>
+																)}
 														</div>
 													)}
 												</TableCell>
@@ -495,9 +527,9 @@ const NewOrderPage = (): React.JSX.Element => {
 												<TableCell>
 													<div>
 														<Input
-															type="number"
-															size="sm"
-															placeholder="SL"
+															type='number'
+															size='sm'
+															placeholder='SL'
 															value={row.quantity}
 															onValueChange={v =>
 																updateProductRow(row.key, {
@@ -509,17 +541,17 @@ const NewOrderPage = (): React.JSX.Element => {
 															isInvalid={!!row.quantityError}
 														/>
 														{row.quantityError && (
-															<p className="text-danger text-tiny mt-1">
+															<p className='text-danger text-tiny mt-1'>
 																{row.quantityError}
 															</p>
 														)}
 													</div>
 												</TableCell>
-												<TableCell align="center">
+												<TableCell align='center'>
 													<Button
-														size="sm"
-														variant="light"
-														color="danger"
+														size='sm'
+														variant='light'
+														color='danger'
 														onPress={() => removeProductRow(row.key)}
 													>
 														Xóa
@@ -533,14 +565,13 @@ const NewOrderPage = (): React.JSX.Element => {
 						</>
 					)}
 
-					{/* AC1: Lưu Đơn disabled by default; AC3 Case 1: disable when quantity invalid */}
-					<div className="flex justify-end pt-4">
+					<div className='flex justify-end pt-4'>
 						<Button
-							color="primary"
+							color='primary'
 							onPress={handleSaveClick}
 							isDisabled={!canSave}
 						>
-							Lưu Đơn
+							{isUpdating ? 'Thêm Vào Đơn' : 'Lưu Đơn'}
 						</Button>
 					</div>
 				</CardBody>
@@ -550,81 +581,78 @@ const NewOrderPage = (): React.JSX.Element => {
 			<Modal
 				isOpen={confirmModalOpen}
 				onOpenChange={setConfirmModalOpen}
-				size="2xl"
+				size='2xl'
 			>
 				<ModalContent>
-					<ModalHeader>Xác nhận ký số đơn hàng</ModalHeader>
+					<ModalHeader>
+						{isUpdating
+							? 'Xác nhận thêm sản phẩm vào đơn hàng'
+							: 'Xác nhận ký số đơn hàng'}
+					</ModalHeader>
 					<ModalBody>
 						{selectedCustomer && (
 							<>
-								<p className="font-medium">Thông tin khách hàng</p>
-								<p className="text-sm text-default-600">
+								<p className='font-medium'>Thông tin khách hàng</p>
+								<p className='text-sm text-default-600'>
 									{selectedCustomer.code} - {fullName(selectedCustomer)} -{' '}
 									{selectedCustomer.phoneNumber}
 								</p>
-								<p className="font-medium mt-4">Danh sách sản phẩm</p>
-								<ul className="list-disc list-inside text-sm text-default-600">
+								{isUpdating && existingOrder?.items?.length ? (
+									<>
+										<p className='font-medium mt-4'>
+											Sản phẩm hiện tại trong đơn
+										</p>
+										<ul className='list-disc list-inside text-sm text-default-500'>
+											{existingOrder.items.map((item, idx) => (
+												<li key={item.id ?? idx}>
+													{item.productCode} - {item.productName} x{' '}
+													{item.quantity}
+												</li>
+											))}
+										</ul>
+									</>
+								) : null}
+								<p className='font-medium mt-4'>
+									{isUpdating ? 'Sản phẩm mới thêm vào' : 'Danh sách sản phẩm'}
+								</p>
+								<ul className='list-disc list-inside text-sm text-default-600'>
 									{productRows
-										.filter(r => r.productId && parseQuantity(r.quantity) !== null)
-										.map((r, i) => (
+										.filter(
+											r => r.productId && parseQuantity(r.quantity) !== null
+										)
+										.map(r => (
 											<li key={r.key}>
 												{r.productCode} - {r.productName} x{' '}
 												{parseQuantity(r.quantity)}
 											</li>
 										))}
 								</ul>
-								<p className="text-default-500 text-sm mt-2">
+								<p className='text-default-500 text-sm mt-2'>
 									Tổng tiền: Theo quy định
 								</p>
 								<Input
-									label="Mã PIN"
-									type="password"
-									placeholder="Nhập mã PIN"
+									label='Mã PIN'
+									type='password'
+									placeholder='Nhập mã PIN'
 									value={pinValue}
 									onValueChange={setPinValue}
-									className="mt-4"
+									className='mt-4'
 								/>
 							</>
 						)}
 					</ModalBody>
 					<ModalFooter>
-						<Button variant="light" onPress={() => setConfirmModalOpen(false)}>
+						<Button variant='light' onPress={() => setConfirmModalOpen(false)}>
 							Hủy
 						</Button>
 						<Button
-							color="primary"
+							color='primary'
 							onPress={handleConfirmSubmit}
 							isDisabled={!pinValue.trim()}
-							isLoading={createOrder.isPending}
+							isLoading={createOrder.isPending || updateOrder.isPending}
 						>
-							Xác nhận ký số
+							{isUpdating ? 'Xác nhận thêm' : 'Xác nhận ký số'}
 						</Button>
-					</ModalFooter>
-				</ModalContent>
-			</Modal>
-
-			{/* View today order modal */}
-			<Modal isOpen={viewTodayOrderModalOpen} onOpenChange={setViewTodayOrderModalOpen}>
-				<ModalContent>
-					<ModalHeader>Đơn hàng của khách hôm nay</ModalHeader>
-					<ModalBody>
-						{todayOrder && (
-							<div className="space-y-2 text-sm">
-								<p>
-									<strong>Số đơn:</strong> {todayOrder.orderNumber}
-								</p>
-								<p>
-									<strong>Ngày:</strong> {todayOrder.orderDate}
-								</p>
-								<p>
-									<strong>Trạng thái:</strong>{' '}
-									{todayOrder.status === 'Signed' ? 'Đã ký' : 'Nháp'}
-								</p>
-							</div>
-						)}
-					</ModalBody>
-					<ModalFooter>
-						<Button onPress={closeViewTodayOrderModal}>Đóng</Button>
 					</ModalFooter>
 				</ModalContent>
 			</Modal>

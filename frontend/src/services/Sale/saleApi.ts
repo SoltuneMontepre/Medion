@@ -7,11 +7,13 @@ import type {
 	CreateOrderRequest,
 	CreateProductRequest,
 	Customer,
+	DailyOrderSummaryItem,
 	Order,
 	OrderSummary,
 	Product,
 	ProductDetail,
 	UpdateCustomerRequest,
+	UpdateOrderRequest,
 	UpdateProductRequest,
 } from './types'
 
@@ -27,6 +29,9 @@ export const saleQueryKeys = {
 		['sale', 'customers', 'search', term, limit] as const,
 	todayOrderByCustomer: (customerId: string) =>
 		['sale', 'orders', 'customer', customerId, 'today'] as const,
+	order: (orderId: string) => ['sale', 'orders', orderId] as const,
+	dailyOrderSummary: (date: string | undefined) =>
+		['sale', 'orders', 'daily-summary', date] as const,
 	allProducts: ['sale', 'products'] as const,
 	product: (productId: string) => ['sale', 'product', productId] as const,
 	productSearch: (term: string, limit?: number) =>
@@ -146,15 +151,96 @@ export function useGetTodayOrderByCustomer(
 	})
 }
 
-/** Create and sign a new order. */
+/** Get daily order summary (tổng hợp đơn đặt hàng trong ngày). Optional date: yyyy-MM-dd; default today UTC. */
+export function useGetDailyOrderSummary(
+	date: string | undefined,
+	options?: { enabled?: boolean }
+) {
+	return useQuery({
+		queryKey: saleQueryKeys.dailyOrderSummary(date),
+		queryFn: () =>
+			apiCall(() =>
+				axiosInstance.get<ApiResult<DailyOrderSummaryItem[]>>(
+					`${ORDER_BASE}/daily-summary`,
+					date ? { params: { date } } : undefined
+				)
+			),
+		enabled: options?.enabled ?? true,
+	})
+}
+
+/** Create and sign a new order. Sends X-Transaction-Password header; body is customerId + items only. */
 export function useCreateOrder() {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: (body: CreateOrderRequest) =>
-			apiCall(() => axiosInstance.post<ApiResult<Order>>(ORDER_BASE, body)),
+		mutationFn: (params: {
+			customerId: string
+			items: CreateOrderRequest['items']
+			pin: string
+		}) =>
+			apiCall(() =>
+				axiosInstance.post<ApiResult<Order>>(
+					ORDER_BASE,
+					{ customerId: params.customerId, items: params.items },
+					{
+						headers: {
+							'X-Transaction-Password': params.pin,
+						},
+					}
+				)
+			),
 		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({
 				queryKey: saleQueryKeys.todayOrderByCustomer(variables.customerId),
+			})
+			queryClient.invalidateQueries({
+				queryKey: saleQueryKeys.dailyOrderSummary(undefined),
+			})
+		},
+	})
+}
+
+/** Get an order by id (with items). */
+export function useGetOrderById(
+	orderId: string,
+	options?: { enabled?: boolean }
+) {
+	return useQuery({
+		queryKey: saleQueryKeys.order(orderId),
+		queryFn: () =>
+			apiCall(() =>
+				axiosInstance.get<ApiResult<Order>>(`${ORDER_BASE}/${orderId}`)
+			),
+		enabled: (options?.enabled ?? true) && !!orderId,
+	})
+}
+
+/** Update an existing order's items. Sends X-Transaction-Password header. */
+export function useUpdateOrder() {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: (params: {
+			orderId: string
+			items: UpdateOrderRequest['items']
+			pin: string
+		}) =>
+			apiCall(() =>
+				axiosInstance.put<ApiResult<Order>>(
+					`${ORDER_BASE}/${params.orderId}`,
+					{ items: params.items },
+					{
+						headers: {
+							'X-Transaction-Password': params.pin,
+						},
+					}
+				)
+			),
+		onSuccess: (_, variables) => {
+			queryClient.invalidateQueries({
+				queryKey: saleQueryKeys.order(variables.orderId),
+			})
+			queryClient.invalidateQueries({
+				queryKey: saleQueryKeys.dailyOrderSummary(undefined),
 			})
 		},
 	})

@@ -10,7 +10,6 @@ builder.AddServiceDefaults();
 var authority = builder.Configuration["Auth:Authority"];
 if (string.IsNullOrWhiteSpace(authority))
     throw new InvalidOperationException("Auth configuration is missing. Expected Auth:Authority.");
-var audience = builder.Configuration["Auth:Audience"];
 var requireHttpsMetadata = builder.Configuration.GetValue("Auth:RequireHttpsMetadata",
     !builder.Environment.IsDevelopment());
 
@@ -22,8 +21,7 @@ builder.Services
         options.RequireHttpsMetadata = requireHttpsMetadata;
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateAudience = true,
-            ValidAudience = audience
+            ValidateAudience = false
         };
     });
 

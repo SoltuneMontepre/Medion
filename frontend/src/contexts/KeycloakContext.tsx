@@ -7,6 +7,7 @@ import React, {
 	useState,
 } from 'react'
 import Keycloak from 'keycloak-js'
+import { Spinner } from '@heroui/react'
 import { keycloakConfig } from '../config/keycloak'
 import useAuth from '../hooks/useAuth'
 import type { User } from '../services/Identity/types'
@@ -163,6 +164,16 @@ export function KeycloakProvider({
 		isReady,
 		login,
 		logout,
+	}
+
+	if (!isReady) {
+		return (
+			<KeycloakContext.Provider value={value}>
+				<div className='min-h-screen flex items-center justify-center bg-content2'>
+					<Spinner size='lg' />
+				</div>
+			</KeycloakContext.Provider>
+		)
 	}
 
 	return (

@@ -64,17 +64,31 @@ export interface OrderSummary {
 	customerId: string
 }
 
+/** One row of the daily order summary (tổng hợp đơn đặt hàng trong ngày). */
+export interface DailyOrderSummaryItem {
+	stt: number
+	productCode: string
+	productName: string
+	specification: string
+	form: string
+	packaging: string
+	totalQuantity: number
+}
+
 /** Request body for creating an order item. */
 export interface CreateOrderItemRequest {
 	productId: string
 	quantity: number
 }
 
-/** Request body for creating an order. */
+/** Request body for creating an order (salesStaffId from JWT; pin sent as X-Transaction-Password header). */
 export interface CreateOrderRequest {
 	customerId: string
-	salesStaffId: string
-	pin: string
+	items: CreateOrderItemRequest[]
+}
+
+/** Request body for updating an existing order's items. */
+export interface UpdateOrderRequest {
 	items: CreateOrderItemRequest[]
 }
 
