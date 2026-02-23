@@ -16,7 +16,7 @@ public class UserDigitalSignatureRepository(SaleDbContext dbContext) : IUserDigi
     public async Task AddOrUpdateAsync(UserDigitalSignature signature, CancellationToken cancellationToken = default)
     {
         var existing = await GetByUserIdAsync(signature.UserId, cancellationToken);
-        if (existing == null)
+        if (existing is null)
         {
             signature.CreatedAt = DateTime.UtcNow;
             await dbContext.UserDigitalSignatures.AddAsync(signature, cancellationToken);

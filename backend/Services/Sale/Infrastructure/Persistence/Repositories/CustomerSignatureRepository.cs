@@ -47,7 +47,7 @@ public class CustomerSignatureRepository(SaleDbContext dbContext)
         CancellationToken cancellationToken = default)
     {
         var signature = await GetByIdAsync(id, cancellationToken);
-        if (signature != null)
+        if (signature is not null)
         {
             signature.IsVerified = true;
             signature.VerifiedAt = DateTime.UtcNow;

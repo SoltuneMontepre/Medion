@@ -11,12 +11,12 @@ public sealed class StronglyTypedIdJsonConverter<TId> : JsonConverter<TId>
         switch (reader.TokenType)
         {
             case JsonTokenType.String:
-            {
-                var value = reader.GetString();
-                if (string.IsNullOrWhiteSpace(value))
-                    return default;
-                return (TId)Activator.CreateInstance(typeof(TId), Guid.Parse(value))!;
-            }
+                {
+                    var value = reader.GetString();
+                    if (string.IsNullOrWhiteSpace(value))
+                        return default;
+                    return (TId)Activator.CreateInstance(typeof(TId), Guid.Parse(value))!;
+                }
             case JsonTokenType.Null:
                 return default;
             default:

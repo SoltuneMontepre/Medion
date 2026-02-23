@@ -29,7 +29,7 @@ public class CustomerRepository(SaleDbContext dbContext) : BaseRepository<Custom
     public async Task DeleteAsync(CustomerId id, CancellationToken cancellationToken = default)
     {
         var customer = await GetByIdAsync(id, cancellationToken);
-        if (customer != null)
+        if (customer is not null)
             await DeleteAsync(customer, cancellationToken);
     }
 
@@ -49,7 +49,7 @@ public class CustomerRepository(SaleDbContext dbContext) : BaseRepository<Custom
             .FirstOrDefaultAsync(cancellationToken);
 
         var nextNumber = 1;
-        if (lastCustomer != null)
+        if (lastCustomer is not null)
         {
             var lastNumberPart = lastCustomer.Code[prefix.Length..];
             if (int.TryParse(lastNumberPart, out var lastNumber)) nextNumber = lastNumber + 1;
@@ -58,11 +58,16 @@ public class CustomerRepository(SaleDbContext dbContext) : BaseRepository<Custom
         return $"{prefix}{nextNumber:D6}";
     }
 
+    /// <summary>
+    ///     Search by Code, FirstName, LastName, or PhoneNumber (ILIKE %term%).
+    ///     Requires migration AddCustomerSearchGinTrigramIndexes: pg_trgm extension and GIN trigram indexes
+    ///     on Customers so that leading-wildcard search uses index instead of full table scan.
+    /// </summary>
     public async Task<IEnumerable<Customer>> SearchAsync(string term, int limit,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(term))
-            return Array.Empty<Customer>();
+            return [];
 
         var normalized = term.Trim();
 

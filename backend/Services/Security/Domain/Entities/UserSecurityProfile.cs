@@ -5,8 +5,8 @@ namespace Security.Domain.Entities;
 /// </summary>
 public sealed class UserSecurityProfile
 {
-  public Guid UserId { get; set; }
-  public string TransactionPinHash { get; set; } = null!;
-  public DateTime CreatedAt { get; set; }
-  public DateTime? UpdatedAt { get; set; }
+    public Guid UserId { get; set; }
+    public string TransactionPinHash { get; set; } = null!;
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 }

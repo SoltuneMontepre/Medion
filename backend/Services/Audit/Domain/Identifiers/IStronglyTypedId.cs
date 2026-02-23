@@ -6,5 +6,5 @@ namespace Audit.Domain.Identifiers;
 /// </summary>
 public interface IStronglyTypedId
 {
-  Guid Value { get; }
+    Guid Value { get; }
 }

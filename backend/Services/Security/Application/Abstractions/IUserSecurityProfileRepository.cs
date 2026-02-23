@@ -4,6 +4,6 @@ namespace Security.Application.Abstractions;
 
 public interface IUserSecurityProfileRepository
 {
-  Task<UserSecurityProfile?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
-  Task AddOrUpdateAsync(UserSecurityProfile profile, CancellationToken cancellationToken = default);
+    Task<UserSecurityProfile?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task AddOrUpdateAsync(UserSecurityProfile profile, CancellationToken cancellationToken = default);
 }

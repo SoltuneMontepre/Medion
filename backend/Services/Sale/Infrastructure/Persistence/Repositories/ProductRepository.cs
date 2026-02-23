@@ -44,7 +44,7 @@ public class ProductRepository(SaleDbContext dbContext) : BaseRepository<Product
     public async Task<bool> DeleteAsync(ProductId id, CancellationToken cancellationToken = default)
     {
         var product = await GetByIdAsync(id, cancellationToken);
-        if (product == null)
+        if (product is null)
             return false;
         await DeleteAsync(product, cancellationToken);
         return true;

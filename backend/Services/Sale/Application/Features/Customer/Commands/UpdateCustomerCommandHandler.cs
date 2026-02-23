@@ -14,7 +14,7 @@ public class UpdateCustomerCommandHandler(ICustomerRepository customerRepository
     {
         // Get existing customer
         var customer = await customerRepository.GetByIdAsync(request.Id, cancellationToken);
-        if (customer == null)
+        if (customer is null)
             return ApiResult<CustomerDto>.NotFound($"Customer with ID '{request.Id}' not found");
 
         // Update properties

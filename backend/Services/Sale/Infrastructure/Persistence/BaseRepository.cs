@@ -62,7 +62,7 @@ public abstract class BaseRepository<TEntity, TId>(SaleDbContext dbContext) : IB
     public virtual Task<bool> AnyAsync(Expression<Func<TEntity, bool>>? predicate = null,
         CancellationToken cancellationToken = default)
     {
-        return predicate == null
+        return predicate is null
             ? Queryable.AnyAsync(cancellationToken)
             : Queryable.AnyAsync(predicate, cancellationToken);
     }
@@ -70,7 +70,7 @@ public abstract class BaseRepository<TEntity, TId>(SaleDbContext dbContext) : IB
     public virtual Task<long> CountAsync(Expression<Func<TEntity, bool>>? predicate = null,
         CancellationToken cancellationToken = default)
     {
-        return predicate == null
+        return predicate is null
             ? Queryable.LongCountAsync(cancellationToken)
             : Queryable.LongCountAsync(predicate, cancellationToken);
     }
@@ -100,14 +100,14 @@ public abstract class BaseRepository<TEntity, TId>(SaleDbContext dbContext) : IB
     {
         var query = Queryable;
 
-        if (specification.Criteria != null)
+        if (specification.Criteria is not null)
             query = query.Where(specification.Criteria);
 
         query = ApplyIncludes(query, specification.Includes);
 
-        if (specification.OrderBy != null)
+        if (specification.OrderBy is not null)
             query = query.OrderBy(specification.OrderBy);
-        else if (specification.OrderByDescending != null)
+        else if (specification.OrderByDescending is not null)
             query = query.OrderByDescending(specification.OrderByDescending);
 
         if (specification.Skip.HasValue)
