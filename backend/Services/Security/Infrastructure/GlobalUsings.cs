@@ -1,0 +1,14 @@
+global using System.Security.Cryptography;
+global using System.Text;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.EntityFrameworkCore.Metadata.Builders;
+global using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;
+global using VaultSharp;
+global using VaultSharp.V1.AuthMethods;
+global using VaultSharp.V1.AuthMethods.AppRole;
+global using VaultSharp.V1.AuthMethods.Token;
+global using VaultSharp.V1.Commons;
+global using VaultSharp.V1.SecretsEngines.Transit;

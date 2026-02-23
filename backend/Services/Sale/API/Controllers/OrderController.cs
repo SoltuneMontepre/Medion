@@ -1,7 +1,3 @@
-using System.Security.Claims;
-using MediatR;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Sale.API.Attributes;
 using Sale.Application.Common.DTOs;
 using Sale.Application.Features.Order.Commands;
@@ -57,7 +53,8 @@ public class OrderController(IMediator mediator) : ApiControllerBase
     }
 
     /// <summary>
-    ///     Tổng hợp đơn đặt hàng trong ngày: gộp tất cả đơn theo ngày, nhóm theo sản phẩm, trả về bảng STT, Mã SP, Tên SP, Quy cách, Dạng, Đóng gói, Tổng số lượng.
+    ///     Tổng hợp đơn đặt hàng trong ngày: gộp tất cả đơn theo ngày, nhóm theo sản phẩm, trả về bảng STT, Mã SP, Tên SP, Quy
+    ///     cách, Dạng, Đóng gói, Tổng số lượng.
     ///     Tham số date (tùy chọn): định dạng yyyy-MM-dd (ví dụ: 2026-02-22). Nếu không truyền thì dùng ngày hiện tại (UTC).
     /// </summary>
     [HttpGet("daily-summary")]

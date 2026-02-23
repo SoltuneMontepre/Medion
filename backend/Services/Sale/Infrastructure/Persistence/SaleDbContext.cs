@@ -1,5 +1,4 @@
 using MassTransit;
-using Microsoft.EntityFrameworkCore;
 using Sale.Domain.Entities;
 
 namespace Sale.Infrastructure.Persistence;

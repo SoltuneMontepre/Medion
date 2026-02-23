@@ -1,4 +1,3 @@
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using Sale.Domain.Identifiers;
 
@@ -9,18 +8,20 @@ public sealed class StronglyTypedIdJsonConverter<TId> : JsonConverter<TId>
 {
     public override TId Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        if (reader.TokenType == JsonTokenType.String)
+        switch (reader.TokenType)
         {
-            var value = reader.GetString();
-            if (string.IsNullOrWhiteSpace(value))
+            case JsonTokenType.String:
+            {
+                var value = reader.GetString();
+                if (string.IsNullOrWhiteSpace(value))
+                    return default;
+                return (TId)Activator.CreateInstance(typeof(TId), Guid.Parse(value))!;
+            }
+            case JsonTokenType.Null:
                 return default;
-            return (TId)Activator.CreateInstance(typeof(TId), Guid.Parse(value))!;
+            default:
+                throw new JsonException($"Unable to convert to {typeof(TId).Name}.");
         }
-
-        if (reader.TokenType == JsonTokenType.Null)
-            return default;
-
-        throw new JsonException($"Unable to convert to {typeof(TId).Name}.");
     }
 
     public override void Write(Utf8JsonWriter writer, TId value, JsonSerializerOptions options)

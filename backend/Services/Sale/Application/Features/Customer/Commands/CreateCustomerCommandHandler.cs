@@ -1,10 +1,5 @@
-using System.Text.Json;
-using Mapster;
-using MassTransit;
-using MediatR;
 using Medion.Shared.Enums;
 using Medion.Shared.Events;
-using Microsoft.Extensions.Logging;
 using Sale.Application.Abstractions;
 using Sale.Application.Common.DTOs;
 using ServiceDefaults.ApiResponses;

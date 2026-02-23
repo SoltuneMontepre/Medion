@@ -1,7 +1,3 @@
-using System.Security.Claims;
-using MediatR;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Security.Application.Features.TransactionPin.Commands;
 
 namespace Security.API.Controllers;
@@ -18,8 +14,8 @@ public class TransactionPinController(IMediator mediator) : ControllerBase
     {
         // Lấy userId từ JWT claims
         var userIdClaim = User.FindFirst("sub")
-                            ?? User.FindFirst(ClaimTypes.NameIdentifier)
-                            ?? User.FindFirst("preferred_username");
+                          ?? User.FindFirst(ClaimTypes.NameIdentifier)
+                          ?? User.FindFirst("preferred_username");
 
         if (userIdClaim == null)
         {
@@ -28,19 +24,18 @@ public class TransactionPinController(IMediator mediator) : ControllerBase
 
             return Unauthorized(new
             {
-                error = "User ID not found in token. This endpoint requires user authentication, not client credentials.",
+                error =
+                    "User ID not found in token. This endpoint requires user authentication, not client credentials.",
                 hint = "Please authenticate with a user account (not service account) to get a token with 'sub' claim.",
                 availableClaims = User.Claims.Select(c => new { c.Type, c.Value }).ToList()
             });
         }
 
         if (!Guid.TryParse(userIdClaim.Value, out var userId))
-        {
             return BadRequest(new
             {
                 error = $"User ID from claim '{userIdClaim.Type}' with value '{userIdClaim.Value}' is not a valid GUID"
             });
-        }
 
         logger.LogInformation("Setting up transaction PIN for user {UserId}", userId);
 

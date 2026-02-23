@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.OpenApi.Models;
 using Sale.API.Attributes;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -21,23 +20,21 @@ public class TransactionPasswordHeaderFilter : IOperationFilter
         var requiresSignature = methodInfo?
             .GetCustomAttributes(typeof(RequiresTransactionPasswordAttribute), false).Any() ?? false;
 
-        if (requiresSignature)
-        {
-            operation.Parameters ??= new List<OpenApiParameter>();
+        if (!requiresSignature) return;
+        operation.Parameters ??= [];
 
-            operation.Parameters.Add(new OpenApiParameter
+        operation.Parameters.Add(new OpenApiParameter
+        {
+            Name = "X-Transaction-Password",
+            In = ParameterLocation.Header,
+            Required = true,
+            Description =
+                "Transaction password for digital signature verification (required for sensitive operations)",
+            Schema = new OpenApiSchema
             {
-                Name = "X-Transaction-Password",
-                In = ParameterLocation.Header,
-                Required = true,
-                Description =
-                    "Transaction password for digital signature verification (required for sensitive operations)",
-                Schema = new OpenApiSchema
-                {
-                    Type = "string",
-                    Format = "password"
-                }
-            });
-        }
+                Type = "string",
+                Format = "password"
+            }
+        });
     }
 }

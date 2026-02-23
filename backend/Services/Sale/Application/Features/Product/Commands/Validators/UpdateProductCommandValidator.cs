@@ -1,5 +1,3 @@
-using FluentValidation;
-
 namespace Sale.Application.Features.Product.Commands.Validators;
 
 public class UpdateProductCommandValidator : AbstractValidator<UpdateProductCommand>

@@ -1,6 +1,4 @@
 using System.Data;
-using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore;
 using Sale.Application.Abstractions;
 using Sale.Domain.Entities;
 using Sale.Domain.Identifiers.Id;

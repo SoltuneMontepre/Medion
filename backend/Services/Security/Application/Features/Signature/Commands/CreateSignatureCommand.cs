@@ -1,5 +1,3 @@
-using MediatR;
-using Microsoft.Extensions.Logging;
 using Security.Domain.Entities;
 using Security.Domain.Identifiers;
 
@@ -14,19 +12,11 @@ public record CreateSignatureCommand(
     string OperationType,
     Guid UserId) : IRequest<SignatureId>;
 
-public class CreateSignatureCommandHandler : IRequestHandler<CreateSignatureCommand, SignatureId>
+public class CreateSignatureCommandHandler(
+    ISignatureRepository repository,
+    ILogger<CreateSignatureCommandHandler> logger)
+    : IRequestHandler<CreateSignatureCommand, SignatureId>
 {
-    private readonly ILogger<CreateSignatureCommandHandler> _logger;
-    private readonly ISignatureRepository _repository;
-
-    public CreateSignatureCommandHandler(
-        ISignatureRepository repository,
-        ILogger<CreateSignatureCommandHandler> logger)
-    {
-        _repository = repository;
-        _logger = logger;
-    }
-
     public async Task<SignatureId> Handle(
         CreateSignatureCommand request,
         CancellationToken cancellationToken)
@@ -37,9 +27,9 @@ public class CreateSignatureCommandHandler : IRequestHandler<CreateSignatureComm
             request.OperationType,
             request.UserId);
 
-        await _repository.AddAsync(signature, cancellationToken);
+        await repository.AddAsync(signature, cancellationToken);
 
-        _logger.LogInformation("Signature record persisted for operation {OperationType}", request.OperationType);
+        logger.LogInformation("Signature record persisted for operation {OperationType}", request.OperationType);
 
         return signature.Id;
     }

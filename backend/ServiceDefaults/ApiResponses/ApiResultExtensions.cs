@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Http;
-
 namespace ServiceDefaults.ApiResponses;
 
 /// <summary>
@@ -7,33 +5,6 @@ namespace ServiceDefaults.ApiResponses;
 /// </summary>
 public static class ApiResultExtensions
 {
-    /// <summary>
-    ///     Convert ApiResult to IResult (for minimal APIs)
-    /// </summary>
-    public static IResult ToResult<T>(this ApiResult<T> result)
-    {
-        return result.StatusCode switch
-        {
-            200 => Results.Ok(result),
-            201 => Results.Created(string.Empty, result),
-            400 => Results.BadRequest(result),
-            401 => Results.Unauthorized(),
-            403 => Results.Forbid(),
-            404 => Results.NotFound(result),
-            409 => Results.Conflict(result),
-            500 => Results.StatusCode(500),
-            _ => Results.StatusCode(result.StatusCode)
-        };
-    }
-
-    /// <summary>
-    ///     Convert ApiResult to ObjectResult (for controller-based APIs)
-    /// </summary>
-    public static ObjectResult ToObjectResult<T>(this ApiResult<T> result)
-    {
-        return new ObjectResult(result) { StatusCode = result.StatusCode };
-    }
-
     /// <summary>
     ///     Convert non-generic ApiResult to IResult
     /// </summary>
@@ -77,5 +48,35 @@ public static class ApiResultExtensions
     {
         var result = ApiResult<T>.Failure(message, statusCode);
         return result.ToResult();
+    }
+
+    extension<T>(ApiResult<T> result)
+    {
+        /// <summary>
+        ///     Convert ApiResult to IResult (for minimal APIs)
+        /// </summary>
+        public IResult ToResult()
+        {
+            return result.StatusCode switch
+            {
+                200 => Results.Ok((object?)result),
+                201 => Results.Created(string.Empty, (object?)result),
+                400 => Results.BadRequest((object?)result),
+                401 => Results.Unauthorized(),
+                403 => Results.Forbid(),
+                404 => Results.NotFound((object?)result),
+                409 => Results.Conflict((object?)result),
+                500 => Results.StatusCode(500),
+                _ => Results.StatusCode(result.StatusCode)
+            };
+        }
+
+        /// <summary>
+        ///     Convert ApiResult to ObjectResult (for controller-based APIs)
+        /// </summary>
+        public ObjectResult ToObjectResult()
+        {
+            return new ObjectResult(result) { StatusCode = result.StatusCode };
+        }
     }
 }

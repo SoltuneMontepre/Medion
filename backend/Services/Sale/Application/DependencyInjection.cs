@@ -1,8 +1,3 @@
-using FluentValidation;
-using Mapster;
-using MapsterMapper;
-using MediatR;
-using Microsoft.Extensions.DependencyInjection;
 using Sale.Application.Common.Behaviors;
 using Sale.Application.Common.Mappings;
 using Sale.Application.Features.Customer.Commands;

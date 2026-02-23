@@ -1,4 +1,3 @@
-using Mapster;
 using Sale.Application.Common.DTOs;
 using Sale.Domain.Entities;
 

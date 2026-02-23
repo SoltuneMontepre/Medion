@@ -5,11 +5,6 @@ using MassTransit;
 using Microsoft.IdentityModel.JsonWebTokens;
 using MediatR;
 using Medion.Shared.Events;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
-using Npgsql;
 using Sale.API.Behaviors;
 using Sale.API.Middleware;
 using Sale.API.Serialization;
@@ -71,7 +66,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 
     var idTypes = typeof(IStronglyTypedId).Assembly.GetTypes()
-        .Where(t => typeof(IStronglyTypedId).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
+        .Where(t => typeof(IStronglyTypedId).IsAssignableFrom(t) && t is { IsInterface: false, IsAbstract: false });
 
     foreach (var idType in idTypes)
         c.MapType(idType, () => new OpenApiSchema
@@ -120,7 +115,7 @@ builder.Services.AddSwaggerGen(c =>
                     Id = "oauth2"
                 }
             },
-            new[] { "openid" }
+            ["openid"]
         }
     });
 });
@@ -264,15 +259,11 @@ else
 Console.WriteLine($"[Sale.API] Security gRPC address FINAL: {securityGrpcAddress}");
 
 builder.Services.AddGrpcClient<SignatureService.SignatureServiceClient>(o => { o.Address = securityGrpcAddress; })
-    .ConfigurePrimaryHttpMessageHandler(() =>
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
     {
-        // For unencrypted HTTP/2 (gRPC over plain HTTP), we need to configure the handler
-        return new SocketsHttpHandler
-        {
-            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-            EnableMultipleHttp2Connections = true
-        };
+        KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+        KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+        EnableMultipleHttp2Connections = true
     })
     .ConfigureChannel(o =>
     {
@@ -331,7 +322,7 @@ app.MapDefaultEndpoints();
 app.MapControllers();
 
 // NOTE: CD pipeline also runs migrations; app startup keeps auto-migrate enabled
-// See .github/workflows/sale-cd.yml for the migration step
+// See .GitHub/workflows/sale-cd.yml for the migration step
 
 // Endpoints
 app.MapGrpcReflectionService();

@@ -1,5 +1,3 @@
-using FluentValidation;
-
 namespace Sale.Application.Features.Customer.Queries.Validators;
 
 /// <summary>

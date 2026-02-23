@@ -1,6 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Security.Application.Abstractions;
 using Security.Application.Common.Abstractions;
 using Security.Application.Features.Signature.Commands;
@@ -15,7 +12,8 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration config)
     {
         var connectionString = config.GetConnectionString("postgresSecurity")
-                               ?? throw new InvalidOperationException("Connection string 'postgresSecurity' not found. Ensure it's provided by Aspire or set in configuration.");
+                               ?? throw new InvalidOperationException(
+                                   "Connection string 'postgresSecurity' not found. Ensure it's provided by Aspire or set in configuration.");
 
         services.AddDbContext<SecurityDbContext>(options =>
             options.UseNpgsql(connectionString, npgsqlOptions =>

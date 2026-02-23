@@ -1,7 +1,4 @@
 using Security.Application.Abstractions;
-using VaultSharp;
-using VaultSharp.V1.Commons;
-using VaultSharp.V1.SecretsEngines.Transit;
 
 namespace Security.Infrastructure;
 

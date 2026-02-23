@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using Sale.Domain.Entities;
 using Sale.Domain.Identifiers;
 using Security.Application.Abstractions;

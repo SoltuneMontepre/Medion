@@ -1,4 +1,3 @@
-using MediatR;
 using Sale.Application.Common.DTOs;
 
 namespace Sale.Application.Features.Order.Queries;

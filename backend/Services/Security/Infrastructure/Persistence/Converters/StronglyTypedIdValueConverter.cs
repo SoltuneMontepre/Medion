@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sale.Domain.Identifiers;
 
 namespace Security.Infrastructure.Persistence.Converters;

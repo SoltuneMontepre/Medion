@@ -1,7 +1,3 @@
-using System.Security.Claims;
-using MediatR;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Sale.Application.Common.DTOs;
 using Sale.Application.Features.Customer.Commands;
 using Sale.Application.Features.Customer.Queries;

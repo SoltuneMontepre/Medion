@@ -1,12 +1,8 @@
-using System.Security.Cryptography;
 using Security.Application.Abstractions;
-using VaultSharp;
-using VaultSharp.V1.Commons;
-using VaultSharp.V1.SecretsEngines.Transit;
 
 namespace Security.Infrastructure;
 
-public sealed class HashiCorpSignatureService() : ISignatureService
+public sealed class HashiCorpSignatureService : ISignatureService
 {
     private const int Iterations = 120_000;
     private const int HashSize = 32;

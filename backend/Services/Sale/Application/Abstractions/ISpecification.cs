@@ -1,5 +1,3 @@
-using System.Linq.Expressions;
-
 namespace Sale.Application.Abstractions;
 
 public interface ISpecification<TEntity>

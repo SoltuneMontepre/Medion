@@ -1,10 +1,5 @@
-using System.Text.Json;
-using MassTransit;
-using MediatR;
 using Medion.Shared.Enums;
 using Medion.Shared.Events;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using TransactionContext = Sale.Application.Common.Context.TransactionContext;
 
 namespace Sale.Application.Common.Behaviors;
@@ -51,7 +46,7 @@ public class AuditLoggingBehavior<TRequest, TResponse>(
         try
         {
             var userIdClaim = httpContext?.User.FindFirst("sub")
-                                ?? httpContext?.User.FindFirst("NameIdentifier");
+                              ?? httpContext?.User.FindFirst("NameIdentifier");
             var userId = userIdClaim?.Value ?? "SYSTEM";
 
             var ipAddress = httpContext?.Connection.RemoteIpAddress?.ToString() ?? "UNKNOWN";
