@@ -16,13 +16,13 @@ public class CreateOrderCommandHandler(
     public async Task<ApiResult<OrderDto>> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
     {
         var customer = await customerRepository.GetByIdAsync(request.CustomerId, cancellationToken);
-        if (customer == null)
+        if (customer is null)
             return ApiResult<OrderDto>.NotFound("Customer not found");
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var existingOrder =
             await orderRepository.GetTodayOrderForCustomerAsync(request.CustomerId, today, cancellationToken);
-        if (existingOrder != null)
+        if (existingOrder is not null)
         {
             var errors = new Dictionary<string, string[]>
             {

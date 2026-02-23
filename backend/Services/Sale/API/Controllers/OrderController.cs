@@ -33,7 +33,7 @@ public class OrderController(IMediator mediator) : ApiControllerBase
                           ?? User.FindFirst(ClaimTypes.NameIdentifier)
                           ?? User.FindFirst("preferred_username");
 
-        if (userIdClaim == null)
+        if (userIdClaim is null)
             return Unauthorized(new
             {
                 error = "User ID not found in token. Authenticate with a user account to create an order.",
@@ -79,7 +79,7 @@ public class OrderController(IMediator mediator) : ApiControllerBase
         var query = new GetTodayOrderByCustomerQuery(customerId);
         var order = await mediator.Send(query, cancellationToken);
 
-        if (order == null)
+        if (order is null)
             return NotFound<OrderSummaryDto>("Customer has no order today");
 
         return Ok(order, "Order found");

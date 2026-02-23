@@ -29,7 +29,7 @@ public class CustomerRepository(SaleDbContext dbContext) : BaseRepository<Custom
     public async Task DeleteAsync(CustomerId id, CancellationToken cancellationToken = default)
     {
         var customer = await GetByIdAsync(id, cancellationToken);
-        if (customer != null)
+        if (customer is not null)
             await DeleteAsync(customer, cancellationToken);
     }
 
@@ -49,7 +49,7 @@ public class CustomerRepository(SaleDbContext dbContext) : BaseRepository<Custom
             .FirstOrDefaultAsync(cancellationToken);
 
         var nextNumber = 1;
-        if (lastCustomer != null)
+        if (lastCustomer is not null)
         {
             var lastNumberPart = lastCustomer.Code[prefix.Length..];
             if (int.TryParse(lastNumberPart, out var lastNumber)) nextNumber = lastNumber + 1;

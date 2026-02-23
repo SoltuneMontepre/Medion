@@ -36,7 +36,7 @@ public class ProductController(IMediator mediator) : ApiControllerBase
         var query = new GetProductByIdQuery(id);
         var product = await mediator.Send(query, cancellationToken);
 
-        if (product == null)
+        if (product is null)
             return NotFound<ProductDetailDto>($"Product with ID '{id}' not found");
 
         return Ok(product, "Product retrieved successfully");

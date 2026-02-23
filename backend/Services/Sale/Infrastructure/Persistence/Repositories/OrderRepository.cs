@@ -69,6 +69,6 @@ public class OrderRepository(SaleDbContext dbContext) : BaseRepository<Order, Or
         command.Parameters.Add(dateParameter);
 
         var result = await command.ExecuteScalarAsync(cancellationToken);
-        return result == null ? 1 : Convert.ToInt32(result);
+        return result is null ? 1 : Convert.ToInt32(result);
     }
 }

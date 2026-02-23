@@ -11,7 +11,7 @@ public class UpdateProductCommandHandler(IProductRepository productRepository)
         CancellationToken cancellationToken)
     {
         var product = await productRepository.GetByIdAsync(request.Id, cancellationToken);
-        if (product == null)
+        if (product is null)
             return ApiResult<ProductDetailDto>.NotFound("Product not found");
 
         var exists = await productRepository.ExistsByCodeAsync(request.Code, request.Id, cancellationToken);
