@@ -7,9 +7,9 @@ resource "aws_lambda_function" "this" {
   environment {
     variables = merge(
       {
-        aspnetcoreUrls                        = "http://+:8080"
-        dotnetSystemGlobalizationInvariant    = "1"
-        dotnetGcServer                        = "0"
+        aspnetcoreUrls                     = "http://+:8080"
+        dotnetSystemGlobalizationInvariant = "1"
+        dotnetGcServer                     = "0"
       },
       var.environment_variables
     )
