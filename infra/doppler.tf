@@ -33,8 +33,8 @@ locals {
   r2Region         = data.doppler_secrets.this.map.R2_REGION
 
   ## JWT Settings (Identity Service)
-  jwtSecret             = data.doppler_secrets.this.map.JWT_SECRET
-  jwtIssuer             = data.doppler_secrets.this.map.JWT_ISSUER
-  jwtAudience           = data.doppler_secrets.this.map.JWT_AUDIENCE
-  jwtExpirationMinutes  = data.doppler_secrets.this.map.JWT_EXPIRATION_MINUTES
+  jwtSecret            = data.doppler_secrets.this.map.JWT_SECRET
+  jwtIssuer            = data.doppler_secrets.this.map.JWT_ISSUER
+  jwtAudience          = data.doppler_secrets.this.map.JWT_AUDIENCE
+  jwtExpirationMinutes = data.doppler_secrets.this.map.JWT_EXPIRATION_MINUTES
 }

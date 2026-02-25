@@ -8,9 +8,8 @@ module "iam" {
 module "api_gateway" {
   source = "./modules/api-gateway"
 
-  project_name         = local.projectName
-  cors_origins         = var.cors_origins
-  auth_integration_uri = "http://${module.ec2.ec2_instance_public_dns}/api/auth"
+  project_name = local.projectName
+  cors_origins = var.cors_origins
 }
 
 module "ecr" {
@@ -157,7 +156,6 @@ module "security_service" {
   ecr_repository            = module.ecr.repository_urls["security-api"]
   api_gateway_id            = module.api_gateway.api_gateway_id
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
-
 
   environment_variables = {
     aspnetcoreEnvironment        = "Production"
