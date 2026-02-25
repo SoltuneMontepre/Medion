@@ -39,6 +39,11 @@ resource "aws_iam_role_policy_attachment" "lambda_basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_iam_role_policy_attachment" "grafana_cloudwatch" {
+  role       = aws_iam_role.grafana_cloudwatch_access.name
+  policy_arn = aws_iam_policy.grafana_cloudwatch.arn
+}
+
 resource "aws_iam_openid_connect_provider" "github_actions" {
   url = "https://token.actions.githubusercontent.com"
 

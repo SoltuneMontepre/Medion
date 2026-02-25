@@ -158,12 +158,13 @@ module "security_service" {
   api_gateway_execution_arn = module.api_gateway.api_gateway_execution_arn
 
   environment_variables = {
-    aspnetcoreEnvironment        = "Production"
-    postgresSecurity             = local.securityDbUrl
-    jwtSettingsSecret            = local.jwtSecret
-    jwtSettingsIssuer            = local.jwtIssuer
-    jwtSettingsAudience          = local.jwtAudience
-    jwtSettingsExpirationMinutes = local.jwtExpirationMinutes
+    aspnetcoreEnvironment                = "Production"
+    ConnectionStrings__postgresSecurity  = local.securityDbUrl
+    jwtSettingsSecret                    = local.jwtSecret
+    jwtSettingsIssuer                    = local.jwtIssuer
+    jwtSettingsAudience                  = local.jwtAudience
+    jwtSettingsExpirationMinutes         = local.jwtExpirationMinutes
+    Kestrel__EndpointDefaults__Protocols = "Http1AndHttp2"
   }
 }
 
