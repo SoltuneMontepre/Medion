@@ -1,0 +1,78 @@
+# MES Medion — Flutter Desktop Frontend (Enterprise)
+# Aligns with MES_Flutter_MDC_Rules: Clean Architecture, Riverpod, Dio, modular monolith.
+
+name: frontend_flutter
+description: MES Medion Flutter Desktop frontend. Modular monolith, Clean Architecture, Windows primary.
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # ——— MDC: State management (required)
+  flutter_riverpod: ^2.6.1
+
+  # ——— MDC: Network (core/network)
+  dio: ^5.7.0
+
+  # ——— Routing (go_router: guards, deep links, declarative ShellRoute)
+  go_router: ^14.6.2
+
+  # ——— Persistence & config
+  shared_preferences: ^2.3.3
+  flutter_secure_storage: ^9.2.2
+
+  # ——— Typed models & domain (API DTOs, entities, value equality)
+  json_annotation: ^4.9.0
+  freezed_annotation: ^2.4.4
+  equatable: ^2.0.5
+
+  # ——— Logging (structured, levels, production-safe)
+  logger: ^2.5.0
+
+  # ——— Environment / API base URL (--dart-define or .env)
+  flutter_dotenv: ^5.2.1
+
+  # ——— Data grid (sortable, resizable, pagination — MDC data grid rules)
+  data_table_2: ^2.5.15
+
+  # ——— App version in UI / about
+  package_info_plus: ^8.1.2
+
+  # ——— Optional: connectivity check before API calls
+  connectivity_plus: ^6.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  # ——— Code generation (run: dart run build_runner build --delete-conflicting-outputs)
+  build_runner: ^2.4.13
+  json_serializable: ^6.8.0
+  freezed: ^2.5.7
+
+  # ——— Testing
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
+  # generate: true   # enable when using l10n.yaml for AppLocalizations
+
+  # Uncomment and add paths when you have assets/fonts:
+  # assets:
+  #   - assets/images/
+  #   - .env
+  # fonts:
+  #   - family: Roboto
+  #     fonts:
+  #       - asset: fonts/Roboto-Regular.ttf
+  #       - asset: fonts/Roboto-Bold.ttf
+  #         weight: 700
