@@ -1,0 +1,94 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+  issues-exit-code: 1
+  allow-parallel-runners: true
+  go: "1.25"
+
+output:
+  format: colored-line-number
+  sort-results: true
+
+linters-settings:
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment
+
+  staticcheck:
+    checks: ["all"]
+
+  revive:
+    severity: warning
+    rules:
+      - name: exported
+        arguments: ["disableStutteringCheck"]
+      - name: indent-error-flow
+      - name: empty-block
+      - name: error-return
+      - name: error-naming
+      - name: if-return
+      - name: superfluous-else
+      - name: unreachable-code
+
+  gocyclo:
+    min-complexity: 10
+
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - hugeParam
+
+  misspell:
+    locale: US
+
+  dupl:
+    threshold: 80
+
+linters:
+  default: all
+  disable:
+    - wsl
+    - wsl_v5
+    - tagliatelle
+    - exhaustruct
+    - varnamelen
+    - tagalign
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  new: true
+  new-from-rev: HEAD~1
+  fix: false
+
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - mnd
+        - dupl
+        - gocyclo
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+  settings:
+    gofmt:
+      simplify: true
+    goimports:
+      local-prefixes:
+        - backend
