@@ -78,3 +78,17 @@ func (a *AuthController) Logout(c fuego.ContextNoBody) (*dto.Envelope[dto.Logout
 	c.SetCookie(security.ExpireRefreshCookie())
 	return dto.Ok(dto.LogoutData{LoggedOut: true}, "logout success", http.StatusOK), nil
 }
+
+func (a *AuthController) Me(c fuego.ContextNoBody) (*dto.Envelope[dto.UserPayload], error) {
+	accessToken, ok := middleware.GetAccessTokenFromContext(c.Context())
+	if !ok {
+		return nil, &dto.AppError{HTTPStatus: http.StatusUnauthorized, Code: 1011, Message: "access token is missing"}
+	}
+
+	user, err := a.authService.Me(c.Context(), accessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return dto.Ok(user, "success", http.StatusOK), nil
+}

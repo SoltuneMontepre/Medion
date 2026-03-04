@@ -4,6 +4,8 @@ import '../../../../core/network/api_client_provider.dart';
 import '../../../../core/network/api_result.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../domain/entities/order_summary.dart';
+import '../models/order_detail_model.dart';
+import '../models/product_suggest_model.dart';
 import '../models/sale_order_model.dart';
 import 'sales_remote_datasource.dart';
 
@@ -13,27 +15,27 @@ class SalesRemoteDataSourceImpl implements SalesRemoteDataSource {
 
   final DioClient _client;
 
-  static const _salePath = '/api/sale';
+  static const _salePath = '/api/v1/sale';
 
   @override
   Future<List<SaleOrderModel>> fetchOrders({
     int page = 1,
     int pageSize = 20,
   }) async {
-    // Backend has no list-orders endpoint yet; keep mock until added.
-    await Future.delayed(const Duration(milliseconds: 300));
-    final base = (page - 1) * pageSize;
-    return List.generate(
-      5,
-      (i) => SaleOrderModel(
-        id: '${base + i + 1}',
-        orderNumber: 'SO-${base + i + 1}',
-        customerName: 'Khách hàng ${base + i + 1}',
-        date: '2025-02-${(base + i + 1).clamp(1, 28)}',
-        totalAmount: 100.0 * (i + 1),
-        status: i.isEven ? 'Hoàn thành' : 'Chờ xử lý',
-      ),
+    final response = await _client.dio.get(
+      '$_salePath/orders',
+      queryParameters: {'page': page, 'pageSize': pageSize},
     );
+    final json = response.data;
+    if (json is! Map<String, dynamic>) return [];
+    final data = json['data'];
+    if (data is! Map<String, dynamic>) return [];
+    final items = data['items'];
+    if (items is! List) return [];
+    return items
+        .whereType<Map<String, dynamic>>()
+        .map(SaleOrderModel.fromJson)
+        .toList();
   }
 
   @override
@@ -46,8 +48,82 @@ class SalesRemoteDataSourceImpl implements SalesRemoteDataSource {
     if (json is! Map<String, dynamic>) {
       return OrderSummary(summaryDate: dateYyyyMmDd, items: []);
     }
-    final list = parseDataList<OrderSummaryItem>(json, _orderSummaryItemFromJson);
-    return OrderSummary(summaryDate: dateYyyyMmDd, items: list);
+    final data = json['data'];
+    if (data is Map<String, dynamic> && data['items'] is List) {
+      final list = parseDataList<OrderSummaryItem>(json, _orderSummaryItemFromJson);
+      return OrderSummary(summaryDate: dateYyyyMmDd, items: list);
+    }
+    return OrderSummary(summaryDate: dateYyyyMmDd, items: []);
+  }
+
+  @override
+  Future<CheckCustomerOrderTodayResult> checkCustomerOrderToday(
+      String customerId) async {
+    final response = await _client.dio.get(
+      '$_salePath/orders/check-today',
+      queryParameters: {'customerId': customerId},
+    );
+    final json = response.data;
+    if (json is! Map<String, dynamic>) {
+      return const CheckCustomerOrderTodayResult(hasOrderToday: false);
+    }
+    final data = json['data'];
+    if (data is! Map<String, dynamic>) {
+      return const CheckCustomerOrderTodayResult(hasOrderToday: false);
+    }
+    final hasOrderToday = data['hasOrderToday'] as bool? ?? false;
+    final existingId = data['existingOrderId']?.toString();
+    final nextNumber = data['nextOrderNumber'] as String?;
+    return CheckCustomerOrderTodayResult(
+      hasOrderToday: hasOrderToday,
+      existingOrderId: existingId,
+      nextOrderNumber: nextNumber,
+    );
+  }
+
+  @override
+  Future<OrderDetailModel> createOrder({
+    required String customerId,
+    required List<OrderItemRequest> items,
+    required String pin,
+  }) async {
+    final body = {
+      'customerId': customerId,
+      'items': items
+          .map((e) => {'productId': e.productId, 'quantity': e.quantity})
+          .toList(),
+      'pin': pin,
+    };
+    final response = await _client.dio.post('$_salePath/orders', data: body);
+    final json = response.data;
+    if (json is! Map<String, dynamic>) throw Exception('Invalid response');
+    final data = parseData<OrderDetailModel>(json, OrderDetailModel.fromJson);
+    if (data == null) throw Exception(apiMessage(json) ?? 'Lưu đơn thất bại');
+    return data;
+  }
+
+  @override
+  Future<OrderDetailModel> getOrderById(String orderId) async {
+    final response = await _client.dio.get('$_salePath/orders/$orderId');
+    final json = response.data;
+    if (json is! Map<String, dynamic>) throw Exception('Invalid response');
+    final data = parseData<OrderDetailModel>(json, OrderDetailModel.fromJson);
+    if (data == null) throw Exception(apiMessage(json) ?? 'Không tìm thấy đơn hàng');
+    return data;
+  }
+
+  @override
+  Future<List<ProductSuggestModel>> fetchProductSuggest(String query) async {
+    if (query.trim().isEmpty) return [];
+    final response = await _client.dio.get(
+      '$_salePath/products/suggest',
+      queryParameters: {'q': query.trim()},
+    );
+    final json = response.data;
+    if (json is! Map<String, dynamic>) return [];
+    final list = parseDataList<ProductSuggestModel>(
+        json, ProductSuggestModel.fromJson);
+    return list;
   }
 }
 

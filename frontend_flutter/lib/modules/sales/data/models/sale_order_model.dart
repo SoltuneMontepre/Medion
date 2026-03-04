@@ -19,11 +19,13 @@ class SaleOrderModel {
   final String status;
 
   factory SaleOrderModel.fromJson(Map<String, dynamic> json) {
+    final orderDate = json['orderDate'];
+    final dateStr = orderDate != null ? orderDate.toString() : (json['date'] as String? ?? '');
     return SaleOrderModel(
-      id: json['id'] as String? ?? '',
+      id: json['id']?.toString() ?? '',
       orderNumber: json['orderNumber'] as String? ?? '',
       customerName: json['customerName'] as String? ?? '',
-      date: json['date'] as String? ?? '',
+      date: dateStr,
       totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0,
       status: json['status'] as String? ?? '',
     );

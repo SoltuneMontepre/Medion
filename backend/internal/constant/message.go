@@ -19,8 +19,16 @@ const (
 // Role
 const (
 	MsgRoleNameAlreadyExists = "role name already exists"
+	MsgRoleCodeAlreadyExists = "role code already exists"
 	MsgRoleNotFound          = "role not found"
 	MsgInvalidRoleID         = "invalid role id"
+)
+
+// Permission
+const (
+	MsgPermissionCodeAlreadyExists = "permission code already exists"
+	MsgPermissionNotFound          = "permission not found"
+	MsgInvalidPermissionID         = "invalid permission id"
 )
 
 // Course
@@ -66,4 +74,31 @@ const (
 // Reels
 const (
 	MsgReelNotFound = "reel not found"
+)
+
+// Customer (Sale)
+const (
+	MsgCustomerNameRequired    = "tên khách hàng là bắt buộc"
+	MsgCustomerAddressRequired = "địa chỉ là bắt buộc"
+	MsgCustomerPhoneRequired   = "số điện thoại là bắt buộc"
+	MsgCustomerPhoneInvalid    = "số điện thoại không hợp lệ"
+	MsgCustomerPhoneExists     = "Số điện thoại này đã tồn tại trong hệ thống. Vui lòng kiểm tra lại."
+	MsgCustomerNotFound        = "khách hàng không tồn tại"
+)
+
+// Order (Sale)
+const (
+	MsgOrderCustomerHasOrderToday = "Khách hàng này đã có đơn hàng hôm nay"
+	MsgOrderNotFound             = "đơn hàng không tồn tại"
+	MsgOrderInvalidCustomer      = "thông tin khách hàng không hợp lệ"
+	MsgOrderProductRequired      = "Vui lòng kiểm tra lại thông tin sản phẩm"
+	MsgOrderQuantityInvalid      = "Số lượng sản phẩm không hợp lệ, vui lòng nhập lại số nguyên dương"
+	MsgOrderSignFailed           = "Ký số không thành công, vui lòng kiểm tra lại thiết bị hoặc mã PIN"
+	MsgOrderSaveSuccess          = "Lưu và ký đơn hàng thành công"
+	MsgOrderServerError          = "Có lỗi xảy ra, vui lòng thử lại sau"
+)
+
+// Product (Sale)
+const (
+	MsgProductNotFound = "sản phẩm không tồn tại"
 )

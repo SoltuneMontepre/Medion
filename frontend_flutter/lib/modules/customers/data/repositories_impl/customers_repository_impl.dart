@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/create_customer_params.dart';
 import '../../domain/entities/customer.dart';
+import '../../domain/entities/customer_list_result.dart';
 import '../../domain/errors/customer_exceptions.dart';
 import '../../domain/repositories/customers_repository.dart';
 import '../datasources/customers_remote_datasource.dart';
@@ -14,13 +15,16 @@ class CustomersRepositoryImpl implements CustomersRepository {
   final CustomersRemoteDataSource _dataSource;
 
   @override
-  Future<List<Customer>> getCustomers({
+  Future<CustomerListResult> getCustomers({
     int page = 1,
     int pageSize = 20,
   }) async {
-    final models =
+    final response =
         await _dataSource.fetchCustomers(page: page, pageSize: pageSize);
-    return models.map((m) => m.toEntity()).toList();
+    return CustomerListResult(
+      items: response.items.map((m) => m.toEntity()).toList(),
+      total: response.total,
+    );
   }
 
   @override
@@ -34,12 +38,16 @@ class CustomersRepositoryImpl implements CustomersRepository {
       return model.toEntity();
     } on DioException catch (e) {
       final msg = _extractMessage(e);
-      if (e.response?.statusCode == 400 &&
-          (msg.toLowerCase().contains('đã tồn tại') ||
-              msg.toLowerCase().contains('duplicate') ||
-              msg.toLowerCase().contains('already exists'))) {
+      final code = e.response?.statusCode;
+      if (code == 409 ||
+          (code == 400 &&
+              (msg.toLowerCase().contains('đã tồn tại') ||
+                  msg.toLowerCase().contains('duplicate') ||
+                  msg.toLowerCase().contains('already exists')))) {
         throw CustomerDuplicatePhoneException(
-          'Số điện thoại này đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.',
+          msg.isNotEmpty
+              ? msg
+              : 'Số điện thoại này đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.',
         );
       }
       rethrow;

@@ -152,3 +152,20 @@ func (s *AuthService) Logout(accessToken string) error {
 func (s *AuthService) RefreshCookieMaxAge() int {
 	return int(s.jwt.RefreshTTL().Seconds())
 }
+
+func (s *AuthService) Me(ctx context.Context, accessToken string) (dto.UserPayload, error) {
+	claims, err := s.jwt.ParseAccessToken(accessToken)
+	if err != nil {
+		return dto.UserPayload{}, &dto.AppError{HTTPStatus: http.StatusUnauthorized, Code: 1012, Message: "invalid or expired access token", Err: err}
+	}
+
+	user, err := s.users.FindByID(ctx, claims.Subject)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return dto.UserPayload{}, &dto.AppError{HTTPStatus: http.StatusNotFound, Code: 1013, Message: "user not found"}
+		}
+		return dto.UserPayload{}, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 1510, Message: "failed to load user", Err: err}
+	}
+
+	return s.converter.UserToUserPayload(*user), nil
+}

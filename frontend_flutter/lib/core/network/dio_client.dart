@@ -2,10 +2,10 @@ import 'package:dio/dio.dart';
 
 /// Single Dio instance for the app. No duplicate API client per module.
 class DioClient {
-  DioClient({String? baseUrl}) {
+  DioClient({String? baseUrl, String? Function()? getToken}) {
     _dio = Dio(BaseOptions(baseUrl: baseUrl ?? ''));
     _dio.interceptors.addAll([
-      _AuthInterceptor(),
+      _AuthInterceptor(getToken: getToken),
       _ErrorInterceptor(),
     ]);
   }
@@ -15,9 +15,21 @@ class DioClient {
 }
 
 class _AuthInterceptor extends Interceptor {
+  _AuthInterceptor({String? Function()? getToken}) : _getToken = getToken;
+
+  final String? Function()? _getToken;
+
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    // TODO: attach auth token from core/auth when implemented
+    final path = options.path;
+    if (path.contains('/login') || path.contains('/register')) {
+      handler.next(options);
+      return;
+    }
+    final token = _getToken?.call();
+    if (token != null && token.isNotEmpty) {
+      options.headers['Authorization'] = 'Bearer $token';
+    }
     handler.next(options);
   }
 }

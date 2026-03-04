@@ -2,6 +2,7 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../shared/dialogs/confirm_dialog.dart';
 import '../../../../shared/layout/app_scaffold.dart';
@@ -28,12 +29,12 @@ class _SalesPageState extends ConsumerState<SalesPage> {
     final ordersAsync = ref.watch(salesOrdersProvider(_page));
 
     return AppScaffold(
-      title: 'Bán hàng',
+      title: 'Danh sách đơn hàng',
       toolbarActions: [
         ToolbarButton(
-          label: 'Thêm',
+          label: 'Tạo đơn đặt hàng',
           icon: Icons.add,
-          onPressed: () {},
+          onPressed: () => context.push('/sales/new-order'),
           shortcut: const SingleActivator(LogicalKeyboardKey.keyN,
               control: true),
         ),

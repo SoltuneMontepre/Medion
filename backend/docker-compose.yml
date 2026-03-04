@@ -1,0 +1,19 @@
+# PostgreSQL for Medion backend (local dev)
+# Run: docker compose up -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: medion-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: medion
+      POSTGRES_PASSWORD: medion
+      POSTGRES_DB: medion
+    ports:
+      - "5432:5432"
+    volumes:
+      - medion_pgdata:/var/lib/postgresql/data
+
+volumes:
+  medion_pgdata:

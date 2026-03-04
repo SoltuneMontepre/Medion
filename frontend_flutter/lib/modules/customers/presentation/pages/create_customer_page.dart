@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -105,7 +106,7 @@ class _CreateCustomerPageState extends ConsumerState<CreateCustomerPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tạo khách hàng thành công')),
       );
-      context.go('/customers');
+      context.pop();
     } on CustomerDuplicatePhoneException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -113,6 +114,33 @@ class _CreateCustomerPageState extends ConsumerState<CreateCustomerPage> {
         _phoneError = e.message ??
             'Số điện thoại này đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.';
       });
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final msg = (e.response?.data is Map<String, dynamic>)
+          ? (e.response!.data as Map<String, dynamic>)['message'] as String? ?? ''
+          : '';
+      if (e.response?.statusCode == 400 && msg.isNotEmpty) {
+        String? nameErr;
+        String? addressErr;
+        String? phoneErr;
+        if (msg.toLowerCase().contains('tên')) nameErr = msg;
+        else if (msg.toLowerCase().contains('địa chỉ')) addressErr = msg;
+        else if (msg.toLowerCase().contains('điện thoại') || msg.toLowerCase().contains('số điện thoại')) phoneErr = msg;
+        setState(() {
+          _saving = false;
+          if (nameErr != null) _nameError = nameErr;
+          if (addressErr != null) _addressError = addressErr;
+          if (phoneErr != null) _phoneError = phoneErr;
+        });
+        if (nameErr == null && addressErr == null && phoneErr == null) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+        }
+      } else {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg.isNotEmpty ? msg : 'Lỗi: $e')),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -132,7 +160,7 @@ class _CreateCustomerPageState extends ConsumerState<CreateCustomerPage> {
       confirmLabel: 'Đồng ý',
     );
     if (ok && mounted) {
-      context.go('/customers');
+      context.pop();
     }
   }
 
