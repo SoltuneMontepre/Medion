@@ -91,3 +91,41 @@ func (s *UserService) SetUserRoles(ctx context.Context, userID uuid.UUID, roleID
 	}
 	return nil
 }
+
+// SetSupervisor sets or clears the user's direct leader. Validates: user exists, supervisor exists when set,
+// no self-assignment, no circular reporting chain.
+func (s *UserService) SetSupervisor(ctx context.Context, userID uuid.UUID, supervisorID *uuid.UUID, currentUserID uuid.UUID) error {
+	user, err := s.users.FindByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return &dto.AppError{HTTPStatus: http.StatusNotFound, Code: 2903, Message: constant.MsgUserNotFound}
+		}
+		return &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2904, Message: constant.MsgUserNotFound, Err: err}
+	}
+	if supervisorID != nil {
+		if *supervisorID == userID {
+			return &dto.AppError{HTTPStatus: http.StatusBadRequest, Code: 2907, Message: constant.MsgSupervisorSelf}
+		}
+		if _, err := s.users.FindByID(ctx, *supervisorID); err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return &dto.AppError{HTTPStatus: http.StatusBadRequest, Code: 2908, Message: constant.MsgSupervisorNotFound}
+			}
+			return &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2909, Message: constant.MsgSupervisorNotFound, Err: err}
+		}
+		chain, err := s.users.GetSupervisorChain(ctx, *supervisorID)
+		if err != nil {
+			return &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2910, Message: constant.MsgSupervisorNotFound, Err: err}
+		}
+		for _, id := range chain {
+			if id == userID {
+				return &dto.AppError{HTTPStatus: http.StatusBadRequest, Code: 2911, Message: constant.MsgSupervisorCycle}
+			}
+		}
+	}
+	user.SupervisorID = supervisorID
+	user.UpdatedBy = currentUserID
+	if err := s.users.Update(ctx, user); err != nil {
+		return &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2912, Message: "failed to set supervisor", Err: err}
+	}
+	return nil
+}

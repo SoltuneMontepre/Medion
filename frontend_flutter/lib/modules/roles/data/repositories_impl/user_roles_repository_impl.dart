@@ -32,6 +32,10 @@ class UserRolesRepositoryImpl implements UserRolesRepository {
   @override
   Future<void> setUserRoles(String userId, List<String> roleIds) =>
       _dataSource.setUserRoles(userId, roleIds);
+
+  @override
+  Future<void> setSupervisor(String userId, String? supervisorId) =>
+      _dataSource.setSupervisor(userId, supervisorId);
 }
 
 final userRolesRepositoryProvider = Provider<UserRolesRepository>((ref) {

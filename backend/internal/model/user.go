@@ -12,7 +12,12 @@ type User struct {
 	Password string  `gorm:"size:255;not null"`
 	PIN      *string `gorm:"size:255"`
 
-	UserRoles []UserRole `gorm:"foreignKey:UserID"`
+	// SupervisorID is the user's direct leader (reports-to). Nil for top-level users.
+	SupervisorID *uuid.UUID `gorm:"type:uuid;index:idx_user_supervisor"`
+
+	UserRoles   []UserRole `gorm:"foreignKey:UserID"`
+	Supervisor  *User      `gorm:"foreignKey:SupervisorID"`
+	Subordinates []User    `gorm:"foreignKey:SupervisorID"`
 }
 
 func (User) TableName() string {

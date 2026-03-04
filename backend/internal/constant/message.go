@@ -18,7 +18,10 @@ const (
 
 // User (admin / assign roles)
 const (
-	MsgUserNotFound = "user not found"
+	MsgUserNotFound        = "user not found"
+	MsgSupervisorSelf      = "user cannot be their own supervisor"
+	MsgSupervisorCycle     = "supervisor would create a circular reporting chain"
+	MsgSupervisorNotFound  = "supervisor user not found"
 )
 
 // Role

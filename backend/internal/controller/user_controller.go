@@ -99,3 +99,24 @@ func (uc *UserController) SetUserRoles(c fuego.ContextWithBody[dto.SetUserRolesR
 	}
 	return dto.Ok[any](nil, "success", http.StatusOK), nil
 }
+
+// SetSupervisor sets or clears the user's direct leader (supervisor). Body: { "supervisorId": "uuid" | null }.
+func (uc *UserController) SetSupervisor(c fuego.ContextWithBody[dto.SetSupervisorRequest]) (*dto.Envelope[any], error) {
+	idStr := c.PathParam("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return nil, &dto.AppError{HTTPStatus: http.StatusBadRequest, Code: 2900, Message: constant.MsgUserNotFound}
+	}
+	body, err := c.Body()
+	if err != nil {
+		return nil, err
+	}
+	currentUserID, err := uc.userIDFromContext(c.Context())
+	if err != nil {
+		return nil, err
+	}
+	if err := uc.userService.SetSupervisor(c.Context(), id, body.SupervisorID, currentUserID); err != nil {
+		return nil, err
+	}
+	return dto.Ok[any](nil, "success", http.StatusOK), nil
+}

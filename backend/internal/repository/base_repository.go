@@ -98,11 +98,38 @@ func (r *UserRepository) FindUserIDsByRoleCode(ctx context.Context, roleCode str
 	return ids, err
 }
 
-// FindAll returns users with optional pagination (limit/offset). Ordered by username.
+// FindAll returns users with optional pagination (limit/offset). Ordered by username. Preloads Supervisor.
 func (r *UserRepository) FindAll(ctx context.Context, limit, offset int) ([]model.User, error) {
 	var list []model.User
-	err := r.DB().WithContext(ctx).Order("username ASC").Limit(limit).Offset(offset).Find(&list).Error
+	err := r.DB().WithContext(ctx).Preload("Supervisor").Order("username ASC").Limit(limit).Offset(offset).Find(&list).Error
 	return list, err
+}
+
+// FindDirectSubordinateIDs returns user IDs whose supervisor_id is the given user (direct reports).
+func (r *UserRepository) FindDirectSubordinateIDs(ctx context.Context, supervisorID uuid.UUID) ([]uuid.UUID, error) {
+	var ids []uuid.UUID
+	err := r.DB().WithContext(ctx).Model(&model.User{}).
+		Where("supervisor_id = ?", supervisorID).
+		Pluck("id", &ids).Error
+	return ids, err
+}
+
+// GetSupervisorChain returns the list of user IDs from the given user's supervisor upward (for cycle detection).
+func (r *UserRepository) GetSupervisorChain(ctx context.Context, startUserID uuid.UUID) ([]uuid.UUID, error) {
+	var chain []uuid.UUID
+	currentID := startUserID
+	for {
+		var u model.User
+		if err := r.DB().WithContext(ctx).Select("supervisor_id").Where("id = ?", currentID).First(&u).Error; err != nil {
+			return nil, err
+		}
+		if u.SupervisorID == nil {
+			break
+		}
+		chain = append(chain, *u.SupervisorID)
+		currentID = *u.SupervisorID
+	}
+	return chain, nil
 }
 
 // Count returns total number of users.

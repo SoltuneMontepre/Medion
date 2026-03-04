@@ -211,4 +211,9 @@ func RegisterRoutes(server *fuego.Server, authController *controller.AuthControl
 		fuego.OptionTags("Users"),
 		fuego.OptionMiddleware(authGuardMiddleware),
 	)
+	fuego.Put(userGroup, "/{id}/supervisor", userController.SetSupervisor,
+		fuego.OptionSummary("Set user's direct leader (supervisor); pass null to clear"),
+		fuego.OptionTags("Users"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
 }

@@ -48,7 +48,7 @@ func parseSummaryDate(s string) (time.Time, bool) {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC), true
 }
 
-// List returns order summaries for the current user. Only users with role sale_admin see the global summary (owner_id = Nil). Read-only.
+// List returns order summaries for the current user. Sale admin sees their own summaries and their direct subordinates'; others see only their own. Read-only.
 func (s *OrderSummaryService) List(ctx context.Context, userID uuid.UUID, page, pageSize int) ([]dto.OrderSummaryPayload, int64, error) {
 	roleCodes, err := s.users.GetRoleCodesForUser(ctx, userID)
 	if err != nil {
@@ -64,12 +64,21 @@ func (s *OrderSummaryService) List(ctx context.Context, userID uuid.UUID, page, 
 		pageSize = 20
 	}
 	offset := (page - 1) * pageSize
-	// Global summary: owner_id = Nil (all sale_person orders aggregated here)
-	list, err := s.summaries.FindAllByOwnerID(ctx, uuid.Nil, pageSize, offset)
+
+	allowedOwnerIDs := []uuid.UUID{userID}
+	if orderSummaryHasAccess(roleCodes) {
+		subIDs, err := s.users.FindDirectSubordinateIDs(ctx, userID)
+		if err != nil {
+			return nil, 0, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2601, Message: constant.MsgOrderSummaryServerError, Err: err}
+		}
+		allowedOwnerIDs = append(allowedOwnerIDs, subIDs...)
+	}
+
+	list, err := s.summaries.FindAllByOwnerIDIn(ctx, allowedOwnerIDs, pageSize, offset)
 	if err != nil {
 		return nil, 0, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2601, Message: constant.MsgOrderSummaryServerError, Err: err}
 	}
-	total, err := s.summaries.CountByOwnerID(ctx, uuid.Nil)
+	total, err := s.summaries.CountByOwnerIDIn(ctx, allowedOwnerIDs)
 	if err != nil {
 		return nil, 0, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2602, Message: constant.MsgOrderSummaryServerError, Err: err}
 	}
@@ -90,7 +99,33 @@ func orderSummaryHasAccess(roleCodes []string) bool {
 	return false
 }
 
-// GetByID returns one summary by id; only sale_admin can view (global summary has OwnerID = Nil).
+// allowedOwnerIDs returns the list of owner IDs the user may access (self + direct subordinates for sale_admin).
+func (s *OrderSummaryService) allowedOwnerIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+	roleCodes, err := s.users.GetRoleCodesForUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	allowed := []uuid.UUID{userID}
+	if orderSummaryHasAccess(roleCodes) {
+		subIDs, err := s.users.FindDirectSubordinateIDs(ctx, userID)
+		if err != nil {
+			return nil, err
+		}
+		allowed = append(allowed, subIDs...)
+	}
+	return allowed, nil
+}
+
+func ownerIDIn(id uuid.UUID, list []uuid.UUID) bool {
+	for _, x := range list {
+		if x == id {
+			return true
+		}
+	}
+	return false
+}
+
+// GetByID returns one summary by id; allowed if summary belongs to the user or their direct subordinate.
 func (s *OrderSummaryService) GetByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*dto.OrderSummaryDetailPayload, error) {
 	roleCodes, err := s.users.GetRoleCodesForUser(ctx, userID)
 	if err != nil {
@@ -106,7 +141,11 @@ func (s *OrderSummaryService) GetByID(ctx context.Context, id uuid.UUID, userID 
 		}
 		return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2604, Message: constant.MsgOrderSummaryServerError, Err: err}
 	}
-	if os.OwnerID != uuid.Nil {
+	allowed, err := s.allowedOwnerIDs(ctx, userID)
+	if err != nil {
+		return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2604, Message: constant.MsgOrderSummaryServerError, Err: err}
+	}
+	if !ownerIDIn(os.OwnerID, allowed) {
 		return nil, &dto.AppError{HTTPStatus: http.StatusNotFound, Code: 2603, Message: constant.MsgOrderSummaryNotFound}
 	}
 	itemDetails := make([]dto.OrderSummaryItemDetail, len(os.Items))
@@ -117,8 +156,8 @@ func (s *OrderSummaryService) GetByID(ctx context.Context, id uuid.UUID, userID 
 	return &detail, nil
 }
 
-// GetByDate returns the global summary for the given date. Only sale_admin can view. Read-only.
-func (s *OrderSummaryService) GetByDate(ctx context.Context, dateStr string, userID uuid.UUID) (*dto.OrderSummaryDetailPayload, error) {
+// GetByDate returns the order summary for the given date and owner. Owner defaults to current user; optional ownerId must be self or a direct subordinate. Read-only.
+func (s *OrderSummaryService) GetByDate(ctx context.Context, dateStr string, userID uuid.UUID, ownerIDParam *uuid.UUID) (*dto.OrderSummaryDetailPayload, error) {
 	roleCodes, err := s.users.GetRoleCodesForUser(ctx, userID)
 	if err != nil {
 		return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2605, Message: constant.MsgOrderSummaryServerError, Err: err}
@@ -130,7 +169,18 @@ func (s *OrderSummaryService) GetByDate(ctx context.Context, dateStr string, use
 	if !ok {
 		return nil, &dto.AppError{HTTPStatus: http.StatusBadRequest, Code: 2615, Message: constant.MsgOrderSummaryDateRequired}
 	}
-	os, err := s.summaries.FindBySummaryDateAndOwner(ctx, summaryDate, uuid.Nil)
+	ownerID := userID
+	if ownerIDParam != nil {
+		allowed, err := s.allowedOwnerIDs(ctx, userID)
+		if err != nil {
+			return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2605, Message: constant.MsgOrderSummaryServerError, Err: err}
+		}
+		if !ownerIDIn(*ownerIDParam, allowed) {
+			return nil, &dto.AppError{HTTPStatus: http.StatusNotFound, Code: 2603, Message: constant.MsgOrderSummaryNotFound}
+		}
+		ownerID = *ownerIDParam
+	}
+	os, err := s.summaries.FindBySummaryDateAndOwner(ctx, summaryDate, ownerID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, &dto.AppError{HTTPStatus: http.StatusNotFound, Code: 2603, Message: constant.MsgOrderSummaryNotFound}

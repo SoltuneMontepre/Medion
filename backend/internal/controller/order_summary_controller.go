@@ -69,9 +69,9 @@ func (osc *OrderSummaryController) List(c fuego.ContextNoBody) (*dto.Envelope[li
 	return dto.Ok(listOrderSummariesResponse{Items: items, Total: total}, "success", http.StatusOK), nil
 }
 
-// GetByDate returns the order summary for the given date (e.g. today) for the current sale admin. Read-only.
+// GetByDate returns the order summary for the given date. Optional ownerId (self or subordinate); defaults to current user. Read-only.
 func (osc *OrderSummaryController) GetByDate(c fuego.ContextNoBody) (*dto.Envelope[dto.OrderSummaryDetailPayload], error) {
-	ownerID, err := osc.userIDFromContext(c.Context())
+	userID, err := osc.userIDFromContext(c.Context())
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,13 @@ func (osc *OrderSummaryController) GetByDate(c fuego.ContextNoBody) (*dto.Envelo
 	if dateStr == "" {
 		return nil, &dto.AppError{HTTPStatus: http.StatusBadRequest, Code: 2698, Message: constant.MsgOrderSummaryDateRequired}
 	}
-	detail, err := osc.orderSummaryService.GetByDate(c.Context(), dateStr, ownerID)
+	var ownerIDParam *uuid.UUID
+	if s := c.QueryParam("ownerId"); s != "" {
+		if id, parseErr := uuid.Parse(s); parseErr == nil {
+			ownerIDParam = &id
+		}
+	}
+	detail, err := osc.orderSummaryService.GetByDate(c.Context(), dateStr, userID, ownerIDParam)
 	if err != nil {
 		return nil, err
 	}

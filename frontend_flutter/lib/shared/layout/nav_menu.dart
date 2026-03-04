@@ -64,6 +64,7 @@ class NavMenu {
       children: [
         NavItem(label: 'Vai trò & phân cấp', path: '/roles'),
         NavItem(label: 'Gán vai trò user', path: '/roles/assign'),
+        NavItem(label: 'Gán cấp trên', path: '/roles/assign-supervisor'),
         NavItem(label: 'Phòng ban', path: '/departments'),
       ],
     ),

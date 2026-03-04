@@ -14,9 +14,11 @@ type LoginRequest struct {
 }
 
 type UserPayload struct {
-	ID       uuid.UUID `json:"id"`
-	Username string    `json:"username"`
-	Email    string    `json:"email"`
+	ID           uuid.UUID  `json:"id"`
+	Username     string     `json:"username"`
+	Email        string     `json:"email"`
+	SupervisorID *uuid.UUID `json:"supervisorId,omitempty"`
+	Supervisor   *UserPayload `json:"supervisor,omitempty"` // minimal leader info when loaded
 }
 
 type AuthData struct {

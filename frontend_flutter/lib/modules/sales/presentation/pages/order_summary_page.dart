@@ -26,7 +26,8 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
     final dateStr = formatDateToYyyyMmDd(_selectedDate);
     final summaryAsync = ref.watch(orderSummaryByDateProvider(dateStr));
     final listAsync = ref.watch(
-        orderSummaryListProvider((page: _listPage, pageSize: _pageSize)));
+      orderSummaryListProvider((page: _listPage, pageSize: _pageSize)),
+    );
 
     return AppScaffold(
       title: 'Bảng Tổng hợp Đơn đặt hàng',
@@ -51,11 +52,7 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
             }
           },
         ),
-        ToolbarButton(
-          label: 'In',
-          icon: Icons.print,
-          onPressed: () {},
-        ),
+        ToolbarButton(label: 'In', icon: Icons.print, onPressed: () {}),
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -98,11 +95,13 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
                 }
                 return _buildTable(context, summary);
               },
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(
-                  child: Text('Lỗi: $e',
-                      style: const TextStyle(color: Colors.red))),
+                child: Text(
+                  'Lỗi: $e',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
             ),
           ),
           const Divider(height: 1),
@@ -130,10 +129,7 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'Các ngày đã có bảng (bấm để xem)',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
             ),
             const SizedBox(height: 4),
@@ -149,12 +145,10 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ActionChip(
-                        label: Text(
-                          _formatDisplayDateFromStr(e.summaryDate),
-                        ),
+                        label: Text(_formatDisplayDateFromStr(e.summaryDate)),
                         onPressed: () => setState(() {
-                          _selectedDate = DateTime.tryParse(e.summaryDate) ??
-                              _selectedDate;
+                          _selectedDate =
+                              DateTime.tryParse(e.summaryDate) ?? _selectedDate;
                         }),
                         backgroundColor: isSelected
                             ? const Color(0xFFE8E0F0)
@@ -190,7 +184,8 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
     final items = summary.items;
     final rowCount = items.isEmpty ? 0 : items.length;
     final tableHeight =
-        headingRowHeight + (rowCount > 0 ? rowCount * dataRowHeight : dataRowHeight);
+        headingRowHeight +
+        (rowCount > 0 ? rowCount * dataRowHeight : dataRowHeight);
 
     final table = DataTable2(
       columnSpacing: 12,
@@ -220,13 +215,15 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
             DataCell(Text(item.specification)),
             DataCell(Text(item.productType)),
             DataCell(Text(item.packagingType)),
-            DataCell(Text(
-              '${item.quantity}',
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Colors.red,
+            DataCell(
+              Text(
+                '${item.quantity}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.red,
+                ),
               ),
-            )),
+            ),
           ],
         );
       }).toList(),
@@ -236,11 +233,7 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
     return SingleChildScrollView(
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: SizedBox(
-          width: tableWidth,
-          height: tableHeight,
-          child: table,
-        ),
+        child: SizedBox(width: tableWidth, height: tableHeight, child: table),
       ),
     );
   }

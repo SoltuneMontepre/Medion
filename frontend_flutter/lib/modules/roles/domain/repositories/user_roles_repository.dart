@@ -7,6 +7,9 @@ abstract class UserRolesRepository {
   Future<List<Role>> getUserRoles(String userId);
 
   Future<void> setUserRoles(String userId, List<String> roleIds);
+
+  /// Sets or clears the user's direct supervisor. Pass null to clear.
+  Future<void> setSupervisor(String userId, String? supervisorId);
 }
 
 class UsersListResult {

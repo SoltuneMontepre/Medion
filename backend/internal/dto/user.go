@@ -6,3 +6,9 @@ import "github.com/google/uuid"
 type SetUserRolesRequest struct {
 	RoleIDs []uuid.UUID `json:"roleIds"`
 }
+
+// SetSupervisorRequest for PUT /users/:id/supervisor — set or clear the user's direct leader.
+// SupervisorID nil = clear supervisor (user has no direct leader).
+type SetSupervisorRequest struct {
+	SupervisorID *uuid.UUID `json:"supervisorId"`
+}

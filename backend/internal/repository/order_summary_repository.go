@@ -36,6 +36,28 @@ func (r *OrderSummaryRepository) CountByOwnerID(ctx context.Context, ownerID uui
 	return count, err
 }
 
+// FindAllByOwnerIDIn returns summaries for any of the given owners, paginated (e.g. self + subordinates).
+func (r *OrderSummaryRepository) FindAllByOwnerIDIn(ctx context.Context, ownerIDs []uuid.UUID, limit, offset int) ([]model.OrderSummary, error) {
+	if len(ownerIDs) == 0 {
+		return nil, nil
+	}
+	var list []model.OrderSummary
+	err := r.DB().WithContext(ctx).Where("owner_id IN ?", ownerIDs).
+		Order("summary_date DESC").Limit(limit).Offset(offset).Find(&list).Error
+	return list, err
+}
+
+// CountByOwnerIDIn returns total count for any of the given owners.
+func (r *OrderSummaryRepository) CountByOwnerIDIn(ctx context.Context, ownerIDs []uuid.UUID) (int64, error) {
+	if len(ownerIDs) == 0 {
+		return 0, nil
+	}
+	var count int64
+	err := r.DB().WithContext(ctx).Model(&model.OrderSummary{}).
+		Where("owner_id IN ?", ownerIDs).Count(&count).Error
+	return count, err
+}
+
 // FindBySummaryDateAndOwner returns the summary for the given date and owner (e.g. "today" for this sale admin).
 func (r *OrderSummaryRepository) FindBySummaryDateAndOwner(ctx context.Context, t time.Time, ownerID uuid.UUID) (*model.OrderSummary, error) {
 	day := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)

@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -91,6 +92,14 @@ class _NewOrderPageState extends ConsumerState<NewOrderPage> {
         _rows.every((r) => r.product != null && r.quantityValid) &&
         _rows.every((r) => r.quantityError == null);
     setState(() => _saveEnabled = valid);
+  }
+
+  String? _apiMessage(DioException e) {
+    final data = e.response?.data;
+    if (data is Map<String, dynamic>) {
+      return data['message'] as String?;
+    }
+    return null;
   }
 
   void _addProductRow() {
@@ -262,17 +271,32 @@ class _NewOrderPageState extends ConsumerState<NewOrderPage> {
         ),
       );
       context.go('/customers/orders');
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final status = e.response?.statusCode ?? 0;
+      String msg =
+          status == 409 || e.toString().contains('Conflict')
+              ? 'Khách hàng này đã có đơn hàng hôm nay'
+              : (status == 400 || e.toString().contains('PIN')
+                    ? 'Ký số không thành công, vui lòng kiểm tra lại thiết bị hoặc mã PIN'
+                    : _apiMessage(e) ?? 'Có lỗi xảy ra, vui lòng thử lại sau');
+      if (status >= 500 && status < 600) {
+        msg = '$msg Nếu đơn đã được tạo, vui lòng kiểm tra danh sách đơn hàng.';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), backgroundColor: Colors.red),
+      );
     } on Exception catch (e) {
       if (!mounted) return;
       final msg =
           e.toString().contains('409') || e.toString().contains('Conflict')
-          ? 'Khách hàng này đã có đơn hàng hôm nay'
-          : (e.toString().contains('400') || e.toString().contains('PIN')
-                ? 'Ký số không thành công, vui lòng kiểm tra lại thiết bị hoặc mã PIN'
-                : 'Có lỗi xảy ra, vui lòng thử lại sau');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
+              ? 'Khách hàng này đã có đơn hàng hôm nay'
+              : (e.toString().contains('400') || e.toString().contains('PIN')
+                    ? 'Ký số không thành công, vui lòng kiểm tra lại thiết bị hoặc mã PIN'
+                    : 'Có lỗi xảy ra, vui lòng thử lại sau');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), backgroundColor: Colors.red),
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }

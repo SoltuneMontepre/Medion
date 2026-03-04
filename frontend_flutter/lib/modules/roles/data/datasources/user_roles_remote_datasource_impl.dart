@@ -73,6 +73,14 @@ class UserRolesRemoteDataSourceImpl implements UserRolesRemoteDataSource {
       data: {'roleIds': roleIds},
     );
   }
+
+  @override
+  Future<void> setSupervisor(String userId, String? supervisorId) async {
+    await _client.dio.put(
+      '$_usersPath/$userId/supervisor',
+      data: {'supervisorId': supervisorId},
+    );
+  }
 }
 
 final userRolesRemoteDataSourceProvider =

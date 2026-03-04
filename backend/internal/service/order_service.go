@@ -169,28 +169,36 @@ func (s *OrderService) Create(ctx context.Context, req dto.CreateOrderRequest, a
 		return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2506, Message: constant.MsgOrderServerError, Err: err}
 	}
 
-	// Aggregate into global order summary when order is created by a user with role sale_person.
-	creatorRoles, _ := s.users.GetRoleCodesForUser(ctx, creatorID)
-	if containsRole(creatorRoles, constant.RoleCodeSalePerson) {
-		summary, err := s.summaries.FindOrCreateByDateAndOwner(ctx, order.OrderDate, uuid.Nil)
-		if err != nil {
-			// Log but do not fail the order; summary can be fixed later
-			_ = err
-		} else {
-			for _, it := range items {
-				_ = s.summaryItems.AddQuantity(ctx, summary.ID, it.ProductID, it.Quantity)
-			}
+	// Aggregate into the creator's order summary (per-owner daily summary; sale admin sees self + subordinates).
+	summary, err := s.summaries.FindOrCreateByDateAndOwner(ctx, order.OrderDate, creatorID)
+	if err != nil {
+		// Log but do not fail the order; summary can be fixed later
+		_ = err
+	} else {
+		for _, it := range items {
+			_ = s.summaryItems.AddQuantity(ctx, summary.ID, it.ProductID, it.Quantity)
 		}
 	}
 
-	// Load items with product for response
+	// Load items with product for response (fallback: build from created items if FindByOrderID fails so we never return 500 after a successful create)
+	var itemDetails []dto.OrderItemDetail
 	loadedItems, err := s.orderItems.FindByOrderID(ctx, order.ID)
 	if err != nil {
-		return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2507, Message: constant.MsgOrderServerError, Err: err}
-	}
-	itemDetails := make([]dto.OrderItemDetail, len(loadedItems))
-	for i, oi := range loadedItems {
-		itemDetails[i] = s.converter.OrderItemToDetail(oi)
+		// Order and items are already persisted; build response from in-memory items + product lookups
+		itemDetails = make([]dto.OrderItemDetail, 0, len(items))
+		for _, it := range items {
+			prod, pErr := s.products.FindByID(ctx, it.ProductID)
+			if pErr != nil || prod == nil {
+				itemDetails = append(itemDetails, dto.OrderItemDetail{ProductID: it.ProductID, Quantity: it.Quantity})
+				continue
+			}
+			itemDetails = append(itemDetails, s.converter.OrderItemToDetail(model.OrderItem{ProductID: it.ProductID, Quantity: it.Quantity, Product: prod}))
+		}
+	} else {
+		itemDetails = make([]dto.OrderItemDetail, len(loadedItems))
+		for i, oi := range loadedItems {
+			itemDetails[i] = s.converter.OrderItemToDetail(oi)
+		}
 	}
 	payload := s.converter.OrderToDetailPayload(order, customer.Code, customer.Name, itemDetails)
 	return &payload, nil
