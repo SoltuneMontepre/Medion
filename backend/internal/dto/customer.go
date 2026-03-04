@@ -9,7 +9,14 @@ type CreateCustomerRequest struct {
 	Phone   string `json:"phone"`
 }
 
-// CustomerPayload is returned in list and create responses.
+// UpdateCustomerRequest is the body for PUT /customers/:id.
+type UpdateCustomerRequest struct {
+	Name    string `json:"name"`
+	Address string `json:"address"`
+	Phone   string `json:"phone"`
+}
+
+// CustomerPayload is returned in list, create, update, get responses.
 type CustomerPayload struct {
 	ID            uuid.UUID `json:"id"`
 	Code          string    `json:"code"`

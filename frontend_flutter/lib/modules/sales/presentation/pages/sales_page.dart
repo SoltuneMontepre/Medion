@@ -34,7 +34,7 @@ class _SalesPageState extends ConsumerState<SalesPage> {
         ToolbarButton(
           label: 'Tạo đơn đặt hàng',
           icon: Icons.add,
-          onPressed: () => context.push('/sales/new-order'),
+          onPressed: () => context.push('/customers/new-order'),
           shortcut: const SingleActivator(LogicalKeyboardKey.keyN,
               control: true),
         ),

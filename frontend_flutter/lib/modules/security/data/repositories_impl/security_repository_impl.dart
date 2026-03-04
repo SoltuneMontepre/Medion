@@ -15,6 +15,13 @@ class SecurityRepositoryImpl implements SecurityRepository {
     final model = await _dataSource.fetchSecurityInfo();
     return model.toEntity();
   }
+
+  @override
+  Future<void> setPin(String pin) => _dataSource.setPin(pin);
+
+  @override
+  Future<void> changePin(String oldPin, String newPin) =>
+      _dataSource.changePin(oldPin, newPin);
 }
 
 final securityRepositoryProvider = Provider<SecurityRepository>((ref) {

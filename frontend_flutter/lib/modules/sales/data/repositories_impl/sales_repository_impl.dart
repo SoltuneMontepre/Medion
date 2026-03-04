@@ -18,8 +18,24 @@ class SalesRepositoryImpl implements SalesRepository {
   }
 
   @override
-  Future<OrderSummary> getOrderSummary(String dateYyyyMmDd) async {
-    return _dataSource.fetchDailyOrderSummary(dateYyyyMmDd);
+  Future<OrderSummaryListResult> getOrderSummaries({
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    return _dataSource.fetchOrderSummaries(
+      page: page,
+      pageSize: pageSize,
+    );
+  }
+
+  @override
+  Future<OrderSummary?> getOrderSummaryByDate(String dateYyyyMmDd) async {
+    return _dataSource.fetchOrderSummaryByDate(dateYyyyMmDd);
+  }
+
+  @override
+  Future<OrderSummary?> getOrderSummaryById(String id) async {
+    return _dataSource.fetchOrderSummaryById(id);
   }
 }
 

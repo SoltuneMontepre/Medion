@@ -5,6 +5,7 @@ import (
 
 	"backend/internal/model"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -73,4 +74,67 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*model.
 		return nil, err
 	}
 	return &user, nil
+}
+
+// GetRoleCodesForUser returns role codes for the user (from user_roles + roles).
+func (r *UserRepository) GetRoleCodesForUser(ctx context.Context, userID uuid.UUID) ([]string, error) {
+	var codes []string
+	err := r.DB().WithContext(ctx).Table("user_roles").
+		Select("roles.code").
+		Joins("JOIN roles ON roles.id = user_roles.role_id").
+		Where("user_roles.user_id = ?", userID).
+		Pluck("roles.code", &codes).Error
+	return codes, err
+}
+
+// FindUserIDsByRoleCode returns user IDs that have the given role (by code).
+func (r *UserRepository) FindUserIDsByRoleCode(ctx context.Context, roleCode string) ([]uuid.UUID, error) {
+	var ids []uuid.UUID
+	err := r.DB().WithContext(ctx).Table("user_roles").
+		Select("user_roles.user_id").
+		Joins("JOIN roles ON roles.id = user_roles.role_id").
+		Where("roles.code = ?", roleCode).
+		Pluck("user_roles.user_id", &ids).Error
+	return ids, err
+}
+
+// FindAll returns users with optional pagination (limit/offset). Ordered by username.
+func (r *UserRepository) FindAll(ctx context.Context, limit, offset int) ([]model.User, error) {
+	var list []model.User
+	err := r.DB().WithContext(ctx).Order("username ASC").Limit(limit).Offset(offset).Find(&list).Error
+	return list, err
+}
+
+// Count returns total number of users.
+func (r *UserRepository) Count(ctx context.Context) (int64, error) {
+	var count int64
+	err := r.DB().WithContext(ctx).Model(&model.User{}).Count(&count).Error
+	return count, err
+}
+
+// GetRoleIDsForUser returns role IDs assigned to the user.
+func (r *UserRepository) GetRoleIDsForUser(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+	var ids []uuid.UUID
+	err := r.DB().WithContext(ctx).Table("user_roles").
+		Where("user_id = ?", userID).
+		Pluck("role_id", &ids).Error
+	return ids, err
+}
+
+// SetUserRoles replaces all role assignments for the user with the given role IDs (audit fields set in service).
+func (r *UserRepository) SetUserRoles(ctx context.Context, userID uuid.UUID, roleIDs []uuid.UUID, createdBy uuid.UUID) error {
+	return r.DB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("user_id = ?", userID).Delete(&model.UserRole{}).Error; err != nil {
+			return err
+		}
+		for _, roleID := range roleIDs {
+			ur := model.UserRole{UserID: userID, RoleID: roleID}
+			ur.CreatedBy = createdBy
+			ur.UpdatedBy = createdBy
+			if err := tx.Create(&ur).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }

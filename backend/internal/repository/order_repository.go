@@ -60,6 +60,42 @@ func (r *OrderRepository) FindAll(ctx context.Context, limit, offset int) ([]mod
 	return list, err
 }
 
+// FindAllByCreatedBy returns orders created by the given user (sale person: own orders).
+func (r *OrderRepository) FindAllByCreatedBy(ctx context.Context, createdBy uuid.UUID, limit, offset int) ([]model.Order, error) {
+	var list []model.Order
+	err := r.DB().WithContext(ctx).Where("created_by = ?", createdBy).
+		Preload("Customer").Order("created_at DESC").Limit(limit).Offset(offset).Find(&list).Error
+	return list, err
+}
+
+// CountByCreatedBy returns total orders created by the given user.
+func (r *OrderRepository) CountByCreatedBy(ctx context.Context, createdBy uuid.UUID) (int64, error) {
+	var count int64
+	err := r.DB().WithContext(ctx).Model(&model.Order{}).Where("created_by = ?", createdBy).Count(&count).Error
+	return count, err
+}
+
+// FindAllByCreatedByIn returns orders created by any of the given users (sale admin: team orders).
+func (r *OrderRepository) FindAllByCreatedByIn(ctx context.Context, createdByIDs []uuid.UUID, limit, offset int) ([]model.Order, error) {
+	if len(createdByIDs) == 0 {
+		return nil, nil
+	}
+	var list []model.Order
+	err := r.DB().WithContext(ctx).Where("created_by IN ?", createdByIDs).
+		Preload("Customer").Order("created_at DESC").Limit(limit).Offset(offset).Find(&list).Error
+	return list, err
+}
+
+// CountByCreatedByIn returns total orders created by any of the given users.
+func (r *OrderRepository) CountByCreatedByIn(ctx context.Context, createdByIDs []uuid.UUID) (int64, error) {
+	if len(createdByIDs) == 0 {
+		return 0, nil
+	}
+	var count int64
+	err := r.DB().WithContext(ctx).Model(&model.Order{}).Where("created_by IN ?", createdByIDs).Count(&count).Error
+	return count, err
+}
+
 // Count total orders.
 func (r *OrderRepository) Count(ctx context.Context) (int64, error) {
 	var count int64

@@ -25,6 +25,17 @@ func (r *CustomerRepository) ExistsByPhone(ctx context.Context, phone string) (b
 	return count > 0, nil
 }
 
+// ExistsByPhoneExcludingID returns true if another customer (excluding id) has the phone.
+func (r *CustomerRepository) ExistsByPhoneExcludingID(ctx context.Context, phone string, excludeID string) (bool, error) {
+	var count int64
+	err := r.DB().WithContext(ctx).Model(&model.Customer{}).
+		Where("phone = ? AND id != ?", phone, excludeID).Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func (r *CustomerRepository) FindAll(ctx context.Context, limit, offset int) ([]model.Customer, error) {
 	var list []model.Customer
 	err := r.DB().WithContext(ctx).Order("created_at DESC").Limit(limit).Offset(offset).Find(&list).Error

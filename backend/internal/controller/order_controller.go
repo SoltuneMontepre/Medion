@@ -6,6 +6,7 @@ import (
 
 	"backend/internal/constant"
 	"backend/internal/dto"
+	"backend/internal/middleware"
 	"backend/internal/service"
 
 	"github.com/go-fuego/fuego"
@@ -26,6 +27,10 @@ type listOrdersResponse struct {
 }
 
 func (oc *OrderController) List(c fuego.ContextNoBody) (*dto.Envelope[listOrdersResponse], error) {
+	token, ok := middleware.GetAccessTokenFromContext(c.Context())
+	if !ok {
+		return nil, &dto.AppError{HTTPStatus: http.StatusUnauthorized, Code: 1011, Message: "access token is missing"}
+	}
 	page, _ := strconv.Atoi(c.QueryParam("page"))
 	if page < 1 {
 		page = 1
@@ -34,7 +39,7 @@ func (oc *OrderController) List(c fuego.ContextNoBody) (*dto.Envelope[listOrders
 	if pageSize < 1 {
 		pageSize = 20
 	}
-	items, total, err := oc.orderService.List(c.Context(), page, pageSize)
+	items, total, err := oc.orderService.List(c.Context(), token, page, pageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -72,11 +77,15 @@ func (oc *OrderController) CheckCustomerOrderToday(c fuego.ContextNoBody) (*dto.
 }
 
 func (oc *OrderController) Create(c fuego.ContextWithBody[dto.CreateOrderRequest]) (*dto.Envelope[dto.OrderDetailPayload], error) {
+	token, ok := middleware.GetAccessTokenFromContext(c.Context())
+	if !ok {
+		return nil, &dto.AppError{HTTPStatus: http.StatusUnauthorized, Code: 1011, Message: "access token is missing"}
+	}
 	body, err := c.Body()
 	if err != nil {
 		return nil, err
 	}
-	detail, err := oc.orderService.Create(c.Context(), body)
+	detail, err := oc.orderService.Create(c.Context(), body, token)
 	if err != nil {
 		return nil, err
 	}

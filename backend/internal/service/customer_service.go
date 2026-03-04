@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"regexp"
 	"strings"
@@ -11,6 +12,8 @@ import (
 	"backend/internal/dto"
 	"backend/internal/model"
 	"backend/internal/repository"
+
+	"gorm.io/gorm"
 )
 
 // Vietnamese mobile: 10 digits starting with 0 (e.g. 0901234567).
@@ -80,6 +83,79 @@ func (s *CustomerService) Create(ctx context.Context, req dto.CreateCustomerRequ
 		return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2504, Message: "failed to create customer", Err: err}
 	}
 	return s.converter.CustomerToPayload(customer), nil
+}
+
+// GetByID returns the full customer record for a given UUID string.
+func (s *CustomerService) GetByID(ctx context.Context, id string) (dto.CustomerPayload, error) {
+	customer, err := s.customers.FindByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusNotFound, Code: 2006, Message: constant.MsgCustomerNotFound}
+		}
+		return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2506, Message: "failed to get customer", Err: err}
+	}
+	return s.converter.CustomerToPayload(*customer), nil
+}
+
+// Update updates a customer. Validates phone uniqueness when phone changes.
+func (s *CustomerService) Update(ctx context.Context, id string, req dto.UpdateCustomerRequest) (dto.CustomerPayload, error) {
+	name := strings.TrimSpace(req.Name)
+	address := strings.TrimSpace(req.Address)
+	phone := strings.TrimSpace(req.Phone)
+
+	if name == "" {
+		return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusBadRequest, Code: 2007, Message: constant.MsgCustomerNameRequired}
+	}
+	if address == "" {
+		return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusBadRequest, Code: 2008, Message: constant.MsgCustomerAddressRequired}
+	}
+	if phone == "" {
+		return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusBadRequest, Code: 2009, Message: constant.MsgCustomerPhoneRequired}
+	}
+	if !phoneRegex.MatchString(phone) {
+		return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusBadRequest, Code: 2010, Message: constant.MsgCustomerPhoneInvalid}
+	}
+
+	existing, err := s.customers.FindByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusNotFound, Code: 2006, Message: constant.MsgCustomerNotFound}
+		}
+		return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2506, Message: "failed to get customer", Err: err}
+	}
+
+	if existing.Phone != phone {
+		exists, err := s.customers.ExistsByPhoneExcludingID(ctx, phone, id)
+		if err != nil {
+			return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2507, Message: "failed to check phone", Err: err}
+		}
+		if exists {
+			return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusConflict, Code: 2005, Message: constant.MsgCustomerPhoneExists}
+		}
+	}
+
+	existing.Name = name
+	existing.Address = address
+	existing.Phone = phone
+	if err := s.customers.Update(ctx, existing); err != nil {
+		return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2508, Message: "failed to update customer", Err: err}
+	}
+	return s.converter.CustomerToPayload(*existing), nil
+}
+
+// Delete soft-deletes a customer.
+func (s *CustomerService) Delete(ctx context.Context, id string) error {
+	_, err := s.customers.FindByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return &dto.AppError{HTTPStatus: http.StatusNotFound, Code: 2006, Message: constant.MsgCustomerNotFound}
+		}
+		return &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2509, Message: "failed to get customer", Err: err}
+	}
+	if err := s.customers.Delete(ctx, id); err != nil {
+		return &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2510, Message: "failed to delete customer", Err: err}
+	}
+	return nil
 }
 
 // Suggest returns customers matching query (code, name, or phone) for dropdown. Limit 20.

@@ -34,6 +34,12 @@ func BuildServer() (*fuego.Server, error) {
 	if err := database.SeedProducts(db); err != nil {
 		return nil, fmt.Errorf("seed products: %w", err)
 	}
+	if err := database.SeedOrderSummaryPermissions(db); err != nil {
+		return nil, fmt.Errorf("seed order summary permissions: %w", err)
+	}
+	if err := database.SeedRoles(db); err != nil {
+		return nil, fmt.Errorf("seed roles: %w", err)
+	}
 
 	jwtManager, err := security.NewJWTManagerFromEnv()
 	if err != nil {
@@ -47,15 +53,26 @@ func BuildServer() (*fuego.Server, error) {
 	productRepo := repository.NewProductRepository(db)
 	orderRepo := repository.NewOrderRepository(db)
 	orderItemRepo := repository.NewOrderItemRepository(db)
+	orderSummaryRepo := repository.NewOrderSummaryRepository(db)
+	orderSummaryItemRepo := repository.NewOrderSummaryItemRepository(db)
+	roleRepo := repository.NewRoleRepository(db)
 	conv := converter.NewConverter()
 	authService := service.NewAuthService(userRepo, jwtManager, blacklist, conv)
+	pinService := service.NewPINService(userRepo, jwtManager)
 	customerService := service.NewCustomerService(customerRepo, conv)
 	productService := service.NewProductService(productRepo, conv)
-	orderService := service.NewOrderService(orderRepo, orderItemRepo, customerRepo, productRepo, conv)
+	orderService := service.NewOrderService(orderRepo, orderItemRepo, customerRepo, productRepo, userRepo, orderSummaryRepo, orderSummaryItemRepo, pinService, conv)
+	orderSummaryService := service.NewOrderSummaryService(orderSummaryRepo, orderSummaryItemRepo, userRepo, conv)
 	authController := controller.NewAuthController(authService)
+	pinController := controller.NewPINController(pinService)
 	customerController := controller.NewCustomerController(customerService)
 	productController := controller.NewProductController(productService)
 	orderController := controller.NewOrderController(orderService)
+	orderSummaryController := controller.NewOrderSummaryController(orderSummaryService, jwtManager)
+	roleService := service.NewRoleService(roleRepo, conv)
+	roleController := controller.NewRoleController(roleService)
+	userService := service.NewUserService(userRepo, roleRepo, conv)
+	userController := controller.NewUserController(userService, jwtManager)
 	authGuard := middleware.AccessTokenGuard(jwtManager, blacklist)
 
 	addr := os.Getenv("APP_ADDR")
@@ -83,7 +100,7 @@ func BuildServer() (*fuego.Server, error) {
 		Description: "API Server",
 	})
 
-	RegisterRoutes(server, authController, customerController, productController, orderController, func(next http.Handler) http.Handler {
+	RegisterRoutes(server, authController, customerController, productController, orderController, orderSummaryController, pinController, roleController, userController, func(next http.Handler) http.Handler {
 		return authGuard(next)
 	})
 	return server, nil

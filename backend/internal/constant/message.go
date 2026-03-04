@@ -16,6 +16,11 @@ const (
 	MsgTooManyRequests        = "too many requests, please try again later"
 )
 
+// User (admin / assign roles)
+const (
+	MsgUserNotFound = "user not found"
+)
+
 // Role
 const (
 	MsgRoleNameAlreadyExists = "role name already exists"
@@ -84,6 +89,8 @@ const (
 	MsgCustomerPhoneInvalid    = "số điện thoại không hợp lệ"
 	MsgCustomerPhoneExists     = "Số điện thoại này đã tồn tại trong hệ thống. Vui lòng kiểm tra lại."
 	MsgCustomerNotFound        = "khách hàng không tồn tại"
+	MsgCustomerDeleteSuccess  = "xóa khách hàng thành công"
+	MsgCustomerUpdateSuccess  = "cập nhật khách hàng thành công"
 )
 
 // Order (Sale)
@@ -100,5 +107,34 @@ const (
 
 // Product (Sale)
 const (
-	MsgProductNotFound = "sản phẩm không tồn tại"
+	MsgProductNotFound      = "sản phẩm không tồn tại"
+	MsgProductCodeRequired  = "mã sản phẩm là bắt buộc"
+	MsgProductNameRequired  = "tên sản phẩm là bắt buộc"
+	MsgProductCodeExists    = "mã sản phẩm đã tồn tại"
+	MsgProductSaveSuccess   = "lưu sản phẩm thành công"
+	MsgProductDeleteSuccess = "xóa sản phẩm thành công"
+	MsgProductServerError   = "có lỗi xảy ra, vui lòng thử lại sau"
+)
+
+// Order Summary (Bảng tổng hợp đơn hàng)
+const (
+	MsgOrderSummaryNotFound           = "bảng tổng hợp đơn không tồn tại"
+	MsgOrderSummaryAlreadyExistsForDate = "đã có bảng tổng hợp đơn cho ngày này, mỗi ngày chỉ được một bảng"
+	MsgOrderSummaryDateRequired       = "ngày tổng hợp đơn là bắt buộc"
+	MsgOrderSummaryItemsRequired      = "bảng tổng hợp phải có ít nhất một sản phẩm"
+	MsgOrderSummaryQuantityInvalid    = "số lượng sản phẩm không hợp lệ"
+	MsgOrderSummaryServerError        = "có lỗi xảy ra, vui lòng thử lại sau"
+	MsgOrderSummarySaveSuccess        = "lưu bảng tổng hợp đơn thành công"
+	MsgOrderSummaryApproveSuccess     = "duyệt bảng tổng hợp đơn thành công"
+)
+
+// PIN (Security)
+const (
+	MsgPINRequired      = "mã PIN là bắt buộc"
+	MsgPINInvalid       = "mã PIN phải gồm đúng 4 chữ số"
+	MsgPINAlreadySet    = "mã PIN đã được thiết lập, vui lòng sử dụng chức năng đổi PIN"
+	MsgPINNotSet        = "chưa thiết lập mã PIN, vui lòng thiết lập trước khi ký số"
+	MsgPINIncorrect     = "mã PIN không đúng"
+	MsgPINSetSuccess    = "thiết lập mã PIN thành công"
+	MsgPINChangeSuccess = "đổi mã PIN thành công"
 )

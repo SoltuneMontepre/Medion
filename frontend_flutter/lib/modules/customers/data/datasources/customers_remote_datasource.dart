@@ -18,4 +18,16 @@ abstract class CustomersRemoteDataSource {
 
   /// GET /api/v1/sale/customers/suggest?q=...
   Future<List<CustomerModel>> suggestCustomers(String query);
+
+  /// GET /api/v1/sale/customers/:id
+  Future<CustomerModel> getCustomerById(String id);
+
+  Future<CustomerModel> updateCustomer({
+    required String id,
+    required String name,
+    required String address,
+    required String phone,
+  });
+
+  Future<void> deleteCustomer(String id);
 }

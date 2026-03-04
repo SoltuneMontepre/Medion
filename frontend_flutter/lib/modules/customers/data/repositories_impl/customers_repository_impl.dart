@@ -37,20 +37,56 @@ class CustomersRepositoryImpl implements CustomersRepository {
       );
       return model.toEntity();
     } on DioException catch (e) {
-      final msg = _extractMessage(e);
-      final code = e.response?.statusCode;
-      if (code == 409 ||
-          (code == 400 &&
-              (msg.toLowerCase().contains('đã tồn tại') ||
-                  msg.toLowerCase().contains('duplicate') ||
-                  msg.toLowerCase().contains('already exists')))) {
-        throw CustomerDuplicatePhoneException(
-          msg.isNotEmpty
-              ? msg
-              : 'Số điện thoại này đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.',
-        );
-      }
+      _throwIfDuplicatePhone(e);
       rethrow;
+    }
+  }
+
+  @override
+  Future<Customer?> getCustomerById(String id) async {
+    try {
+      final model = await _dataSource.getCustomerById(id);
+      return model.toEntity();
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Customer> updateCustomer(String id, CreateCustomerParams params) async {
+    try {
+      final model = await _dataSource.updateCustomer(
+        id: id,
+        name: params.name,
+        address: params.address,
+        phone: params.phone,
+      );
+      return model.toEntity();
+    } on DioException catch (e) {
+      _throwIfDuplicatePhone(e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteCustomer(String id) async {
+    await _dataSource.deleteCustomer(id);
+  }
+
+  void _throwIfDuplicatePhone(DioException e) {
+    final msg = _extractMessage(e);
+    final code = e.response?.statusCode;
+    if (code == 409 ||
+        (code == 400 &&
+            (msg.toLowerCase().contains('đã tồn tại') ||
+                msg.toLowerCase().contains('duplicate') ||
+                msg.toLowerCase().contains('already exists')))) {
+      throw CustomerDuplicatePhoneException(
+        msg.isNotEmpty
+            ? msg
+            : 'Số điện thoại này đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.',
+      );
     }
   }
 

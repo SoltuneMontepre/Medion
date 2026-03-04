@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"backend/internal/constant"
 	"backend/internal/dto"
 	"backend/internal/service"
 
@@ -50,6 +51,39 @@ func (cc *CustomerController) Create(c fuego.ContextWithBody[dto.CreateCustomerR
 	}
 	c.SetStatus(http.StatusCreated)
 	return dto.Ok(data, "Tạo khách hàng thành công", http.StatusCreated), nil
+}
+
+// GetByID returns the full customer record for the given {id} path param.
+func (cc *CustomerController) GetByID(c fuego.ContextNoBody) (*dto.Envelope[dto.CustomerPayload], error) {
+	id := c.PathParam("id")
+	data, err := cc.customerService.GetByID(c.Context(), id)
+	if err != nil {
+		return nil, err
+	}
+	return dto.Ok(data, "success", http.StatusOK), nil
+}
+
+// Update updates a customer.
+func (cc *CustomerController) Update(c fuego.ContextWithBody[dto.UpdateCustomerRequest]) (*dto.Envelope[dto.CustomerPayload], error) {
+	id := c.PathParam("id")
+	body, err := c.Body()
+	if err != nil {
+		return nil, err
+	}
+	data, err := cc.customerService.Update(c.Context(), id, body)
+	if err != nil {
+		return nil, err
+	}
+	return dto.Ok(data, constant.MsgCustomerUpdateSuccess, http.StatusOK), nil
+}
+
+// Delete soft-deletes a customer.
+func (cc *CustomerController) Delete(c fuego.ContextNoBody) (*dto.Envelope[any], error) {
+	id := c.PathParam("id")
+	if err := cc.customerService.Delete(c.Context(), id); err != nil {
+		return nil, err
+	}
+	return dto.Ok[any](nil, constant.MsgCustomerDeleteSuccess, http.StatusOK), nil
 }
 
 // Suggest returns customers for dropdown: ?q=...

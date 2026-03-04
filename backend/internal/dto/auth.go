@@ -27,3 +27,24 @@ type AuthData struct {
 type LogoutData struct {
 	LoggedOut bool `json:"loggedOut"`
 }
+
+type SetPINRequest struct {
+	PIN string `json:"pin"`
+}
+
+type ChangePINRequest struct {
+	OldPIN string `json:"oldPin"`
+	NewPIN string `json:"newPin"`
+}
+
+type VerifyPINRequest struct {
+	PIN string `json:"pin"`
+}
+
+type PINStatusPayload struct {
+	HasPIN bool `json:"hasPin"`
+}
+
+type VerifyPINPayload struct {
+	Valid bool `json:"valid"`
+}

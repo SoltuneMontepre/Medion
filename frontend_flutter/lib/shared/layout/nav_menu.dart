@@ -54,6 +54,7 @@ class NavMenu {
     NavItem(
       label: 'Sản phẩm',
       children: [
+        NavItem(label: 'Danh sách sản phẩm', path: '/products'),
         NavItem(label: 'Thu hồi sản phẩm', path: '/products/recall'),
       ],
     ),
@@ -61,10 +62,21 @@ class NavMenu {
     NavItem(
       label: 'Nhân sự',
       children: [
+        NavItem(label: 'Vai trò & phân cấp', path: '/roles'),
+        NavItem(label: 'Gán vai trò user', path: '/roles/assign'),
         NavItem(label: 'Phòng ban', path: '/departments'),
       ],
     ),
-    NavItem(label: 'Khách hàng', path: '/customers'),
+    NavItem(
+      label: 'Khách hàng',
+      children: [
+        NavItem(label: 'Khách hàng', path: '/customers'),
+        NavItem(label: 'Đơn hàng', path: '/customers/orders'),
+        NavItem(label: 'Tổng hợp đơn hàng', path: '/customers/order-summary'),
+        NavItem(label: 'Theo dõi đơn hàng', path: '/customers/order-tracking'),
+        NavItem(label: 'Hoàn đơn', path: '/customers/order-return'),
+      ],
+    ),
     NavItem(label: 'Đối tác', path: '/partners'),
     NavItem(label: 'Rủi ro', path: '/risk'),
   ];

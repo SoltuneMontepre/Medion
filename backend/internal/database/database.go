@@ -54,6 +54,8 @@ func AutoMigrate(db *gorm.DB) error {
 		&model.Product{},
 		&model.Order{},
 		&model.OrderItem{},
+		&model.OrderSummary{},
+		&model.OrderSummaryItem{},
 		&model.Permission{},
 		&model.Role{},
 		&model.RolePermission{},
@@ -118,5 +120,54 @@ func SeedProducts(db *gorm.DB) error {
 		}
 	}
 	log.Println("database: seeded sample products")
+	return nil
+}
+
+// Order summary permissions (ViewOrderSummary, CreateOrderSummary, EditOrderSummary, DeleteOrderSummary).
+var seedOrderSummaryPermissions = []model.Permission{
+	{Code: "ViewOrderSummary", Name: "Xem bảng tổng hợp đơn hàng", Description: "View order summary table"},
+	{Code: "CreateOrderSummary", Name: "Tạo bảng tổng hợp đơn hàng", Description: "Create order summary table"},
+	{Code: "EditOrderSummary", Name: "Sửa bảng tổng hợp đơn hàng", Description: "Edit order summary table"},
+	{Code: "DeleteOrderSummary", Name: "Xóa bảng tổng hợp đơn hàng", Description: "Delete order summary table"},
+}
+
+// SeedOrderSummaryPermissions creates order summary permissions when missing (by code).
+func SeedOrderSummaryPermissions(db *gorm.DB) error {
+	for i := range seedOrderSummaryPermissions {
+		var existing model.Permission
+		err := db.Where("code = ?", seedOrderSummaryPermissions[i].Code).First(&existing).Error
+		if err == gorm.ErrRecordNotFound {
+			if err := db.Create(&seedOrderSummaryPermissions[i]).Error; err != nil {
+				return err
+			}
+		} else if err != nil {
+			return err
+		}
+	}
+	log.Println("database: seeded order summary permissions")
+	return nil
+}
+
+// Default roles: admin, sale_admin, sale. Safe to call on every startup (creates only when missing by code).
+var seedRoles = []model.Role{
+	{Code: "admin", Name: "Admin", Description: "Full system administrator"},
+	{Code: "sale_admin", Name: "Sale Admin", Description: "Sales administration and oversight"},
+	{Code: "sale", Name: "Sale", Description: "Sales person"},
+}
+
+// SeedRoles creates default roles (admin, sale_admin, sale) when missing (by code).
+func SeedRoles(db *gorm.DB) error {
+	for i := range seedRoles {
+		var existing model.Role
+		err := db.Where("code = ?", seedRoles[i].Code).First(&existing).Error
+		if err == gorm.ErrRecordNotFound {
+			if err := db.Create(&seedRoles[i]).Error; err != nil {
+				return err
+			}
+		} else if err != nil {
+			return err
+		}
+	}
+	log.Println("database: seeded default roles (admin, sale_admin, sale)")
 	return nil
 }

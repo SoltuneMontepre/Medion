@@ -7,8 +7,17 @@ import '../../domain/entities/order_summary.dart';
 abstract class SalesRemoteDataSource {
   Future<List<SaleOrderModel>> fetchOrders({int page = 1, int pageSize = 20});
 
-  /// GET /api/v1/sale/orders/daily-summary?date=yyyy-MM-dd
-  Future<OrderSummary> fetchDailyOrderSummary(String dateYyyyMmDd);
+  /// GET /api/v1/sale/order-summaries (list for current sale admin)
+  Future<OrderSummaryListResult> fetchOrderSummaries({
+    int page = 1,
+    int pageSize = 20,
+  });
+
+  /// GET /api/v1/sale/order-summaries/by-date?date=yyyy-MM-dd
+  Future<OrderSummary?> fetchOrderSummaryByDate(String dateYyyyMmDd);
+
+  /// GET /api/v1/sale/order-summaries/:id
+  Future<OrderSummary?> fetchOrderSummaryById(String id);
 
   /// GET /api/v1/sale/orders/check-today?customerId=...
   Future<CheckCustomerOrderTodayResult> checkCustomerOrderToday(String customerId);

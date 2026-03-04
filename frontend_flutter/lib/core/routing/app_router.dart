@@ -20,6 +20,9 @@ import '../../modules/sales/presentation/pages/new_order_page.dart';
 import '../../modules/sales/presentation/pages/order_detail_page.dart';
 import '../../modules/sales/presentation/pages/order_summary_page.dart';
 import '../../modules/sales/presentation/pages/sales_page.dart';
+import '../../modules/products/presentation/pages/products_page.dart';
+import '../../modules/roles/presentation/pages/assign_role_to_user_page.dart';
+import '../../modules/roles/presentation/pages/roles_page.dart';
 import '../../modules/security/presentation/pages/security_page.dart';
 import '../../shared/layout/app_shell.dart';
 import 'home_page.dart';
@@ -53,6 +56,33 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, _) => const CreateCustomerPage(),
           ),
           GoRoute(
+            path: '/customers/orders',
+            builder: (_, _) => const SalesPage(),
+          ),
+          GoRoute(
+            path: '/customers/new-order',
+            builder: (_, _) => const NewOrderPage(),
+          ),
+          GoRoute(
+            path: '/customers/orders/:id',
+            builder: (_, state) => OrderDetailPage(
+              orderId: state.pathParameters['id'] ?? '',
+            ),
+          ),
+          GoRoute(
+            path: '/customers/order-summary',
+            builder: (_, _) => const OrderSummaryPage(),
+          ),
+          GoRoute(
+            path: '/customers/order-tracking',
+            builder: (_, _) =>
+                const PlaceholderPage(title: 'Theo dõi đơn hàng'),
+          ),
+          GoRoute(
+            path: '/customers/order-return',
+            builder: (_, _) => const PlaceholderPage(title: 'Hoàn đơn'),
+          ),
+          GoRoute(
             path: '/inventory',
             builder: (_, _) => const InventorySectionPage(sub: 'raw'),
           ),
@@ -80,25 +110,33 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/production/plan',
             builder: (_, _) => const ProductionPlanPage(),
           ),
-          GoRoute(path: '/sales', builder: (_, _) => const SalesPage()),
+          GoRoute(path: '/products', builder: (_, _) => const ProductsPage()),
+          GoRoute(
+            path: '/sales',
+            redirect: (_, __) => '/customers/orders',
+          ),
           GoRoute(
             path: '/sales/new-order',
-            builder: (_, _) => const NewOrderPage(),
+            redirect: (_, __) => '/customers/new-order',
           ),
           GoRoute(
             path: '/sales/orders/:id',
-            builder: (_, state) => OrderDetailPage(
-              orderId: state.pathParameters['id'] ?? '',
-            ),
+            redirect: (_, state) =>
+                '/customers/orders/${state.pathParameters['id'] ?? ''}',
           ),
           GoRoute(
             path: '/sales/order-summary',
-            builder: (_, _) => const OrderSummaryPage(),
+            redirect: (_, __) => '/customers/order-summary',
           ),
           GoRoute(path: '/qc', builder: (_, _) => const QcPage()),
           GoRoute(path: '/audit', builder: (_, _) => const AuditPage()),
           GoRoute(path: '/payroll', builder: (_, _) => const PayrollPage()),
           GoRoute(path: '/approval', builder: (_, _) => const ApprovalPage()),
+          GoRoute(path: '/roles', builder: (_, _) => const RolesPage()),
+          GoRoute(
+            path: '/roles/assign',
+            builder: (_, _) => const AssignRoleToUserPage(),
+          ),
           GoRoute(path: '/security', builder: (_, _) => const SecurityPage()),
           GoRoute(path: '/reports', builder: (_, _) => const ReportsPage()),
           // Placeholder routes for nav items not yet implemented

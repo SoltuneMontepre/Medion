@@ -9,8 +9,10 @@ import '../../../../shared/layout/app_scaffold.dart';
 import '../../../../shared/widgets/filter_bar.dart';
 import '../../../../shared/widgets/pagination_footer.dart';
 import '../../../../shared/widgets/toolbar.dart';
+import '../../data/repositories_impl/customers_repository_impl.dart';
 import '../../domain/entities/customer.dart';
 import '../providers/customers_provider.dart';
+import '../widgets/customer_form_dialog.dart';
 
 const int _pageSize = 20;
 
@@ -51,6 +53,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
     final totalPages = resultAsync.valueOrNull != null
         ? ((resultAsync.valueOrNull!.total + _pageSize - 1) / _pageSize).ceil().clamp(1, 0x7fffffff)
         : 1;
+    final repo = ref.read(customersRepositoryProvider);
 
     return AppScaffold(
       title: 'Danh sách Khách hàng',
@@ -71,10 +74,16 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
           icon: Icons.edit,
           onPressed: _selectedCustomer == null
               ? null
-              : () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Chức năng sửa đang phát triển')),
+              : () async {
+                  final updated = await showCustomerFormDialog(
+                    context,
+                    customer: _selectedCustomer!,
+                    repository: repo,
                   );
+                  if (updated != null && mounted) {
+                    ref.invalidate(customersProvider(_page));
+                    setState(() => _selectedCustomer = updated);
+                  }
                 },
           shortcut: const SingleActivator(LogicalKeyboardKey.f2),
         ),
@@ -84,16 +93,30 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
           onPressed: _selectedCustomer == null
               ? null
               : () async {
+                  final messenger = ScaffoldMessenger.of(context);
                   final ok = await showConfirmDialog(
                     context,
-                    title: 'Xóa',
-                    message: 'Xóa khách hàng đã chọn?',
+                    title: 'Xóa khách hàng',
+                    message:
+                        'Bạn có chắc muốn xóa "${_selectedCustomer!.name}" (${_selectedCustomer!.code})?',
                     isDestructive: true,
                   );
-                  if (ok && mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Chức năng xóa đang phát triển')),
-                    );
+                  if (!ok || !mounted) return;
+                  try {
+                    await repo.deleteCustomer(_selectedCustomer!.id);
+                    if (mounted) {
+                      ref.invalidate(customersProvider(_page));
+                      _clearSelection();
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('Đã xóa khách hàng')),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      messenger.showSnackBar(
+                        SnackBar(content: Text('Lỗi: $e')),
+                      );
+                    }
                   }
                 },
           shortcut: const SingleActivator(LogicalKeyboardKey.delete),
