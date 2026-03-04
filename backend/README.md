@@ -1,66 +1,348 @@
-# Medion Backend – Onboarding
+# Medion Backend - Complete Authentication System
 
-Tài liệu này giúp dev mới hiểu nhanh kiến trúc và cách chạy dự án.
+## Overview
 
-## Kiến trúc tóm tắt
+Hệ thống Authentication hoàn chỉnh sử dụng **Fuego Framework**, **GORM + PostgreSQL**, **Argon2id**, **JWT**, và **go-cache** để quản lý token blacklist.
 
-- Orchestrator dùng .NET Aspire AppHost: khởi chạy Postgres, RabbitMQ và các service, xem [AppHost/AppHost.cs#L3-L48](AppHost/AppHost.cs#L3-L48).
-- API Gateway dùng YARP, load config từ appsettings, xem [Gateway/Program.cs#L4-L82](Gateway/Program.cs#L4-L82) và [Gateway/appsettings.json](Gateway/appsettings.json).
-- Các domain service tuân theo clean architecture: `Domain` + `Application` + `Infrastructure` + `API` (Sales, Approval, Payroll, Inventory, Manufacture, Identity). Shared libs: `ServiceDefaults` (health, OpenTelemetry, service discovery) và `SharedStorage` (S3).
-- gRPC contracts đặt tại `Protos/` và build qua `Grpc.Tools`.
+## Kiến Trúc & Thiết Kế
 
-## Yêu cầu môi trường
+### 1. Tech Stack
+- **Framework**: Fuego (OpenAPI auto-generation, net/http compatible)
+- **ORM**: GORM + PostgreSQL driver
+- **Password Hashing**: Argon2id (`golang.org/x/crypto/argon2`)
+- **JWT**: `github.com/golang-jwt/jwt/v5`
+- **Caching**: `github.com/patrickmn/go-cache` (in-memory token blacklist)
+- **Go Version**: 1.23+
 
-- .NET SDK 10 (preview) và workloads Aspire: `dotnet workload install aspire`.
-- Docker + Docker Compose (cho Postgres, RabbitMQ nếu không chạy bằng Aspire host).
-- Make sure `OTEL_EXPORTER_OTLP_ENDPOINT` có giá trị khi cần gửi telemetry ra OTLP.
+### 2. API Endpoints
 
-## Chạy nhanh toàn bộ stack
+#### POST /register
+Đăng ký tài khoản mới.
 
-1) `dotnet restore` ở thư mục backend.
-2) Khởi chạy bằng Aspire: `dotnet run --project AppHost/AppHost.csproj`.
-   - AppHost sẽ spin up Postgres + RabbitMQ, rồi chạy từng service và Gateway.
-3) Gateway mặc định lắng nghe (qua Aspire) và expose swagger tại `http://localhost:<gateway-port>/swagger`.
-4) Dừng bằng Ctrl+C.
+**Request:**
+```json
+{
+  "username": "john_doe",
+  "email": "john@example.com",
+  "password": "SecurePass123!"
+}
+```
 
-## Chạy một service riêng lẻ
+**Response (201 Created):**
+```json
+{
+  "status": "success",
+  "code": 201,
+  "message": "register success",
+  "data": {
+    "accessToken": "eyJhbGc...",
+    "user": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "username": "john_doe",
+      "email": "john@example.com"
+    }
+  }
+}
+```
 
-- Ví dụ Sale API: `dotnet run --project Services/Sale/API/Sale.API.csproj --urls http://localhost:8080`.
-- Để gateway forward đến instance tự chạy, chỉnh `Gateway/appsettings.json` cho đúng `Address` hoặc chạy qua Aspire để tự resolve.
+**Cookies Set:**
+- `refresh_token` (HttpOnly, Secure, SameSite=Lax, Path=/refresh)
 
-## Routing qua Gateway (mặc định)
+---
 
-- Sale: `/api/sale/*` → `sale.api:8080`
-- Approval: `/api/approval/*` → `approval.api:8080`
-- Payroll: `/api/payroll/*` → `payroll.api:8080`
-- Inventory: `/api/inventory/*` → `inventory.api:8080`
-- Manufacture: `/api/manufacture/*` → `manufacture.api:8080`
-- Identity: `/api/identity/*` → `identity.api:8080`
-- Swagger gộp: `/swagger` và từng service tại `/swagger-docs/{service}/v1/swagger.json`.
+#### POST /login
+Đăng nhập với email và password.
 
-## Health check và observability
+**Request:**
+```json
+{
+  "email": "john@example.com",
+  "password": "SecurePass123!"
+}
+```
 
-- Health: `/health`, Liveness: `/alive` (dev-only) từ [ServiceDefaults/Extensions.cs#L58-L74](ServiceDefaults/Extensions.cs#L58-L74).
-- OpenTelemetry tích hợp sẵn HTTP, ASP.NET Core, runtime; cấu hình exporter qua biến môi trường `OTEL_EXPORTER_OTLP_ENDPOINT`.
+**Response (200 OK):**
+```json
+{
+  "status": "success",
+  "code": 200,
+  "message": "login success",
+  "data": {
+    "accessToken": "eyJhbGc...",
+    "user": {...}
+  }
+}
+```
 
-## Quy ước code nhanh
+**Cookies Set:**
+- `refresh_token` (same as register)
 
-- Ngôn ngữ C#, `net10.0`, `LangVersion` preview, nullable bật, implicit usings bật ([Directory.Build.props#L3-L23](Directory.Build.props#L3-L23)).
-- Quản lý version NuGet tập trung qua `Directory.Packages.props`.
-- Mỗi service nên tham chiếu `ServiceDefaults` để có health, discovery, resilience, OTel.
-- Thêm proto mới vào `Protos/*` và tham chiếu qua `GrpcProtoRoot` trong build props.
+---
 
-## Kiểm thử
+#### POST /refresh
+Lấy access token mới từ refresh token.
 
-- Chạy toàn bộ test: `dotnet test Backend.slnx` (hoặc `dotnet test` tại repo root nếu có solution file `.sln`).
+**Headers:**
+- `Cookie: refresh_token=<refresh_token>`
 
-## Troubleshooting nhanh
+**Response (200 OK):**
+```json
+{
+  "status": "success",
+  "code": 200,
+  "message": "refresh success",
+  "data": {
+    "accessToken": "eyJhbGc... (new)",
+    "user": {...}
+  }
+}
+```
 
-- Lỗi không tìm thấy Aspire workload: chạy `dotnet workload install aspire` hoặc update `PATH` sau khi cài SDK.
-- Cổng trùng khi chạy lẻ service: override `--urls` và cập nhật route gateway tương ứng.
-- Nếu telemetry không gửi được: kiểm tra biến `OTEL_EXPORTER_OTLP_ENDPOINT` và outbound network.
+**Cookies Set:**
+- `refresh_token` (rotate to new token)
 
-## Tài liệu thêm
+---
 
-- Aspire docs: <https://learn.microsoft.com/dotnet/aspire/overview>
-- YARP docs: <https://microsoft.github.io/reverse-proxy/>
+#### POST /logout
+Đăng xuất (yêu cầu Access Token).
+
+**Headers:**
+- `Authorization: Bearer <access_token>`
+
+**Response (200 OK):**
+```json
+{
+  "status": "success",
+  "code": 200,
+  "message": "logout success",
+  "data": {
+    "loggedOut": true
+  }
+}
+```
+
+**Cookies Set:**
+- `refresh_token` (deleted/expired)
+
+---
+
+### 3. Lưu Ý Về Response Envelope
+
+Mọi response (thành công hay lỗi) đều được bọc trong struct với cấu trúc:
+```go
+{
+  "status": "success" | "error",
+  "code": <HTTP status code>,
+  "message": "...",
+  "data": <actual data or null>
+}
+```
+
+---
+
+### 4. Kiến Trúc Layer
+
+#### DTO (`internal/dto/`)
+- `envelope.go`: Response wrapper, error serializer
+- `auth.go`: Request/response DTOs (RegisterRequest, LoginRequest, AuthData, etc.)
+- `error.go`: Custom `AppError` type với `StatusCode()` method
+- `context.go`: Context keys
+
+#### Security (`internal/security/`)
+- `password.go`: Argon2id hashing/verification (64MB memory, t=3, p=2)
+- `jwt.go`: JWT generation, parsing, token refresh logic (access TTL: 15m, refresh TTL: 7d)
+- `cookie.go`: HTTP Cookie builder với flags HttpOnly, Secure, SameSite=Lax
+
+#### Repository (`internal/repository/`)
+- `base_repository.go`: Generic `Repository[T]` CRUD pattern
+  - `FindByID(ctx, id)`, `Create(ctx, entity)`, `Update(ctx, entity)`, `Delete(ctx, id)`
+- `UserRepository`: Extends base, adds `ExistsByEmail()`, `ExistsByUsername()`, `FindByEmail()`
+
+#### Service (`internal/service/`)
+- `auth_service.go`: Business logic
+  - `Register()`: xác thực input, hash password, tạo user, generate token pair
+  - `Login()`: tìm user, verify password, generate tokens
+  - `Refresh()`: parse refresh token, generate access token mới
+  - `Logout()`: thêm access token vào blacklist cache
+
+#### Middleware (`internal/middleware/`)
+- `auth_middleware.go`: `AccessTokenGuard` middleware
+  - Kiểm tra `Authorization: Bearer <token>` header
+  - Kiểm tra token có nằm trong blacklist (logout)
+  - Validate JWT signature & expiry
+  - Inject token vào context
+
+#### Controller (`internal/controller/`)
+- `auth_controller.go`: Fuego handlers
+  - `Register()`, `Login()`, `Refresh()`, `Logout()`
+  - Tự động validation via `validate` tags (Fuego built-in)
+  - Set cookies + Access Token trong JSON response
+
+#### Config (`internal/config/`)
+- `wire.go`: Dependency injection
+  - Kết nối DB, init JWT manager, cache, repository, service, controller
+  - Cấu hình server & error serializer
+- `route.go`: Register routes với Fuego
+
+#### Database (`internal/database/`)
+- `database.go`: OpenConnection, AutoMigrate (User model)
+
+---
+
+### 5. Argument2id Configuration
+
+```go
+const (
+  argon2Memory      = 64 * 1024      // 64 MB memory
+  argon2Iterations  = 3              // 3 passes
+  argon2Parallelism = 2              // 2 parallel threads
+  argon2SaltLength  = 16             // 16 bytes salt
+  argon2KeyLength   = 32             // 32 bytes output hash
+)
+```
+
+Format: `$argon2id$v=19$m=65536,t=3,p=2$<b64_salt>$<b64_hash>`
+
+---
+
+### 6. Token Blacklist
+
+- In-memory cache: `github.com/patrickmn/go-cache`
+- TTL = remaining lifetime của token (hoặc 1 min nếu không tính được)
+- Cleanup background: 1 minute interval
+- **Note**: Cho production, cần migrate sang Redis hoặc database untuk distributed systems
+
+---
+
+### 7. Setup & Run
+
+#### Prerequisites
+- PostgreSQL 12+
+- Go 1.23+
+
+#### Install Dependencies
+```bash
+go mod download
+```
+
+#### Environment
+```bash
+cp .env.example .env
+# Edit .env: điền DATABASE_DSN, JWT_SECRET
+```
+
+#### Database
+```bash
+# GORM AutoMigrate sẽ tự tạo bảng users khi server start
+# Hoặc CLI: psql -U user -d medion -f schema.sql (nếu có)
+```
+
+#### Build
+```bash
+go build -o tmp/main ./cmd/api
+```
+
+#### Run
+```bash
+./tmp/main
+# Server listens on http://localhost:9999 (hoặc APP_ADDR trong .env)
+```
+
+#### Test
+```bash
+# Register
+curl -X POST http://localhost:9999/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser",
+    "email": "test@example.com",
+    "password": "TestPassword123!"
+  }'
+
+# Login
+curl -X POST http://localhost:9999/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "password": "TestPassword123!"
+  }'
+
+# Refresh (fetch refresh_token từ Set-Cookie header)
+curl -X POST http://localhost:9999/refresh \
+  -H "Cookie: refresh_token=<TOKEN>"
+
+# Logout (fetch access_token từ register/login response)
+curl -X POST http://localhost:9999/logout \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+---
+
+### 8. OpenAPI Documentation
+
+Server tự động sinh OpenAPI spec tại:
+- **Swagger UI**: http://localhost:9999/swagger
+- **JSON Spec**: http://localhost:9999/openapi.json
+- **File**: `doc/openapi.json`
+
+---
+
+### 9. Error Handling
+
+All errors follow envelope format với custom status codes (1000-1999):
+
+| Code | Message | HTTP |
+|------|---------|------|
+| 1001 | Fields required | 400 |
+| 1002 | Email exists | 409 |
+| 1003 | Username exists | 409 |
+| 1004 | Email/password required | 400 |
+| 1005-1006 | Invalid credentials | 401 |
+| 1007 | Invalid refresh token | 401 |
+| 1008 | User not found | 401 |
+| 1010 | Refresh token missing | 401 |
+| 1011 | Access token missing | 401 |
+| 1500-1509 | Internal errors | 500 |
+
+---
+
+### 10. Security Best Practices Applied
+
+✅ **Password Hashing**: Argon2id (resistant to GPU/ASIC attacks)
+✅ **JWT**: Signed with HS256, includes expiry & issued-at timestamps
+✅ **Token Refresh**: Separate refresh token with longer TTL, rotated on each use
+✅ **Cookie Security**: HttpOnly (XSS protection), Secure (HTTPS), SameSite=Lax (CSRF protection)
+✅ **Token Blacklist**: Logout immediately revokes access token
+✅ **Context Injection**: Access token injected safely via middleware
+✅ **Error Messages**: Generic messages to prevent user enumeration
+
+---
+
+### 11. Future Improvements
+
+- [ ] Persist token blacklist to Redis (distributed)
+- [ ] Add refresh token rotation & revocation tracking
+- [ ] Implement rate limiting on login/register
+- [ ] Add 2FA support (TOTP, email)
+- [ ] Add password reset flow
+- [ ] Add user roles & permission system
+- [ ] Database migrations tool (goose, flyway, etc.)
+- [ ] Test coverage (unit + integration)
+
+---
+
+## Dependency List
+
+```
+github.com/go-fuego/fuego    v0.19.0   # Framework
+github.com/golang-jwt/jwt    v5.3.0    # JWT
+gorm.io/gorm                 v1.25.7   # ORM
+gorm.io/driver/postgres      v1.5.7    # Database
+golang.org/x/crypto          v0.36.0   # Argon2id
+github.com/patrickmn/go-cache v2.1.0   # Cache
+github.com/google/uuid       v1.6.0    # UUID v7
+```
+
+---
+
+Happy coding! 🔥
