@@ -2,11 +2,15 @@ import 'package:dio/dio.dart';
 
 /// Single Dio instance for the app. No duplicate API client per module.
 class DioClient {
-  DioClient({String? baseUrl, String? Function()? getToken}) {
+  DioClient({
+    String? baseUrl,
+    String? Function()? getToken,
+    void Function()? onUnauthorized,
+  }) {
     _dio = Dio(BaseOptions(baseUrl: baseUrl ?? ''));
     _dio.interceptors.addAll([
       _AuthInterceptor(getToken: getToken),
-      _ErrorInterceptor(),
+      _ErrorInterceptor(onUnauthorized: onUnauthorized),
     ]);
   }
 
@@ -35,9 +39,15 @@ class _AuthInterceptor extends Interceptor {
 }
 
 class _ErrorInterceptor extends Interceptor {
+  _ErrorInterceptor({void Function()? onUnauthorized}) : _onUnauthorized = onUnauthorized;
+
+  final void Function()? _onUnauthorized;
+
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    // Map API errors to app-level exceptions if needed
+    if (err.response?.statusCode == 401) {
+      _onUnauthorized?.call();
+    }
     handler.next(err);
   }
 }

@@ -13,5 +13,6 @@ final apiClientProvider = Provider<DioClient>((ref) {
   return DioClient(
     baseUrl: _baseUrl,
     getToken: () => ref.read(authProvider).token,
+    onUnauthorized: () => ref.read(authProvider.notifier).logout(),
   );
 });

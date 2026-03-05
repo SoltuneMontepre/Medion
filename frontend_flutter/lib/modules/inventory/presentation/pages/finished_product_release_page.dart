@@ -43,8 +43,8 @@ class _FinishedProductReleasePageState
       final msg = status == 403
           ? 'Bạn không có quyền thực hiện thao tác này'
           : (e.response?.data?['message']?.toString() ??
-              e.message ??
-              'Gửi duyệt thất bại');
+                e.message ??
+                'Gửi duyệt thất bại');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(msg.toString()), backgroundColor: Colors.red),
       );
@@ -57,17 +57,17 @@ class _FinishedProductReleasePageState
       await ds.approve(release.id);
       if (!mounted) return;
       _invalidateList();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đã duyệt phiếu xuất kho')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Đã duyệt phiếu xuất kho')));
     } on DioException catch (e) {
       if (!mounted) return;
       final status = e.response?.statusCode;
       final msg = status == 403
           ? 'Bạn không có quyền thực hiện thao tác này'
           : (e.response?.data?['message']?.toString() ??
-              e.message ??
-              'Duyệt thất bại');
+                e.message ??
+                'Duyệt thất bại');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(msg.toString()), backgroundColor: Colors.red),
       );
@@ -113,17 +113,17 @@ class _FinishedProductReleasePageState
       await ds.reject(release.id, reason);
       if (!mounted) return;
       _invalidateList();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đã gửi yêu cầu sửa')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Đã gửi yêu cầu sửa')));
     } on DioException catch (e) {
       if (!mounted) return;
       final status = e.response?.statusCode;
       final msg = status == 403
           ? 'Bạn không có quyền thực hiện thao tác này'
           : (e.response?.data?['message']?.toString() ??
-              e.message ??
-              'Thất bại');
+                e.message ??
+                'Thất bại');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(msg.toString()), backgroundColor: Colors.red),
       );
@@ -147,7 +147,9 @@ class _FinishedProductReleasePageState
 
   @override
   Widget build(BuildContext context) {
-    final releasesAsync = ref.watch(finishedProductReleasesProvider(_statusFilter));
+    final releasesAsync = ref.watch(
+      finishedProductReleasesProvider(_statusFilter),
+    );
 
     return AppScaffold(
       title: 'Phiếu Xuất kho Thành phẩm',
@@ -157,11 +159,7 @@ class _FinishedProductReleasePageState
           icon: Icons.add,
           onPressed: () => context.push('/inventory/finished-release/create'),
         ),
-        ToolbarButton(
-          label: 'In',
-          icon: Icons.print,
-          onPressed: () {},
-        ),
+        ToolbarButton(label: 'In', icon: Icons.print, onPressed: () {}),
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,10 +171,7 @@ class _FinishedProductReleasePageState
               children: [
                 const Text(
                   'Bộ lọc phiếu',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -291,7 +286,8 @@ class _FinishedProductReleasePageState
         const dataRowHeight = 36.0;
         final lines = release.lines;
         final lineCount = lines.length;
-        final tableHeight = headingRowHeight +
+        final tableHeight =
+            headingRowHeight +
             (lineCount > 0 ? lineCount * dataRowHeight : dataRowHeight);
 
         return Card(
@@ -321,10 +317,10 @@ class _FinishedProductReleasePageState
                       backgroundColor: release.isApproved
                           ? Colors.green.shade100
                           : release.status == 'revision_requested'
-                              ? Colors.orange.shade100
-                              : release.status == 'pending_approval'
-                                  ? Colors.blue.shade100
-                                  : Colors.grey.shade200,
+                          ? Colors.orange.shade100
+                          : release.status == 'pending_approval'
+                          ? Colors.blue.shade100
+                          : Colors.grey.shade200,
                     ),
                     const Spacer(),
                     if (release.canEdit)
@@ -367,7 +363,11 @@ class _FinishedProductReleasePageState
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.info_outline, size: 18, color: Colors.orange.shade800),
+                        Icon(
+                          Icons.info_outline,
+                          size: 18,
+                          color: Colors.orange.shade800,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -383,31 +383,40 @@ class _FinishedProductReleasePageState
                   ),
                 ],
                 const SizedBox(height: 8),
-                Text('Địa chỉ: ${release.address} • Điện thoại: ${release.phone}'),
+                Text(
+                  'Địa chỉ: ${release.address} • Điện thoại: ${release.phone}',
+                ),
                 const SizedBox(height: 12),
                 SizedBox(
                   height: tableHeight,
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: SizedBox(
-                      width: 700,
+                      width: 900,
                       height: tableHeight,
                       child: DataTable2(
                         columnSpacing: 8,
                         horizontalMargin: 0,
-                        minWidth: 700,
+                        minWidth: 900,
                         headingRowHeight: headingRowHeight,
                         dataRowHeight: dataRowHeight,
                         columns: const [
                           DataColumn2(label: Text('STT'), fixedWidth: 44),
                           DataColumn2(label: Text('MÃ SP'), size: ColumnSize.S),
-                          DataColumn2(label: Text('Tên SP'), size: ColumnSize.L),
+                          DataColumn2(
+                            label: Text('Tên SP'),
+                            size: ColumnSize.L,
+                          ),
                           DataColumn2(label: Text('QUY'), size: ColumnSize.S),
                           DataColumn2(label: Text('Dạng'), size: ColumnSize.S),
-                          DataColumn2(label: Text('Số'), size: ColumnSize.S, numeric: true),
+                          DataColumn2(
+                            label: Text('Số'),
+                            size: ColumnSize.S,
+                            numeric: true,
+                          ),
                           DataColumn2(label: Text('Số lô'), size: ColumnSize.S),
-                          DataColumn2(label: Text('NSX'), size: ColumnSize.S),
-                          DataColumn2(label: Text('HSD'), size: ColumnSize.S),
+                          DataColumn2(label: Text('NSX'), fixedWidth: 140),
+                          DataColumn2(label: Text('HSD'), fixedWidth: 140),
                         ],
                         rows: lines.map((line) {
                           return DataRow(

@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -107,6 +108,35 @@ class _FinishedProductReleaseEditPageState
       _qtyControllers.add(TextEditingController());
     }
     _loaded = true;
+  }
+
+  static String _formatDate(DateTime d) {
+    return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _pickDate(
+    BuildContext context, {
+    required TextEditingController controller,
+    required String label,
+    DateTime? firstDate,
+    DateTime? lastDate,
+  }) async {
+    DateTime initial = DateTime.now();
+    final s = controller.text.trim();
+    if (s.isNotEmpty) {
+      final parsed = DateTime.tryParse(s);
+      if (parsed != null) initial = parsed;
+    }
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: firstDate ?? DateTime(2000),
+      lastDate: lastDate ?? DateTime(2100),
+      helpText: label,
+    );
+    if (picked != null && mounted) {
+      controller.text = _formatDate(picked);
+    }
   }
 
   Future<void> _pickProduct(int index) async {
@@ -238,6 +268,22 @@ class _FinishedProductReleaseEditPageState
         const SnackBar(content: Text('Đã cập nhật phiếu xuất kho')),
       );
       context.pop();
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final msg = e.response?.data is Map
+          ? (e.response!.data as Map)['message']?.toString()
+          : null;
+      final display = msg?.isNotEmpty == true
+          ? msg!
+          : (e.response?.statusCode == 400
+              ? 'Dữ liệu không hợp lệ. Kiểm tra số đơn, địa chỉ, SĐT và các dòng sản phẩm (mã SP, số lượng, định dạng ngày NSX/HSD YYYY-MM-DD).'
+              : e.message ?? 'Lỗi: ${e.type}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(display),
+          backgroundColor: Colors.red,
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -404,7 +450,7 @@ class _FinishedProductReleaseEditPageState
                               ? _qtyControllers[index]
                               : null,
                           decoration: const InputDecoration(
-                            labelText: 'Số',
+                            labelText: 'Số lượng',
                             isDense: true,
                             border: OutlineInputBorder(),
                           ),
@@ -426,27 +472,53 @@ class _FinishedProductReleaseEditPageState
                       ),
                       SizedBox(
                         width: 170,
-                        child: TextField(
-                          controller: index < _mfgControllers.length
-                              ? _mfgControllers[index]
+                        child: InkWell(
+                          onTap: index < _mfgControllers.length
+                              ? () => _pickDate(
+                                    context,
+                                    controller: _mfgControllers[index],
+                                    label: 'Ngày sản xuất (NSX)',
+                                  )
                               : null,
-                          decoration: const InputDecoration(
-                            labelText: 'NSX (YYYY-MM-DD)',
-                            isDense: true,
-                            border: OutlineInputBorder(),
+                          child: IgnorePointer(
+                            child: TextField(
+                              controller: index < _mfgControllers.length
+                                  ? _mfgControllers[index]
+                                  : null,
+                              decoration: const InputDecoration(
+                                labelText: 'NSX',
+                                hintText: 'Chọn ngày',
+                                isDense: true,
+                                border: OutlineInputBorder(),
+                                suffixIcon: Icon(Icons.calendar_today, size: 20),
+                              ),
+                            ),
                           ),
                         ),
                       ),
                       SizedBox(
                         width: 170,
-                        child: TextField(
-                          controller: index < _expControllers.length
-                              ? _expControllers[index]
+                        child: InkWell(
+                          onTap: index < _expControllers.length
+                              ? () => _pickDate(
+                                    context,
+                                    controller: _expControllers[index],
+                                    label: 'Hạn sử dụng (HSD)',
+                                  )
                               : null,
-                          decoration: const InputDecoration(
-                            labelText: 'HSD (YYYY-MM-DD)',
-                            isDense: true,
-                            border: OutlineInputBorder(),
+                          child: IgnorePointer(
+                            child: TextField(
+                              controller: index < _expControllers.length
+                                  ? _expControllers[index]
+                                  : null,
+                              decoration: const InputDecoration(
+                                labelText: 'HSD',
+                                hintText: 'Chọn ngày',
+                                isDense: true,
+                                border: OutlineInputBorder(),
+                                suffixIcon: Icon(Icons.calendar_today, size: 20),
+                              ),
+                            ),
                           ),
                         ),
                       ),
