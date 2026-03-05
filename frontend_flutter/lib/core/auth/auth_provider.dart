@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'data/auth_repository_impl.dart';
-import 'dto/auth_dto.dart';
 
 enum AuthStatus { unauthenticated, authenticated, loading }
 
@@ -28,9 +27,10 @@ final authRepositoryProvider = Provider<AuthRepositoryImpl>((ref) {
   return AuthRepositoryImpl(baseUrl: _apiBaseUrl);
 });
 
+// Use 127.0.0.1 (not localhost) so Windows desktop uses IPv4 and matches backend; Chrome often works with localhost.
 const _apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://localhost:9999',
+  defaultValue: 'http://127.0.0.1:9999',
 );
 
 class AuthNotifier extends StateNotifier<AuthState> {
@@ -64,19 +64,40 @@ class AuthNotifier extends StateNotifier<AuthState> {
         username: data.user.username,
         token: data.accessToken,
       );
-    } on DioException catch (e) {
-      final message = e.response?.data is Map
+    } on DioException catch (e, stack) {
+      final fromBody = e.response?.data is Map
           ? (e.response!.data as Map)['message'] as String?
           : null;
+      final status = e.response?.statusCode;
+      final underlying = e.error?.toString();
+      final parts = <String>[
+        if (fromBody != null && fromBody.isNotEmpty) fromBody,
+        if (e.message != null && e.message!.isNotEmpty) e.message!,
+        if (underlying != null && underlying.isNotEmpty) underlying,
+        if (status != null) 'HTTP $status',
+        '(${e.type})',
+      ];
+      final message = parts.isNotEmpty ? parts.join(' · ') : 'Đăng nhập thất bại';
       state = AuthState(
         status: AuthStatus.unauthenticated,
-        errorMessage: message ?? e.message ?? 'Đăng nhập thất bại',
+        errorMessage: message.length > 280 ? '${message.substring(0, 280)}…' : message,
       );
-    } catch (e) {
+      assert(() {
+        // ignore: avoid_print
+        print('Login DioException: ${e.type} message=${e.message} error=${e.error} response=${e.response?.statusCode}\n$stack');
+        return true;
+      }());
+    } catch (e, stack) {
+      final msg = e.toString().replaceFirst('Exception: ', '');
       state = AuthState(
         status: AuthStatus.unauthenticated,
-        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+        errorMessage: msg.length > 200 ? '${msg.substring(0, 200)}…' : msg,
       );
+      assert(() {
+        // ignore: avoid_print
+        print('Login error: $e\n$stack');
+        return true;
+      }());
     }
   }
 

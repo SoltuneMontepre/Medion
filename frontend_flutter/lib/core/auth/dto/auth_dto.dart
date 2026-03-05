@@ -17,20 +17,30 @@ class UserPayload {
   final String username;
   final String email;
   factory UserPayload.fromJson(Map<String, dynamic> json) => UserPayload(
-        id: json['id'] as String,
-        username: json['username'] as String,
-        email: json['email'] as String,
+        id: _stringFromJson(json['id'])!,
+        username: _stringFromJson(json['username'])!,
+        email: _stringFromJson(json['email'])!,
       );
+}
+
+String? _stringFromJson(dynamic v) {
+  if (v == null) return null;
+  if (v is String) return v;
+  return v.toString();
 }
 
 class AuthData {
   AuthData({required this.accessToken, required this.user});
   final String accessToken;
   final UserPayload user;
-  factory AuthData.fromJson(Map<String, dynamic> json) => AuthData(
-        accessToken: json['accessToken'] as String,
-        user: UserPayload.fromJson(json['user'] as Map<String, dynamic>),
-      );
+  factory AuthData.fromJson(Map<String, dynamic> json) {
+    final userMap = _mapFromJson(json['user']);
+    if (userMap == null) throw FormatException('Missing or invalid "user" in login response', json.toString());
+    return AuthData(
+      accessToken: _stringFromJson(json['accessToken']) ?? '',
+      user: UserPayload.fromJson(userMap),
+    );
+  }
 }
 
 /// Backend envelope: { "data": T, "message": string, "status": string, "code": int }
@@ -39,9 +49,19 @@ class AuthEnvelope {
   final AuthData data;
   final String? message;
   final String? status;
-  factory AuthEnvelope.fromJson(Map<String, dynamic> json) => AuthEnvelope(
-        data: AuthData.fromJson(json['data'] as Map<String, dynamic>),
-        message: json['message'] as String?,
-        status: json['status'] as String?,
-      );
+  factory AuthEnvelope.fromJson(Map<String, dynamic> json) {
+    final dataMap = _mapFromJson(json['data']);
+    if (dataMap == null) throw FormatException('Missing or invalid "data" in login response', json.toString());
+    return AuthEnvelope(
+      data: AuthData.fromJson(dataMap),
+      message: json['message'] as String?,
+      status: json['status'] as String?,
+    );
+  }
+}
+
+Map<String, dynamic>? _mapFromJson(dynamic v) {
+  if (v == null) return null;
+  if (v is Map<String, dynamic>) return v;
+  return null;
 }

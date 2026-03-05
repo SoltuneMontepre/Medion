@@ -125,7 +125,9 @@ func BuildServer() (*fuego.Server, error) {
 		fuego.WithAddr(addr),
 		fuego.WithErrorSerializer(dto.ErrorSerializer),
 		fuego.WithDisallowUnknownFields(true),
-		fuego.WithCorsMiddleware(corsMiddleware),
+		fuego.WithCorsMiddleware(func(next http.Handler) http.Handler {
+			return corsMiddleware(middleware.ContentLengthAll(next))
+		}),
 	)
 
 	// Configure OpenAPI/Swagger
