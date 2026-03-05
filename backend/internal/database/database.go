@@ -55,6 +55,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&model.Department{},
 		&model.Customer{},
 		&model.Product{},
+		&model.Ingredient{},
 		&model.Order{},
 		&model.OrderItem{},
 		&model.OrderSummary{},
@@ -63,6 +64,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&model.ProductionPlan{},
 		&model.ProductionPlanItem{},
 		&model.ProductionOrder{},
+		&model.ProductionOrderIngredient{},
 		&model.FinishedProductDispatch{},
 		&model.FinishedProductDispatchLine{},
 		&model.Permission{},
@@ -87,6 +89,14 @@ var seedProducts = []model.Product{
 	{Code: "444", Name: "Flor 30%", PackageSize: "1000", PackageUnit: "ml", ProductType: "Dung dịch uống", PackagingType: "Chai"},
 	{Code: "555", Name: "Amox hỗn dịch 15%", PackageSize: "100", PackageUnit: "ml", ProductType: "Hỗn dịch tiêm", PackagingType: "Chai"},
 	{Code: "666", Name: "Cetriason", PackageSize: "100", PackageUnit: "ml", ProductType: "Bột pha tiêm", PackagingType: "Chai"},
+}
+
+// Sample ingredients (nguyên liệu) for production orders. Seed when table is empty.
+var seedIngredients = []model.Ingredient{
+	{Code: "KSI01", Name: "FLORFENICOL", Unit: "kg", Description: ""},
+	{Code: "KSI05", Name: "TYLOSIN TARTRATE", Unit: "kg", Description: ""},
+	{Code: "DD05", Name: "DIMETHYL SULFOXIDE (DMSO)", Unit: "kg", Description: ""},
+	{Code: "NC", Name: "Nước cất vừa đủ", Unit: "lít", Description: "Distilled water"},
 }
 
 // SeedDefaultUser creates a single user (admin@medion.local / MedionAdmin1!) if the users table is empty.
@@ -129,6 +139,24 @@ func SeedProducts(db *gorm.DB) error {
 		}
 	}
 	log.Println("database: seeded sample products")
+	return nil
+}
+
+// SeedIngredients creates sample ingredients when the ingredients table is empty.
+func SeedIngredients(db *gorm.DB) error {
+	var count int64
+	if err := db.Model(&model.Ingredient{}).Count(&count).Error; err != nil {
+		return err
+	}
+	if count > 0 {
+		return nil
+	}
+	for i := range seedIngredients {
+		if err := db.Create(&seedIngredients[i]).Error; err != nil {
+			return err
+		}
+	}
+	log.Println("database: seeded sample ingredients")
 	return nil
 }
 

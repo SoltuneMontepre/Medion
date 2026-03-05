@@ -63,6 +63,7 @@ class NavMenu {
       label: 'Sản phẩm',
       children: [
         NavItem(label: 'Danh sách sản phẩm', path: '/products'),
+        NavItem(label: 'Nguyên liệu', path: '/ingredients'),
         NavItem(label: 'Thu hồi sản phẩm', path: '/products/recall'),
       ],
     ),

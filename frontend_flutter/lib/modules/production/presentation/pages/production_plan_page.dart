@@ -31,6 +31,17 @@ class _ProductionPlanPageState extends ConsumerState<ProductionPlanPage> {
     return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
   }
 
+  String _getPlanButtonLabel(ProductionPlan? plan) {
+    if (plan?.id == null) return 'Lập kế hoạch';
+    // Kế hoạch viên có thể sửa kế hoạch đã duyệt; sau khi sửa cần duyệt lại
+    return 'Sửa kế hoạch';
+  }
+
+  IconData _getPlanButtonIcon(ProductionPlan? plan) {
+    if (plan?.id == null) return Icons.add;
+    return Icons.edit;
+  }
+
   Future<void> _submitPlan(String planId, String dateStr) async {
     final ds = ref.read(productionPlanRemoteDataSourceProvider);
     try {
@@ -129,19 +140,14 @@ class _ProductionPlanPageState extends ConsumerState<ProductionPlanPage> {
           onPressed: () {},
         ),
         ToolbarButton(
-          label: planAsync.valueOrNull?.id != null &&
-                  planAsync.valueOrNull?.status == 'draft'
-              ? 'Sửa kế hoạch'
-              : 'Lập kế hoạch',
-          icon: planAsync.valueOrNull?.id != null &&
-                  planAsync.valueOrNull?.status == 'draft'
-              ? Icons.edit
-              : Icons.add,
+          label: _getPlanButtonLabel(planAsync.valueOrNull),
+          icon: _getPlanButtonIcon(planAsync.valueOrNull),
           onPressed: () {
             final apiDate =
                 '${_selectedDate.year.toString().padLeft(4, '0')}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
             final plan = planAsync.valueOrNull;
-            if (plan?.id != null && plan?.status == 'draft') {
+            // Luôn mở edit khi đã có kế hoạch (tránh 409: đã có kế hoạch cho ngày này)
+            if (plan?.id != null) {
               context.push('/production/plan/${plan!.id}/edit');
             } else {
               context.push('/production/plan/create?date=$apiDate');

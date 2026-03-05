@@ -75,3 +75,21 @@ func (r *InventoryRepository) AddQuantity(ctx context.Context, productID uuid.UU
 	}
 	return r.DB().WithContext(ctx).Create(inv).Error
 }
+
+// SubtractQuantity subtracts quantity from finished-product inventory.
+// If current quantity is less than subQty (e.g. some was already dispatched), subtracts only what is available (clamp to 0).
+func (r *InventoryRepository) SubtractQuantity(ctx context.Context, productID uuid.UUID, subQty int64) error {
+	if subQty <= 0 {
+		return nil
+	}
+	inv, err := r.FindByProductIDAndWarehouseType(ctx, productID, model.WarehouseTypeFinished)
+	if err != nil {
+		return err
+	}
+	toSubtract := subQty
+	if inv.Quantity < toSubtract {
+		toSubtract = inv.Quantity
+	}
+	inv.Quantity -= toSubtract
+	return r.DB().WithContext(ctx).Save(inv).Error
+}

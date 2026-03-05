@@ -25,6 +25,7 @@ import '../../modules/sales/presentation/pages/new_order_page.dart';
 import '../../modules/sales/presentation/pages/order_detail_page.dart';
 import '../../modules/sales/presentation/pages/order_summary_page.dart';
 import '../../modules/sales/presentation/pages/sales_page.dart';
+import '../../modules/ingredients/presentation/pages/ingredients_page.dart';
 import '../../modules/products/presentation/pages/products_page.dart';
 import '../../modules/roles/presentation/pages/assign_role_to_user_page.dart';
 import '../../modules/roles/presentation/pages/assign_supervisor_page.dart';
@@ -174,6 +175,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             },
           ),
           GoRoute(path: '/products', builder: (_, _) => const ProductsPage()),
+          GoRoute(path: '/ingredients', builder: (_, _) => const IngredientsPage()),
           GoRoute(
             path: '/sales',
             redirect: (_, __) => '/customers/orders',

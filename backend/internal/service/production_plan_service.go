@@ -18,10 +18,11 @@ import (
 )
 
 type ProductionPlanService struct {
-	plans    *repository.ProductionPlanRepository
-	items    *repository.ProductionPlanItemRepository
-	products *repository.ProductRepository
-	users    *repository.UserRepository
+	plans     *repository.ProductionPlanRepository
+	items     *repository.ProductionPlanItemRepository
+	products  *repository.ProductRepository
+	users     *repository.UserRepository
+	inventory *repository.InventoryRepository
 	converter *converter.Converter
 }
 
@@ -30,6 +31,7 @@ func NewProductionPlanService(
 	items *repository.ProductionPlanItemRepository,
 	products *repository.ProductRepository,
 	users *repository.UserRepository,
+	inventory *repository.InventoryRepository,
 	conv *converter.Converter,
 ) *ProductionPlanService {
 	return &ProductionPlanService{
@@ -37,6 +39,7 @@ func NewProductionPlanService(
 		items:     items,
 		products:  products,
 		users:     users,
+		inventory: inventory,
 		converter: conv,
 	}
 }
@@ -130,6 +133,7 @@ func (s *ProductionPlanService) Create(ctx context.Context, req *dto.CreateProdu
 }
 
 // Update updates an existing production plan (date and items). Plan must be draft or submitted.
+// If plan is approved, only kế hoạch viên or trưởng phòng kế hoạch may edit; status reverts to submitted and requires re-approval.
 func (s *ProductionPlanService) Update(ctx context.Context, id uuid.UUID, req *dto.UpdateProductionPlanRequest, updatedBy uuid.UUID) (*dto.ProductionPlanPayload, error) {
 	planDate, ok := parsePlanDate(req.PlanDate)
 	if !ok {
@@ -146,7 +150,28 @@ func (s *ProductionPlanService) Update(ctx context.Context, id uuid.UUID, req *d
 		return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2713, Message: constant.MsgProductionPlanServerError, Err: err}
 	}
 	if plan.Status == model.ProductionPlanStatusApproved {
-		return nil, &dto.AppError{HTTPStatus: http.StatusBadRequest, Code: 2714, Message: "không thể sửa kế hoạch đã duyệt"}
+		isPlanner, err := s.hasRole(ctx, updatedBy, constant.RoleCodeKeHoachVien)
+		if err != nil {
+			return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2713, Message: constant.MsgProductionPlanServerError, Err: err}
+		}
+		isHead, err := s.hasRole(ctx, updatedBy, constant.RoleCodeTruongPhongKeHoach)
+		if err != nil {
+			return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2713, Message: constant.MsgProductionPlanServerError, Err: err}
+		}
+		if !isPlanner && !isHead {
+			return nil, &dto.AppError{HTTPStatus: http.StatusForbidden, Code: 2724, Message: constant.MsgProductionPlanForbidden}
+		}
+		// Revert inventory: subtract quantities that were added when plan was approved
+		for _, item := range plan.Items {
+			if item.PlannedQuantity > 0 {
+				if err := s.inventory.SubtractQuantity(ctx, item.ProductID, int64(item.PlannedQuantity)); err != nil {
+					return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2740, Message: constant.MsgProductionPlanServerError, Err: err}
+				}
+			}
+		}
+		plan.Status = model.ProductionPlanStatusSubmitted
+		plan.ApprovedAt = nil
+		plan.ApprovedBy = nil
 	}
 	modelItems, err := s.buildPlanItems(ctx, req.Items)
 	if err != nil {
@@ -307,6 +332,14 @@ func (s *ProductionPlanService) Approve(ctx context.Context, id uuid.UUID, appro
 	plan.UpdatedBy = approverID
 	if err := s.plans.DB().WithContext(ctx).Save(plan).Error; err != nil {
 		return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2726, Message: constant.MsgProductionPlanServerError, Err: err}
+	}
+	// Add planned quantities to finished-product inventory when plan is approved
+	for _, item := range plan.Items {
+		if item.PlannedQuantity > 0 {
+			if err := s.inventory.AddQuantity(ctx, item.ProductID, int64(item.PlannedQuantity)); err != nil {
+				return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2740, Message: constant.MsgProductionPlanServerError, Err: err}
+			}
+		}
 	}
 	loaded, _ := s.plans.FindByIDWithItems(ctx, id)
 	payload := s.converter.ProductionPlanToPayload(*loaded)

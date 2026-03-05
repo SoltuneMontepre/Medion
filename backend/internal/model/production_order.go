@@ -33,7 +33,8 @@ type ProductionOrder struct {
 
 	ProductionPlanItemID *uuid.UUID `gorm:"type:uuid;index:idx_production_order_plan_item"` // optional link to plan item
 
-	Product *Product `gorm:"foreignKey:ProductID"`
+	Product     *Product                    `gorm:"foreignKey:ProductID"`
+	Ingredients []ProductionOrderIngredient `gorm:"foreignKey:ProductionOrderID"`
 }
 
 func (ProductionOrder) TableName() string {

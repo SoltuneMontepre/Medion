@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../shared/layout/app_scaffold.dart';
 import '../../../../shared/widgets/toolbar.dart';
+import '../../../ingredients/data/datasources/ingredients_remote_datasource_impl.dart';
 import '../../data/datasources/production_plan_remote_datasource_impl.dart';
 import '../../data/datasources/production_remote_datasource_impl.dart';
 import '../providers/production_provider.dart';
@@ -29,6 +30,24 @@ class ProductionOrderCreatePage extends ConsumerStatefulWidget {
       _ProductionOrderCreatePageState();
 }
 
+class _IngredientLine {
+  String ingredientId;
+  String ingredientDisplay;
+  final TextEditingController quantityController;
+  final TextEditingController unitController;
+  final TextEditingController notesController;
+
+  _IngredientLine({
+    required this.ingredientId,
+    required this.ingredientDisplay,
+    TextEditingController? quantityController,
+    TextEditingController? unitController,
+    TextEditingController? notesController,
+  })  : quantityController = quantityController ?? TextEditingController(text: '0'),
+        unitController = unitController ?? TextEditingController(text: 'kg'),
+        notesController = notesController ?? TextEditingController();
+}
+
 class _ProductionOrderCreatePageState
     extends ConsumerState<ProductionOrderCreatePage> {
   String _productId = '';
@@ -39,6 +58,7 @@ class _ProductionOrderCreatePageState
   final _batchSizeController = TextEditingController(text: '200');
   final _qtySpec1Controller = TextEditingController(text: '0');
   final _qtySpec2Controller = TextEditingController(text: '0');
+  final List<_IngredientLine> _ingredients = [];
   bool _isSaving = false;
 
   @override
@@ -64,7 +84,90 @@ class _ProductionOrderCreatePageState
     _batchSizeController.dispose();
     _qtySpec1Controller.dispose();
     _qtySpec2Controller.dispose();
+    for (final ing in _ingredients) {
+      ing.quantityController.dispose();
+      ing.unitController.dispose();
+      ing.notesController.dispose();
+    }
     super.dispose();
+  }
+
+  Future<void> _addIngredient() async {
+    final ds = ref.read(ingredientsRemoteDataSourceProvider);
+    final q = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        final c = TextEditingController();
+        return AlertDialog(
+          title: const Text('Tìm nguyên liệu'),
+          content: TextField(
+            controller: c,
+            decoration: const InputDecoration(
+              labelText: 'Mã hoặc tên nguyên liệu',
+            ),
+            autofocus: true,
+            onSubmitted: (v) => Navigator.pop(ctx, v),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Hủy'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, c.text),
+              child: const Text('Tìm'),
+            ),
+          ],
+        );
+      },
+    );
+    if (q == null || q.trim().isEmpty || !mounted) return;
+    final list = await ds.suggestIngredients(q);
+    if (!mounted) return;
+    if (list.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không tìm thấy nguyên liệu')),
+      );
+      return;
+    }
+    final chosen = await showDialog<int>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Chọn nguyên liệu'),
+        children: List.generate(list.length, (i) {
+          final ing = list[i];
+          return ListTile(
+            title: Text('${ing.code} - ${ing.name}'),
+            onTap: () => Navigator.pop(ctx, i),
+          );
+        }),
+      ),
+    );
+    if (chosen == null || !mounted) return;
+    final ing = list[chosen];
+    if (_ingredients.any((e) => e.ingredientId == ing.id)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Nguyên liệu đã được thêm')),
+        );
+      }
+      return;
+    }
+    setState(() {
+      _ingredients.add(_IngredientLine(
+        ingredientId: ing.id,
+        ingredientDisplay: '${ing.code} - ${ing.name}',
+      ));
+    });
+  }
+
+  void _removeIngredient(int index) {
+    setState(() {
+      final ing = _ingredients.removeAt(index);
+      ing.quantityController.dispose();
+      ing.unitController.dispose();
+      ing.notesController.dispose();
+    });
   }
 
   Future<void> _pickProduct() async {
@@ -188,6 +291,22 @@ class _ProductionOrderCreatePageState
       );
       return;
     }
+    final ingredientsPayload = <Map<String, dynamic>>[];
+    for (final ing in _ingredients) {
+      final qty = double.tryParse(ing.quantityController.text);
+      if (qty != null && qty > 0) {
+        ingredientsPayload.add({
+          'ingredientId': ing.ingredientId,
+          'quantity': qty,
+          'quantityAdjustment': 0,
+          'unit': ing.unitController.text.trim().isEmpty
+              ? 'kg'
+              : ing.unitController.text.trim(),
+          'notes': ing.notesController.text.trim(),
+        });
+      }
+    }
+
     setState(() => _isSaving = true);
     final ds = ref.read(productionRemoteDataSourceProvider);
     try {
@@ -200,6 +319,7 @@ class _ProductionOrderCreatePageState
         'quantitySpec1': q1,
         'quantitySpec2': q2,
         if (widget.planItemId != null) 'planItemId': widget.planItemId,
+        'ingredients': ingredientsPayload,
       });
       if (!mounted) return;
       ref.invalidate(productionOrdersProvider);
@@ -393,6 +513,108 @@ class _ProductionOrderCreatePageState
                       ),
                     ],
                   ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Nguyên liệu (vật tư xuất kho)',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: _addIngredient,
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Thêm nguyên liệu'),
+                      ),
+                    ],
+                  ),
+                  if (_ingredients.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Text(
+                          'Chưa có nguyên liệu. Nhấn "Thêm nguyên liệu" để thêm.',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    ...List.generate(_ingredients.length, (i) {
+                      final ing = _ingredients[i];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 2,
+                            child: Text(
+                              ing.ingredientDisplay,
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 90,
+                              child: TextFormField(
+                                controller: ing.quantityController,
+                                decoration: const InputDecoration(
+                                  labelText: 'SL xuất',
+                                  isDense: true,
+                                  border: OutlineInputBorder(),
+                                ),
+                                keyboardType: const TextInputType.numberWithOptions(
+                                  decimal: true,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: 70,
+                              child: TextFormField(
+                                controller: ing.unitController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Đơn vị',
+                                  isDense: true,
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextFormField(
+                                controller: ing.notesController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Ghi chú',
+                                  isDense: true,
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: () => _removeIngredient(i),
+                              tooltip: 'Xóa',
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
                 ],
               ),
             ),

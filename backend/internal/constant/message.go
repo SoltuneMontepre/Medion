@@ -179,6 +179,15 @@ const (
 	MsgProductionOrderDraftOnlyEdit      = "chỉ có thể sửa lệnh sản xuất ở trạng thái nháp"
 )
 
+// Ingredient (Nguyên liệu)
+const (
+	MsgIngredientNotFound     = "nguyên liệu không tồn tại"
+	MsgIngredientCodeRequired = "mã nguyên liệu là bắt buộc"
+	MsgIngredientNameRequired = "tên nguyên liệu là bắt buộc"
+	MsgIngredientCodeExists   = "mã nguyên liệu đã tồn tại"
+	MsgIngredientServerError  = "có lỗi xảy ra, vui lòng thử lại sau"
+)
+
 // Finished product dispatch (Phiếu xuất kho Thành phẩm)
 const (
 	MsgDispatchNotFound           = "phiếu xuất kho thành phẩm không tồn tại"

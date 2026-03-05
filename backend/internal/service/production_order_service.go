@@ -19,23 +19,26 @@ import (
 )
 
 type ProductionOrderService struct {
-	orders    *repository.ProductionOrderRepository
-	products  *repository.ProductRepository
-	inventory *repository.InventoryRepository
-	converter *converter.Converter
+	orders      *repository.ProductionOrderRepository
+	products    *repository.ProductRepository
+	ingredients *repository.IngredientRepository
+	inventory   *repository.InventoryRepository
+	converter   *converter.Converter
 }
 
 func NewProductionOrderService(
 	orders *repository.ProductionOrderRepository,
 	products *repository.ProductRepository,
+	ingredients *repository.IngredientRepository,
 	inventory *repository.InventoryRepository,
 	conv *converter.Converter,
 ) *ProductionOrderService {
 	return &ProductionOrderService{
-		orders:    orders,
-		products:  products,
-		inventory: inventory,
-		converter: conv,
+		orders:      orders,
+		products:    products,
+		ingredients: ingredients,
+		inventory:  inventory,
+		converter:   conv,
 	}
 }
 
@@ -146,11 +149,35 @@ func (s *ProductionOrderService) Create(ctx context.Context, req *dto.CreateProd
 	if err := s.orders.DB().WithContext(ctx).Create(&o).Error; err != nil {
 		return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2735, Message: constant.MsgProductionPlanServerError, Err: err}
 	}
-	// Increase finished-product inventory by total produced (QuantitySpec1 + QuantitySpec2)
-	qty := int64(o.QuantitySpec1) + int64(o.QuantitySpec2)
-	if qty > 0 {
-		if err := s.inventory.AddQuantity(ctx, o.ProductID, qty); err != nil {
-			return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2740, Message: constant.MsgProductionPlanServerError, Err: err}
+	// Create ingredient lines
+	for ord, in := range req.Ingredients {
+		if in.IngredientID == uuid.Nil || in.Quantity <= 0 {
+			continue
+		}
+		_, err := s.ingredients.FindByID(ctx, in.IngredientID)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				continue // skip invalid ingredient
+			}
+			return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2735, Message: constant.MsgProductionPlanServerError, Err: err}
+		}
+		unit := strings.TrimSpace(in.Unit)
+		if unit == "" {
+			unit = "kg"
+		}
+		ing := model.ProductionOrderIngredient{
+			ProductionOrderID:   o.ID,
+			IngredientID:       in.IngredientID,
+			Quantity:            in.Quantity,
+			QuantityAdjustment: in.QuantityAdjustment,
+			Unit:                unit,
+			Notes:               strings.TrimSpace(in.Notes),
+			Ordinal:             ord,
+		}
+		ing.CreatedBy = createdBy
+		ing.UpdatedBy = createdBy
+		if err := s.orders.DB().WithContext(ctx).Create(&ing).Error; err != nil {
+			return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2735, Message: constant.MsgProductionPlanServerError, Err: err}
 		}
 	}
 	loaded, _ := s.orders.FindByIDWithProduct(ctx, o.ID)
@@ -194,6 +221,40 @@ func (s *ProductionOrderService) Update(ctx context.Context, id uuid.UUID, req *
 	o.UpdatedBy = updatedBy
 	if err := s.orders.DB().WithContext(ctx).Save(o).Error; err != nil {
 		return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2735, Message: constant.MsgProductionPlanServerError, Err: err}
+	}
+	// Replace ingredients
+	if err := s.orders.DB().WithContext(ctx).Where("production_order_id = ?", id).Delete(&model.ProductionOrderIngredient{}).Error; err != nil {
+		return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2735, Message: constant.MsgProductionPlanServerError, Err: err}
+	}
+	for ord, in := range req.Ingredients {
+		if in.IngredientID == uuid.Nil || in.Quantity <= 0 {
+			continue
+		}
+		_, err := s.ingredients.FindByID(ctx, in.IngredientID)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				continue
+			}
+			return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2735, Message: constant.MsgProductionPlanServerError, Err: err}
+		}
+		unit := strings.TrimSpace(in.Unit)
+		if unit == "" {
+			unit = "kg"
+		}
+		ing := model.ProductionOrderIngredient{
+			ProductionOrderID:   id,
+			IngredientID:       in.IngredientID,
+			Quantity:           in.Quantity,
+			QuantityAdjustment: in.QuantityAdjustment,
+			Unit:               unit,
+			Notes:              strings.TrimSpace(in.Notes),
+			Ordinal:            ord,
+		}
+		ing.CreatedBy = updatedBy
+		ing.UpdatedBy = updatedBy
+		if err := s.orders.DB().WithContext(ctx).Create(&ing).Error; err != nil {
+			return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2735, Message: constant.MsgProductionPlanServerError, Err: err}
+		}
 	}
 	loaded, _ := s.orders.FindByIDWithProduct(ctx, id)
 	p := s.converter.ProductionOrderToPayload(*loaded)

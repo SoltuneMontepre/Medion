@@ -8,7 +8,7 @@ import (
 	"github.com/go-fuego/fuego"
 )
 
-func RegisterRoutes(server *fuego.Server, authController *controller.AuthController, customerController *controller.CustomerController, productController *controller.ProductController, orderController *controller.OrderController, orderSummaryController *controller.OrderSummaryController, pinController *controller.PINController, roleController *controller.RoleController, userController *controller.UserController, companyController *controller.CompanyController, departmentController *controller.DepartmentController, inventoryController *controller.InventoryController, productionPlanController *controller.ProductionPlanController, productionOrderController *controller.ProductionOrderController, finishedProductDispatchController *controller.FinishedProductDispatchController, authGuardMiddleware func(next http.Handler) http.Handler) {
+func RegisterRoutes(server *fuego.Server, authController *controller.AuthController, customerController *controller.CustomerController, productController *controller.ProductController, ingredientController *controller.IngredientController, orderController *controller.OrderController, orderSummaryController *controller.OrderSummaryController, pinController *controller.PINController, roleController *controller.RoleController, userController *controller.UserController, companyController *controller.CompanyController, departmentController *controller.DepartmentController, inventoryController *controller.InventoryController, productionPlanController *controller.ProductionPlanController, productionOrderController *controller.ProductionOrderController, finishedProductDispatchController *controller.FinishedProductDispatchController, authGuardMiddleware func(next http.Handler) http.Handler) {
 	authGroup := fuego.Group(server, "/api/v1")
 
 	fuego.Post(authGroup, "/register", authController.Register,
@@ -98,6 +98,38 @@ func RegisterRoutes(server *fuego.Server, authController *controller.AuthControl
 	fuego.Delete(saleGroup, "/products/{id}", productController.Delete,
 		fuego.OptionSummary("Delete product"),
 		fuego.OptionTags("Products"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	// Ingredients (Nguyên liệu) — CRUD for raw materials master data
+	ingGroup := fuego.Group(authGroup, "/ingredients")
+	fuego.Get(ingGroup, "", ingredientController.List,
+		fuego.OptionSummary("List ingredients (nguyên liệu)"),
+		fuego.OptionTags("Ingredients"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Get(ingGroup, "/suggest", ingredientController.Suggest,
+		fuego.OptionSummary("Suggest ingredients by code/name"),
+		fuego.OptionTags("Ingredients"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Get(ingGroup, "/{id}", ingredientController.GetByID,
+		fuego.OptionSummary("Get ingredient by id"),
+		fuego.OptionTags("Ingredients"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Post(ingGroup, "", ingredientController.Create,
+		fuego.OptionSummary("Create ingredient"),
+		fuego.OptionTags("Ingredients"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Put(ingGroup, "/{id}", ingredientController.Update,
+		fuego.OptionSummary("Update ingredient"),
+		fuego.OptionTags("Ingredients"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Delete(ingGroup, "/{id}", ingredientController.Delete,
+		fuego.OptionSummary("Delete ingredient"),
+		fuego.OptionTags("Ingredients"),
 		fuego.OptionMiddleware(authGuardMiddleware),
 	)
 	fuego.Get(saleGroup, "/orders", orderController.List,

@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../shared/layout/app_scaffold.dart';
 import '../../../../shared/widgets/toolbar.dart';
 import '../../data/datasources/production_plan_remote_datasource_impl.dart';
+import '../../data/models/production_plan_model.dart';
 import '../providers/production_plan_provider.dart';
 
 String _ddMmYyyyToYyyyMmDd(String ddMmYyyy) {
@@ -223,25 +225,35 @@ class _ProductionPlanEditPageState extends ConsumerState<ProductionPlanEditPage>
           'plannedQuantity': it.quantity,
         });
       }
+      ProductionPlanModel result;
       if (widget.planId != null) {
-        await ds.update(widget.planId!, dateStr, itemsJson);
+        result = await ds.update(widget.planId!, dateStr, itemsJson);
       } else {
-        await ds.create(dateStr, itemsJson);
+        result = await ds.create(dateStr, itemsJson);
       }
       if (!mounted) return;
       ref.invalidate(productionPlanProvider);
-      messenger.showSnackBar(
-        SnackBar(
-            content: Text(widget.planId != null
-                ? 'Đã cập nhật kế hoạch sản xuất'
-                : 'Đã lưu kế hoạch sản xuất')),
-      );
+      final msg = widget.planId != null
+          ? (result.status == 'submitted'
+              ? 'Đã lưu, kế hoạch chờ duyệt lại'
+              : 'Đã cập nhật kế hoạch sản xuất')
+          : 'Đã lưu kế hoạch sản xuất';
+      messenger.showSnackBar(SnackBar(content: Text(msg)));
       context.pop();
     } catch (e) {
       if (!mounted) return;
+      String msg = 'Lỗi khi lưu kế hoạch';
+      if (e is DioException && e.response?.data != null) {
+        final data = e.response!.data;
+        if (data is Map && data['message'] != null) {
+          msg = data['message'] as String;
+        }
+      } else {
+        msg = '$msg: $e';
+      }
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Lỗi khi lưu kế hoạch: $e'),
+          content: Text(msg),
           backgroundColor: Colors.red,
         ),
       );

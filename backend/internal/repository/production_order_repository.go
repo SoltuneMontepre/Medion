@@ -18,10 +18,16 @@ func NewProductionOrderRepository(db *gorm.DB) *ProductionOrderRepository {
 	return &ProductionOrderRepository{Repository: NewRepository[model.ProductionOrder](db), db: db}
 }
 
-// FindByIDWithProduct returns order with Product preloaded.
+// FindByIDWithProduct returns order with Product and Ingredients (with Material) preloaded.
 func (r *ProductionOrderRepository) FindByIDWithProduct(ctx context.Context, id uuid.UUID) (*model.ProductionOrder, error) {
 	var o model.ProductionOrder
-	err := r.DB().WithContext(ctx).Preload("Product").First(&o, "id = ?", id).Error
+	err := r.DB().WithContext(ctx).
+		Preload("Product").
+		Preload("Ingredients", func(db *gorm.DB) *gorm.DB {
+			return db.Order("ordinal ASC, created_at ASC")
+		}).
+		Preload("Ingredients.Ingredient").
+		First(&o, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
