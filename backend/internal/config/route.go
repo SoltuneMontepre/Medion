@@ -8,7 +8,7 @@ import (
 	"github.com/go-fuego/fuego"
 )
 
-func RegisterRoutes(server *fuego.Server, authController *controller.AuthController, customerController *controller.CustomerController, productController *controller.ProductController, orderController *controller.OrderController, orderSummaryController *controller.OrderSummaryController, pinController *controller.PINController, roleController *controller.RoleController, userController *controller.UserController, authGuardMiddleware func(next http.Handler) http.Handler) {
+func RegisterRoutes(server *fuego.Server, authController *controller.AuthController, customerController *controller.CustomerController, productController *controller.ProductController, orderController *controller.OrderController, orderSummaryController *controller.OrderSummaryController, pinController *controller.PINController, roleController *controller.RoleController, userController *controller.UserController, companyController *controller.CompanyController, departmentController *controller.DepartmentController, inventoryController *controller.InventoryController, productionPlanController *controller.ProductionPlanController, productionOrderController *controller.ProductionOrderController, finishedProductDispatchController *controller.FinishedProductDispatchController, authGuardMiddleware func(next http.Handler) http.Handler) {
 	authGroup := fuego.Group(server, "/api/v1")
 
 	fuego.Post(authGroup, "/register", authController.Register,
@@ -214,6 +214,163 @@ func RegisterRoutes(server *fuego.Server, authController *controller.AuthControl
 	fuego.Put(userGroup, "/{id}/supervisor", userController.SetSupervisor,
 		fuego.OptionSummary("Set user's direct leader (supervisor); pass null to clear"),
 		fuego.OptionTags("Users"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Put(userGroup, "/{id}/department", userController.SetDepartment,
+		fuego.OptionSummary("Set user's department; pass null to clear"),
+		fuego.OptionTags("Users"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+
+	// Company & Departments (org structure)
+	companyGroup := fuego.Group(authGroup, "/companies")
+	fuego.Get(companyGroup, "", companyController.List,
+		fuego.OptionSummary("List companies (for dropdown)"),
+		fuego.OptionTags("Companies"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+
+	deptGroup := fuego.Group(authGroup, "/departments")
+	fuego.Get(deptGroup, "", departmentController.List,
+		fuego.OptionSummary("List departments (paginated, optional companyId filter)"),
+		fuego.OptionTags("Departments"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Get(deptGroup, "/suggest", departmentController.Suggest,
+		fuego.OptionSummary("Suggest departments by companyId and/or q"),
+		fuego.OptionTags("Departments"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Get(deptGroup, "/{id}", departmentController.GetByID,
+		fuego.OptionSummary("Get department by id"),
+		fuego.OptionTags("Departments"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Post(deptGroup, "", departmentController.Create,
+		fuego.OptionSummary("Create department"),
+		fuego.OptionTags("Departments"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Put(deptGroup, "/{id}", departmentController.Update,
+		fuego.OptionSummary("Update department"),
+		fuego.OptionTags("Departments"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Delete(deptGroup, "/{id}", departmentController.Delete,
+		fuego.OptionSummary("Delete department"),
+		fuego.OptionTags("Departments"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+
+	// Inventory (Tồn kho): list by warehouse type (raw | semi | finished), get by id
+	invGroup := fuego.Group(authGroup, "/inventory")
+	fuego.Get(invGroup, "", inventoryController.List,
+		fuego.OptionSummary("List inventory (tồn kho) by warehouse type"),
+		fuego.OptionTags("Inventory"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Get(invGroup, "/{id}", inventoryController.GetByID,
+		fuego.OptionSummary("Get inventory record by id"),
+		fuego.OptionTags("Inventory"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+
+	// Production plan (Bảng kế hoạch sản xuất theo ngày)
+	planGroup := fuego.Group(authGroup, "/production-plans")
+	fuego.Get(planGroup, "/by-date", productionPlanController.GetByDate,
+		fuego.OptionSummary("Get production plan by date (query: date=YYYY-MM-DD)"),
+		fuego.OptionTags("Production Plan"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Get(planGroup, "/{id}", productionPlanController.GetByID,
+		fuego.OptionSummary("Get production plan by id"),
+		fuego.OptionTags("Production Plan"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Post(planGroup, "", productionPlanController.Create,
+		fuego.OptionSummary("Create production plan"),
+		fuego.OptionTags("Production Plan"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Put(planGroup, "/{id}", productionPlanController.Update,
+		fuego.OptionSummary("Update production plan"),
+		fuego.OptionTags("Production Plan"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Post(planGroup, "/{id}/submit", productionPlanController.Submit,
+		fuego.OptionSummary("Submit production plan (draft -> submitted)"),
+		fuego.OptionTags("Production Plan"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Post(planGroup, "/{id}/approve", productionPlanController.Approve,
+		fuego.OptionSummary("Approve production plan (submitted -> approved)"),
+		fuego.OptionTags("Production Plan"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Post(planGroup, "/{id}/reject", productionPlanController.Reject,
+		fuego.OptionSummary("Reject production plan (submitted -> draft)"),
+		fuego.OptionTags("Production Plan"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+
+	// Production order (Lệnh sản xuất) — 1 order = 1 product
+	orderGroup := fuego.Group(authGroup, "/production-orders")
+	fuego.Get(orderGroup, "", productionOrderController.List,
+		fuego.OptionSummary("List production orders (query: status, limit, offset)"),
+		fuego.OptionTags("Production Order"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Get(orderGroup, "/{id}", productionOrderController.GetByID,
+		fuego.OptionSummary("Get production order by id"),
+		fuego.OptionTags("Production Order"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Post(orderGroup, "", productionOrderController.Create,
+		fuego.OptionSummary("Create production order (1 product per order)"),
+		fuego.OptionTags("Production Order"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Put(orderGroup, "/{id}", productionOrderController.Update,
+		fuego.OptionSummary("Update draft production order"),
+		fuego.OptionTags("Production Order"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+
+	// Finished product dispatch (Phiếu xuất kho Thành phẩm)
+	dispatchGroup := fuego.Group(authGroup, "/finished-product-dispatches")
+	fuego.Get(dispatchGroup, "", finishedProductDispatchController.List,
+		fuego.OptionSummary("List phiếu xuất kho thành phẩm (query: status, limit, offset)"),
+		fuego.OptionTags("Phiếu xuất kho TP"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Get(dispatchGroup, "/{id}", finishedProductDispatchController.GetByID,
+		fuego.OptionSummary("Get phiếu xuất kho thành phẩm by id"),
+		fuego.OptionTags("Phiếu xuất kho TP"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Post(dispatchGroup, "", finishedProductDispatchController.Create,
+		fuego.OptionSummary("Create phiếu xuất kho thành phẩm (draft)"),
+		fuego.OptionTags("Phiếu xuất kho TP"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Put(dispatchGroup, "/{id}", finishedProductDispatchController.Update,
+		fuego.OptionSummary("Update phiếu xuất kho (draft or revision_requested)"),
+		fuego.OptionTags("Phiếu xuất kho TP"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Post(dispatchGroup, "/{id}/submit", finishedProductDispatchController.Submit,
+		fuego.OptionSummary("Submit for approval (draft/revision_requested -> pending_approval)"),
+		fuego.OptionTags("Phiếu xuất kho TP"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Post(dispatchGroup, "/{id}/approve", finishedProductDispatchController.Approve,
+		fuego.OptionSummary("Approve phiếu xuất kho (Quản lý kho)"),
+		fuego.OptionTags("Phiếu xuất kho TP"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+	fuego.Post(dispatchGroup, "/{id}/reject", finishedProductDispatchController.Reject,
+		fuego.OptionSummary("Reject / yêu cầu sửa (Quản lý kho)"),
+		fuego.OptionTags("Phiếu xuất kho TP"),
 		fuego.OptionMiddleware(authGuardMiddleware),
 	)
 }

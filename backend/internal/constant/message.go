@@ -141,3 +141,58 @@ const (
 	MsgPINSetSuccess    = "thiết lập mã PIN thành công"
 	MsgPINChangeSuccess = "đổi mã PIN thành công"
 )
+
+// Company & Department
+const (
+	MsgCompanyNotFound     = "công ty không tồn tại"
+	MsgDepartmentNotFound  = "phòng ban không tồn tại"
+	MsgDepartmentCodeRequired  = "mã phòng ban là bắt buộc"
+	MsgDepartmentNameRequired  = "tên phòng ban là bắt buộc"
+	MsgDepartmentCompanyRequired = "công ty là bắt buộc"
+	MsgDepartmentCodeExists     = "mã phòng ban đã tồn tại trong công ty"
+	MsgDepartmentDeleteSuccess  = "xóa phòng ban thành công"
+	MsgDepartmentUpdateSuccess = "cập nhật phòng ban thành công"
+)
+
+// Inventory (Tồn kho)
+const (
+	MsgInventoryNotFound         = "bản ghi tồn kho không tồn tại"
+	MsgInventoryInvalidWarehouse = "loại kho không hợp lệ (raw, semi, finished)"
+	MsgInventoryQuantityInvalid  = "số lượng tồn kho không hợp lệ"
+
+	// Production plan (Bảng kế hoạch sản xuất)
+	MsgProductionPlanNotFound             = "kế hoạch sản xuất không tồn tại"
+	MsgProductionPlanDateRequired         = "ngày lập kế hoạch SX là bắt buộc"
+	MsgProductionPlanItemsRequired        = "kế hoạch sản xuất phải có ít nhất một sản phẩm"
+	MsgProductionPlanQuantityInvalid      = "số lượng kế hoạch không hợp lệ"
+	MsgProductionPlanAlreadyExistsForDate = "đã có kế hoạch sản xuất cho ngày này"
+	MsgProductionPlanServerError          = "có lỗi xảy ra, vui lòng thử lại sau"
+	MsgProductionPlanForbidden            = "bạn không có quyền thực hiện thao tác này trên kế hoạch sản xuất"
+	MsgProductionPlanInvalidStatus        = "trạng thái kế hoạch sản xuất không hợp lệ cho thao tác này"
+	MsgProductionPlanRejectReasonRequired = "lý do từ chối là bắt buộc"
+	MsgProductionOrderOneProductOnly      = "1 lệnh sản xuất chỉ có thể làm cho 1 sản phẩm"
+	MsgProductionOrderNotFound            = "lệnh sản xuất không tồn tại"
+	MsgProductionOrderProductRequired     = "sản phẩm là bắt buộc"
+	MsgProductionOrderQuantityInvalid    = "số lượng không hợp lệ"
+	MsgProductionOrderBatchRequired       = "số lô là bắt buộc"
+	MsgProductionOrderExpiryRequired     = "ngày hạn sử dụng là bắt buộc"
+	MsgProductionOrderDraftOnlyEdit      = "chỉ có thể sửa lệnh sản xuất ở trạng thái nháp"
+)
+
+// Finished product dispatch (Phiếu xuất kho Thành phẩm)
+const (
+	MsgDispatchNotFound           = "phiếu xuất kho thành phẩm không tồn tại"
+	MsgDispatchCustomerRequired    = "khách hàng là bắt buộc"
+	MsgDispatchOrderNumberRequired = "số đơn hàng là bắt buộc"
+	MsgDispatchAddressRequired     = "địa chỉ là bắt buộc"
+	MsgDispatchPhoneRequired      = "số điện thoại là bắt buộc"
+	MsgDispatchItemsRequired      = "phiếu xuất kho phải có ít nhất một dòng sản phẩm"
+	MsgDispatchQuantityInvalid     = "số lượng sản phẩm không hợp lệ"
+	MsgDispatchProductNotFound     = "sản phẩm không tồn tại"
+	MsgDispatchCustomerNotFound   = "khách hàng không tồn tại"
+	MsgDispatchInsufficientStock  = "tồn kho thành phẩm không đủ để xuất kho"
+	MsgDispatchForbidden           = "bạn không có quyền thực hiện thao tác này"
+	MsgDispatchInvalidStatus       = "trạng thái phiếu không hợp lệ cho thao tác này"
+	MsgDispatchRejectReasonRequired = "lý do từ chối (yêu cầu sửa) là bắt buộc"
+	MsgDispatchServerError         = "có lỗi xảy ra, vui lòng thử lại sau"
+)

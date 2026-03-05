@@ -13,19 +13,23 @@ func NewConverter() *Converter {
 	return &Converter{}
 }
 
-// UserToUserPayload converts a User model to UserPayload DTO (includes SupervisorID; Supervisor when preloaded).
+// UserToUserPayload converts a User model to UserPayload DTO (includes SupervisorID, DepartmentID; Supervisor/Department when preloaded).
 func (c *Converter) UserToUserPayload(user model.User) dto.UserPayload {
 	p := dto.UserPayload{
 		ID:           user.ID,
 		Username:     user.Username,
 		Email:        user.Email,
 		SupervisorID: user.SupervisorID,
+		DepartmentID: user.DepartmentID,
 	}
 	if user.Supervisor != nil {
 		sup := c.UserToUserPayload(*user.Supervisor)
 		sup.Supervisor = nil
 		sup.SupervisorID = nil
 		p.Supervisor = &sup
+	}
+	if user.Department != nil {
+		p.DepartmentName = user.Department.Name
 	}
 	return p
 }

@@ -107,7 +107,15 @@ class _ActionGrid extends StatelessWidget {
                                 label: 'Tồn kho hiện tại',
                                 icon: Icons.inventory_2_outlined,
                                 highlighted: false,
-                                onTap: () {},
+                                onTap: () {
+                                  if (sub == 'semi') {
+                                    context.go('/inventory/semi/balance');
+                                  } else if (sub == 'finished') {
+                                    context.go('/inventory/finished/balance');
+                                  } else {
+                                    context.go('/inventory/balance');
+                                  }
+                                },
                               ),
                             ),
                           ),

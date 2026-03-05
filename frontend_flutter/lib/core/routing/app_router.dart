@@ -9,11 +9,16 @@ import '../../modules/audit/presentation/pages/audit_page.dart';
 import '../../modules/customers/presentation/pages/create_customer_page.dart';
 import '../../modules/customers/presentation/pages/customers_page.dart';
 import '../../modules/inventory/presentation/pages/finished_product_release_page.dart';
+import '../../modules/inventory/presentation/pages/finished_product_release_create_page.dart';
+import '../../modules/inventory/presentation/pages/finished_product_release_edit_page.dart';
+import '../../modules/inventory/presentation/pages/inventory_balance_page.dart';
 import '../../modules/inventory/presentation/pages/inventory_page.dart';
 import '../../modules/inventory/presentation/pages/inventory_section_page.dart';
 import '../../modules/payroll/presentation/pages/payroll_page.dart';
 import '../../modules/production/presentation/pages/production_page.dart';
 import '../../modules/production/presentation/pages/production_plan_page.dart';
+import '../../modules/production/presentation/pages/production_plan_edit_page.dart';
+import '../../modules/production/presentation/pages/production_order_create_page.dart';
 import '../../modules/qc/presentation/pages/qc_page.dart';
 import '../../modules/reports/presentation/pages/reports_page.dart';
 import '../../modules/sales/presentation/pages/new_order_page.dart';
@@ -92,16 +97,38 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, _) => const InventoryPage(),
           ),
           GoRoute(
+            path: '/inventory/balance',
+            builder: (_, _) => const InventoryBalancePage(section: 'raw'),
+          ),
+          GoRoute(
             path: '/inventory/semi',
             builder: (_, _) => const InventorySectionPage(sub: 'semi'),
+          ),
+          GoRoute(
+            path: '/inventory/semi/balance',
+            builder: (_, _) => const InventoryBalancePage(section: 'semi'),
           ),
           GoRoute(
             path: '/inventory/finished',
             builder: (_, _) => const InventorySectionPage(sub: 'finished'),
           ),
           GoRoute(
+            path: '/inventory/finished/balance',
+            builder: (_, _) => const InventoryBalancePage(section: 'finished'),
+          ),
+          GoRoute(
             path: '/inventory/finished-release',
             builder: (_, _) => const FinishedProductReleasePage(),
+          ),
+          GoRoute(
+            path: '/inventory/finished-release/create',
+            builder: (_, _) => const FinishedProductReleaseCreatePage(),
+          ),
+          GoRoute(
+            path: '/inventory/finished-release/:id/edit',
+            builder: (_, state) => FinishedProductReleaseEditPage(
+              id: state.pathParameters['id'] ?? '',
+            ),
           ),
           GoRoute(
             path: '/production',
@@ -110,6 +137,41 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/production/plan',
             builder: (_, _) => const ProductionPlanPage(),
+          ),
+          GoRoute(
+            path: '/production/plan/create',
+            builder: (_, state) {
+              final date = state.uri.queryParameters['date'];
+              return ProductionPlanEditPage(initialDateYyyyMmDd: date);
+            },
+          ),
+          GoRoute(
+            path: '/production/plan/:id/edit',
+            builder: (_, state) {
+              final id = state.pathParameters['id'] ?? '';
+              return ProductionPlanEditPage(planId: id);
+            },
+          ),
+          GoRoute(
+            path: '/production/orders',
+            builder: (_, _) => const ProductionPage(),
+          ),
+          GoRoute(
+            path: '/production/orders/create',
+            builder: (_, state) {
+              final productId = state.uri.queryParameters['productId'];
+              final productDisplay =
+                  state.uri.queryParameters['productDisplay'];
+              final plannedQty =
+                  int.tryParse(state.uri.queryParameters['plannedQuantity'] ?? '');
+              final planItemId = state.uri.queryParameters['planItemId'];
+              return ProductionOrderCreatePage(
+                productId: productId,
+                productDisplay: productDisplay,
+                plannedQuantity: plannedQty,
+                planItemId: planItemId,
+              );
+            },
           ),
           GoRoute(path: '/products', builder: (_, _) => const ProductsPage()),
           GoRoute(

@@ -15,13 +15,14 @@ import (
 )
 
 type UserService struct {
-	users     *repository.UserRepository
-	roles     *repository.RoleRepository
-	converter *converter.Converter
+	users       *repository.UserRepository
+	roles       *repository.RoleRepository
+	departments *repository.DepartmentRepository
+	converter   *converter.Converter
 }
 
-func NewUserService(users *repository.UserRepository, roles *repository.RoleRepository, conv *converter.Converter) *UserService {
-	return &UserService{users: users, roles: roles, converter: conv}
+func NewUserService(users *repository.UserRepository, roles *repository.RoleRepository, departments *repository.DepartmentRepository, conv *converter.Converter) *UserService {
+	return &UserService{users: users, roles: roles, departments: departments, converter: conv}
 }
 
 // List returns paginated users (id, username, email).
@@ -126,6 +127,31 @@ func (s *UserService) SetSupervisor(ctx context.Context, userID uuid.UUID, super
 	user.UpdatedBy = currentUserID
 	if err := s.users.Update(ctx, user); err != nil {
 		return &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2912, Message: "failed to set supervisor", Err: err}
+	}
+	return nil
+}
+
+// SetDepartment sets or clears the user's department. Validates: user exists, department exists when set.
+func (s *UserService) SetDepartment(ctx context.Context, userID uuid.UUID, departmentID *uuid.UUID, currentUserID uuid.UUID) error {
+	user, err := s.users.FindByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return &dto.AppError{HTTPStatus: http.StatusNotFound, Code: 2903, Message: constant.MsgUserNotFound}
+		}
+		return &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2904, Message: constant.MsgUserNotFound, Err: err}
+	}
+	if departmentID != nil {
+		if _, err := s.departments.FindByID(ctx, departmentID.String()); err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return &dto.AppError{HTTPStatus: http.StatusBadRequest, Code: 3002, Message: constant.MsgDepartmentNotFound}
+			}
+			return &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 3503, Message: constant.MsgDepartmentNotFound, Err: err}
+		}
+	}
+	user.DepartmentID = departmentID
+	user.UpdatedBy = currentUserID
+	if err := s.users.Update(ctx, user); err != nil {
+		return &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2913, Message: "failed to set department", Err: err}
 	}
 	return nil
 }

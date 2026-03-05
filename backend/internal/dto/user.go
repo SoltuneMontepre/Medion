@@ -12,3 +12,9 @@ type SetUserRolesRequest struct {
 type SetSupervisorRequest struct {
 	SupervisorID *uuid.UUID `json:"supervisorId"`
 }
+
+// SetDepartmentRequest for PUT /users/:id/department — set or clear the user's department.
+// DepartmentID nil = clear department.
+type SetDepartmentRequest struct {
+	DepartmentID *uuid.UUID `json:"departmentId"`
+}

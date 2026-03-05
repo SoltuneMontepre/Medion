@@ -1,49 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/finished_product_release.dart';
+import '../../data/datasources/finished_product_dispatch_remote_datasource_impl.dart';
 
-/// Phiếu Xuất kho Thành phẩm. Mock data until API exists.
+/// Phiếu Xuất kho Thành phẩm — list from API. [statusFilter] null or empty = all.
 final finishedProductReleasesProvider =
-    FutureProvider.autoDispose.family<List<FinishedProductRelease>, int>(
-        (ref, page) async {
-  await Future.delayed(const Duration(milliseconds: 250));
-  return [
-    FinishedProductRelease(
-      id: '1',
-      customerCode: '1111',
-      customerName: 'AAAA',
-      address: '....',
-      phone: '....',
-      orderNumber: 'XYZ',
-      lines: [
-        const FinishedProductReleaseLine(
-          ordinal: 1,
-          productCode: '111',
-          productName: 'Amox 10%',
-          specification: '100gr',
-          productForm: 'Bột uống',
-          packagingForm: 'Gói',
-          quantity: 100,
-        ),
-        const FinishedProductReleaseLine(
-          ordinal: 2,
-          productCode: '222',
-          productName: 'Ampi 20%',
-          specification: '250gr',
-          productForm: 'Bột uống',
-          packagingForm: 'Gói',
-          quantity: 200,
-        ),
-        const FinishedProductReleaseLine(
-          ordinal: 3,
-          productCode: '333',
-          productName: 'Enro 10%',
-          specification: '100ml',
-          productForm: 'Dung dịch',
-          packagingForm: 'Chai',
-          quantity: 300,
-        ),
-      ],
-    ),
-  ];
+    FutureProvider.autoDispose.family<({List<FinishedProductRelease> items, int total}), String?>(
+        (ref, statusFilter) async {
+  final ds = ref.watch(finishedProductDispatchRemoteDataSourceProvider);
+  final result = await ds.list(
+    status: statusFilter?.isEmpty == true ? null : statusFilter,
+    limit: 50,
+    offset: 0,
+  );
+  return (
+    items: result.items.map((e) => e.toEntity()).toList(),
+    total: result.total,
+  );
+});
+
+/// Single dispatch by id.
+final finishedProductReleaseByIdProvider =
+    FutureProvider.autoDispose.family<FinishedProductRelease?, String>((ref, id) async {
+  final ds = ref.watch(finishedProductDispatchRemoteDataSourceProvider);
+  final model = await ds.getById(id);
+  return model?.toEntity();
 });

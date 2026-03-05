@@ -14,8 +14,11 @@ type User struct {
 
 	// SupervisorID is the user's direct leader (reports-to). Nil for top-level users.
 	SupervisorID *uuid.UUID `gorm:"type:uuid;index:idx_user_supervisor"`
+	// DepartmentID links the user to a department within the company. Nil if unassigned.
+	DepartmentID *uuid.UUID `gorm:"type:uuid;index:idx_user_department"`
 
-	UserRoles   []UserRole `gorm:"foreignKey:UserID"`
+	UserRoles   []UserRole  `gorm:"foreignKey:UserID"`
+	Department  *Department `gorm:"foreignKey:DepartmentID"`
 	Supervisor  *User      `gorm:"foreignKey:SupervisorID"`
 	Subordinates []User    `gorm:"foreignKey:SupervisorID"`
 }

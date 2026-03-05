@@ -1,6 +1,7 @@
 package database
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -50,12 +51,20 @@ func Open(cfg Config) (*gorm.DB, error) {
 func AutoMigrate(db *gorm.DB) error {
 	return db.AutoMigrate(
 		&model.User{},
+		&model.Company{},
+		&model.Department{},
 		&model.Customer{},
 		&model.Product{},
 		&model.Order{},
 		&model.OrderItem{},
 		&model.OrderSummary{},
 		&model.OrderSummaryItem{},
+		&model.Inventory{},
+		&model.ProductionPlan{},
+		&model.ProductionPlanItem{},
+		&model.ProductionOrder{},
+		&model.FinishedProductDispatch{},
+		&model.FinishedProductDispatchLine{},
 		&model.Permission{},
 		&model.Role{},
 		&model.RolePermission{},
@@ -148,14 +157,22 @@ func SeedOrderSummaryPermissions(db *gorm.DB) error {
 	return nil
 }
 
-// Default roles: admin, sale_admin, sale. Safe to call on every startup (creates only when missing by code).
+// Default roles. Safe to call on every startup (creates only when missing by code).
 var seedRoles = []model.Role{
 	{Code: "admin", Name: "Admin", Description: "Full system administrator"},
+	// Sales
 	{Code: "sale_admin", Name: "Sale Admin", Description: "Sales administration and oversight"},
-	{Code: "sale", Name: "Sale", Description: "Sales person"},
+	{Code: "sale_person", Name: "Sale", Description: "Sales person"},
+	// Planning department
+	{Code: "ke_hoach_vien", Name: "Nhân viên phòng kế hoạch", Description: "Lập và sửa kế hoạch sản xuất"},
+	{Code: "truong_phong_ke_hoach", Name: "Trưởng phòng kế hoạch", Description: "Duyệt kế hoạch sản xuất"},
+	// Warehouse
+	{Code: "ke_toan_kho", Name: "Kế toán kho", Description: "Tạo và sửa phiếu xuất kho"},
+	{Code: "quan_ly_kho", Name: "Quản lý kho", Description: "Duyệt phiếu xuất kho thành phẩm"},
+	{Code: "thu_kho_thanh_pham", Name: "Thủ kho thành phẩm", Description: "Thủ kho quản lý kho thành phẩm"},
 }
 
-// SeedRoles creates default roles (admin, sale_admin, sale) when missing (by code).
+// SeedRoles creates default roles when missing (by code). Safe to call on every startup.
 func SeedRoles(db *gorm.DB) error {
 	for i := range seedRoles {
 		var existing model.Role
@@ -168,6 +185,81 @@ func SeedRoles(db *gorm.DB) error {
 			return err
 		}
 	}
-	log.Println("database: seeded default roles (admin, sale_admin, sale)")
+	log.Println("database: seeded default roles")
+	return nil
+}
+
+// SeedDefaultCompany creates a single company "Medion" if the companies table is empty.
+func SeedDefaultCompany(db *gorm.DB) error {
+	var count int64
+	if err := db.Model(&model.Company{}).Count(&count).Error; err != nil {
+		return err
+	}
+	if count > 0 {
+		return nil
+	}
+	c := model.Company{Code: "MEDION", Name: "Medion", Active: true}
+	if err := db.Create(&c).Error; err != nil {
+		return err
+	}
+	log.Println("database: seeded default company (Medion)")
+	return nil
+}
+
+// SeedDepartments creates default departments when the table is empty (under first company).
+func SeedDepartments(db *gorm.DB) error {
+	var count int64
+	if err := db.Model(&model.Department{}).Count(&count).Error; err != nil {
+		return err
+	}
+	if count > 0 {
+		return nil
+	}
+	var company model.Company
+	if err := db.Where("active = ?", true).First(&company).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+		return err
+	}
+	seedDepts := []model.Department{
+		{CompanyID: company.ID, Code: "KE_HOACH", Name: "Phòng Kế hoạch", Description: "Lập và duyệt kế hoạch sản xuất"},
+		{CompanyID: company.ID, Code: "KHO", Name: "Phòng Kho", Description: "Quản lý kho NVL, BTP, TP"},
+		{CompanyID: company.ID, Code: "KINH_DOANH", Name: "Phòng Kinh doanh", Description: "Bán hàng và đơn hàng"},
+		{CompanyID: company.ID, Code: "SAN_XUAT", Name: "Phòng Sản xuất", Description: "Sản xuất"},
+	}
+	for i := range seedDepts {
+		if err := db.Create(&seedDepts[i]).Error; err != nil {
+			return err
+		}
+	}
+	log.Println("database: seeded default departments")
+	return nil
+}
+
+// SeedInventory creates one inventory record per product for warehouse "finished" (tồn kho TP) when the table is empty.
+func SeedInventory(db *gorm.DB) error {
+	var count int64
+	if err := db.Model(&model.Inventory{}).Count(&count).Error; err != nil {
+		return err
+	}
+	if count > 0 {
+		return nil
+	}
+	var products []model.Product
+	if err := db.Find(&products).Error; err != nil {
+		return err
+	}
+	for _, p := range products {
+		inv := model.Inventory{
+			ProductID:     p.ID,
+			WarehouseType: model.WarehouseTypeFinished,
+			Quantity:      0,
+		}
+		if err := db.Create(&inv).Error; err != nil {
+			return err
+		}
+	}
+	log.Println("database: seeded inventory (tồn kho TP) for existing products")
 	return nil
 }

@@ -120,3 +120,24 @@ func (uc *UserController) SetSupervisor(c fuego.ContextWithBody[dto.SetSuperviso
 	}
 	return dto.Ok[any](nil, "success", http.StatusOK), nil
 }
+
+// SetDepartment sets or clears the user's department. Body: { "departmentId": "uuid" | null }.
+func (uc *UserController) SetDepartment(c fuego.ContextWithBody[dto.SetDepartmentRequest]) (*dto.Envelope[any], error) {
+	idStr := c.PathParam("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return nil, &dto.AppError{HTTPStatus: http.StatusBadRequest, Code: 2900, Message: constant.MsgUserNotFound}
+	}
+	body, err := c.Body()
+	if err != nil {
+		return nil, err
+	}
+	currentUserID, err := uc.userIDFromContext(c.Context())
+	if err != nil {
+		return nil, err
+	}
+	if err := uc.userService.SetDepartment(c.Context(), id, body.DepartmentID, currentUserID); err != nil {
+		return nil, err
+	}
+	return dto.Ok[any](nil, "success", http.StatusOK), nil
+}

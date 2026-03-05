@@ -40,6 +40,15 @@ func BuildServer() (*fuego.Server, error) {
 	if err := database.SeedRoles(db); err != nil {
 		return nil, fmt.Errorf("seed roles: %w", err)
 	}
+	if err := database.SeedDefaultCompany(db); err != nil {
+		return nil, fmt.Errorf("seed default company: %w", err)
+	}
+	if err := database.SeedDepartments(db); err != nil {
+		return nil, fmt.Errorf("seed departments: %w", err)
+	}
+	if err := database.SeedInventory(db); err != nil {
+		return nil, fmt.Errorf("seed inventory: %w", err)
+	}
 
 	jwtManager, err := security.NewJWTManagerFromEnv()
 	if err != nil {
@@ -49,6 +58,14 @@ func BuildServer() (*fuego.Server, error) {
 	blacklist := cache.New(30*time.Minute, 1*time.Minute)
 
 	userRepo := repository.NewUserRepository(db)
+	companyRepo := repository.NewCompanyRepository(db)
+	departmentRepo := repository.NewDepartmentRepository(db)
+	inventoryRepo := repository.NewInventoryRepository(db)
+	productionPlanRepo := repository.NewProductionPlanRepository(db)
+	productionPlanItemRepo := repository.NewProductionPlanItemRepository(db)
+	productionOrderRepo := repository.NewProductionOrderRepository(db)
+	finishedProductDispatchRepo := repository.NewFinishedProductDispatchRepository(db)
+	finishedProductDispatchLineRepo := repository.NewFinishedProductDispatchLineRepository(db)
 	customerRepo := repository.NewCustomerRepository(db)
 	productRepo := repository.NewProductRepository(db)
 	orderRepo := repository.NewOrderRepository(db)
@@ -59,19 +76,31 @@ func BuildServer() (*fuego.Server, error) {
 	conv := converter.NewConverter()
 	authService := service.NewAuthService(userRepo, jwtManager, blacklist, conv)
 	pinService := service.NewPINService(userRepo, jwtManager)
+	companyService := service.NewCompanyService(companyRepo, conv)
+	departmentService := service.NewDepartmentService(departmentRepo, companyRepo, conv, companyService)
 	customerService := service.NewCustomerService(customerRepo, conv)
 	productService := service.NewProductService(productRepo, conv)
 	orderService := service.NewOrderService(orderRepo, orderItemRepo, customerRepo, productRepo, userRepo, orderSummaryRepo, orderSummaryItemRepo, pinService, conv)
 	orderSummaryService := service.NewOrderSummaryService(orderSummaryRepo, orderSummaryItemRepo, userRepo, conv)
 	authController := controller.NewAuthController(authService)
 	pinController := controller.NewPINController(pinService)
+	companyController := controller.NewCompanyController(companyService)
+	departmentController := controller.NewDepartmentController(departmentService)
+	inventoryService := service.NewInventoryService(inventoryRepo, conv)
+	inventoryController := controller.NewInventoryController(inventoryService)
+	productionPlanService := service.NewProductionPlanService(productionPlanRepo, productionPlanItemRepo, productRepo, userRepo, conv)
+	productionPlanController := controller.NewProductionPlanController(productionPlanService, jwtManager)
+	productionOrderService := service.NewProductionOrderService(productionOrderRepo, productRepo, inventoryRepo, conv)
+	productionOrderController := controller.NewProductionOrderController(productionOrderService, jwtManager)
+	finishedProductDispatchService := service.NewFinishedProductDispatchService(finishedProductDispatchRepo, finishedProductDispatchLineRepo, customerRepo, productRepo, inventoryRepo, userRepo, conv)
+	finishedProductDispatchController := controller.NewFinishedProductDispatchController(finishedProductDispatchService, jwtManager)
 	customerController := controller.NewCustomerController(customerService)
 	productController := controller.NewProductController(productService)
 	orderController := controller.NewOrderController(orderService)
 	orderSummaryController := controller.NewOrderSummaryController(orderSummaryService, jwtManager)
 	roleService := service.NewRoleService(roleRepo, conv)
 	roleController := controller.NewRoleController(roleService)
-	userService := service.NewUserService(userRepo, roleRepo, conv)
+	userService := service.NewUserService(userRepo, roleRepo, departmentRepo, conv)
 	userController := controller.NewUserController(userService, jwtManager)
 	authGuard := middleware.AccessTokenGuard(jwtManager, blacklist)
 
@@ -100,7 +129,7 @@ func BuildServer() (*fuego.Server, error) {
 		Description: "API Server",
 	})
 
-	RegisterRoutes(server, authController, customerController, productController, orderController, orderSummaryController, pinController, roleController, userController, func(next http.Handler) http.Handler {
+	RegisterRoutes(server, authController, customerController, productController, orderController, orderSummaryController, pinController, roleController, userController, companyController, departmentController, inventoryController, productionPlanController, productionOrderController, finishedProductDispatchController, func(next http.Handler) http.Handler {
 		return authGuard(next)
 	})
 	return server, nil

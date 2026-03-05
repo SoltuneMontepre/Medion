@@ -2,6 +2,7 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../shared/dialogs/confirm_dialog.dart';
 import '../../../../shared/layout/app_scaffold.dart';
@@ -31,9 +32,9 @@ class _ProductionPageState extends ConsumerState<ProductionPage> {
       title: 'Sản xuất',
       toolbarActions: [
         ToolbarButton(
-          label: 'Thêm',
+          label: 'Lập lệnh SX',
           icon: Icons.add,
-          onPressed: () {},
+          onPressed: () => context.push('/production/orders/create'),
           shortcut: const SingleActivator(LogicalKeyboardKey.keyN,
               control: true),
         ),
@@ -93,42 +94,16 @@ class _ProductionPageState extends ConsumerState<ProductionPage> {
       sortAscending: _sortAsc,
       columns: [
         DataColumn2(
-          label: const Text('Mã'),
-          fixedWidth: 60,
-          onSort: (i, asc) =>
-              setState(() { _sortCol = i; _sortAsc = asc; }),
-        ),
-        DataColumn2(
-          label: const Text('Số lệnh #'),
+          label: const Text('Số LSX'),
           size: ColumnSize.S,
           onSort: (i, asc) =>
               setState(() { _sortCol = i; _sortAsc = asc; }),
         ),
-        DataColumn2(
-          label: const Text('Sản phẩm'),
-          size: ColumnSize.L,
-          onSort: (i, asc) =>
-              setState(() { _sortCol = i; _sortAsc = asc; }),
-        ),
-        DataColumn2(
-          label: const Text('SL'),
-          fixedWidth: 70,
-          numeric: true,
-          onSort: (i, asc) =>
-              setState(() { _sortCol = i; _sortAsc = asc; }),
-        ),
-        DataColumn2(
-          label: const Text('Trạng thái'),
-          size: ColumnSize.S,
-          onSort: (i, asc) =>
-              setState(() { _sortCol = i; _sortAsc = asc; }),
-        ),
-        DataColumn2(
-          label: const Text('Ngày'),
-          size: ColumnSize.S,
-          onSort: (i, asc) =>
-              setState(() { _sortCol = i; _sortAsc = asc; }),
-        ),
+        DataColumn2(label: const Text('Sản phẩm'), size: ColumnSize.L),
+        DataColumn2(label: const Text('Số lô'), size: ColumnSize.S),
+        DataColumn2(label: const Text('SL'), fixedWidth: 70, numeric: true),
+        DataColumn2(label: const Text('Trạng thái'), size: ColumnSize.S),
+        DataColumn2(label: const Text('Ngày SX'), size: ColumnSize.S),
       ],
       rows: orders.asMap().entries.map((entry) {
         final i = entry.key;
@@ -138,16 +113,31 @@ class _ProductionPageState extends ConsumerState<ProductionPage> {
             i.isEven ? Colors.white : const Color(0xFFFAFAFA),
           ),
           cells: [
-            DataCell(Text(o.id)),
             DataCell(Text(o.orderNumber)),
             DataCell(Text(o.productName)),
-            DataCell(Text('${o.quantity}')),
-            DataCell(Text(o.status)),
-            DataCell(Text(o.date)),
+            DataCell(Text(o.batchNumber)),
+            DataCell(Text('${o.quantitySpec1 + o.quantitySpec2}')),
+            DataCell(Text(_statusLabel(o.status))),
+            DataCell(Text(o.productionDate)),
           ],
         );
       }).toList(),
       empty: const Center(child: Text('Không tìm thấy lệnh sản xuất')),
     );
+  }
+
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'draft':
+        return 'Nháp';
+      case 'active':
+        return 'Đang SX';
+      case 'done':
+        return 'Hoàn thành';
+      case 'canceled':
+        return 'Hủy';
+      default:
+        return status;
+    }
   }
 }

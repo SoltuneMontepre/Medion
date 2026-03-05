@@ -1,68 +1,29 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/datasources/production_plan_remote_datasource_impl.dart';
 import '../../domain/entities/production_plan.dart';
 
-/// Bảng Kế hoạch Sản xuất (theo ngày). Mock data until API exists.
+/// Bảng Kế hoạch Sản xuất (theo ngày). Fetches from API; date param is dd/MM/yyyy (display format).
 final productionPlanProvider =
-    FutureProvider.autoDispose.family<ProductionPlan, String>((ref, date) async {
-  await Future.delayed(const Duration(milliseconds: 200));
+    FutureProvider.autoDispose.family<ProductionPlan, String>((ref, dateStr) async {
+  final ds = ref.watch(productionPlanRemoteDataSourceProvider);
+  final apiDate = _displayDateToApiDate(dateStr);
+  final model = await ds.getByDate(apiDate);
+  if (model == null) {
+    return ProductionPlan(planDate: dateStr, items: []);
+  }
+  final plan = model.toEntity();
   return ProductionPlan(
-    planDate: date,
-    items: [
-      const ProductionPlanItem(
-        ordinal: 1,
-        productCode: '111',
-        productName: 'Amox 10%',
-        specification: '100gr',
-        productForm: 'Bột uống',
-        packagingForm: 'Gói',
-        plannedQuantity: 1000,
-      ),
-      const ProductionPlanItem(
-        ordinal: 2,
-        productCode: '222',
-        productName: 'Ampi 20%',
-        specification: '250gr',
-        productForm: 'Bột uống',
-        packagingForm: 'Gói',
-        plannedQuantity: 2000,
-      ),
-      const ProductionPlanItem(
-        ordinal: 3,
-        productCode: '333',
-        productName: 'Enro 10%',
-        specification: '100ml',
-        productForm: 'Dung dịch',
-        packagingForm: 'Chai',
-        plannedQuantity: 3500,
-      ),
-      const ProductionPlanItem(
-        ordinal: 4,
-        productCode: '444',
-        productName: 'Flor 30%',
-        specification: '1000 ml',
-        productForm: 'Dung dịch',
-        packagingForm: 'Chai',
-        plannedQuantity: 200,
-      ),
-      const ProductionPlanItem(
-        ordinal: 5,
-        productCode: '555',
-        productName: 'Amox hỗn dịch 15%',
-        specification: '100ml',
-        productForm: 'Hỗn dịch',
-        packagingForm: 'Chai',
-        plannedQuantity: 1000,
-      ),
-      const ProductionPlanItem(
-        ordinal: 6,
-        productCode: '666',
-        productName: 'Cetriason',
-        specification: '100ml',
-        productForm: 'Bột pha',
-        packagingForm: 'Chai',
-        plannedQuantity: 500,
-      ),
-    ],
+    planDate: dateStr,
+    items: plan.items,
+    id: plan.id,
+    status: plan.status,
   );
 });
+
+/// Converts dd/MM/yyyy to yyyy-MM-dd for API.
+String _displayDateToApiDate(String ddMmYyyy) {
+  final parts = ddMmYyyy.split('/');
+  if (parts.length != 3) return ddMmYyyy;
+  return '${parts[2]}-${parts[1]}-${parts[0]}';
+}

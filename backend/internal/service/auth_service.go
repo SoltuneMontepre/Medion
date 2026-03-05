@@ -159,7 +159,7 @@ func (s *AuthService) Me(ctx context.Context, accessToken string) (dto.UserPaylo
 		return dto.UserPayload{}, &dto.AppError{HTTPStatus: http.StatusUnauthorized, Code: 1012, Message: "invalid or expired access token", Err: err}
 	}
 
-	user, err := s.users.FindByID(ctx, claims.Subject)
+	user, err := s.users.FindByIDWithAssociations(ctx, claims.Subject)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return dto.UserPayload{}, &dto.AppError{HTTPStatus: http.StatusNotFound, Code: 1013, Message: "user not found"}

@@ -20,12 +20,19 @@ class ProductionPlanItem {
   final int plannedQuantity;
 }
 
+/// Plan status from API: draft | submitted | approved.
 class ProductionPlan {
   const ProductionPlan({
     required this.planDate,
     required this.items,
+    this.id,
+    this.status,
   });
 
   final String planDate;
   final List<ProductionPlanItem> items;
+  /// Set when loaded from API; null when no plan for date.
+  final String? id;
+  /// draft | submitted | approved
+  final String? status;
 }

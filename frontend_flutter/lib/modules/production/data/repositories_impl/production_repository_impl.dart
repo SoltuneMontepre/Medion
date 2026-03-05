@@ -12,7 +12,8 @@ class ProductionRepositoryImpl implements ProductionRepository {
 
   @override
   Future<List<ProductionOrder>> getOrders({int page = 1, int pageSize = 20}) async {
-    final models = await _dataSource.fetchOrders(page: page, pageSize: pageSize);
+    final offset = (page - 1) * pageSize;
+    final models = await _dataSource.fetchOrders(limit: pageSize, offset: offset);
     return models.map((m) => m.toEntity()).toList();
   }
 }

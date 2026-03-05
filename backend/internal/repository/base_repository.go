@@ -98,11 +98,20 @@ func (r *UserRepository) FindUserIDsByRoleCode(ctx context.Context, roleCode str
 	return ids, err
 }
 
-// FindAll returns users with optional pagination (limit/offset). Ordered by username. Preloads Supervisor.
+// FindAll returns users with optional pagination (limit/offset). Ordered by username. Preloads Supervisor and Department.
 func (r *UserRepository) FindAll(ctx context.Context, limit, offset int) ([]model.User, error) {
 	var list []model.User
-	err := r.DB().WithContext(ctx).Preload("Supervisor").Order("username ASC").Limit(limit).Offset(offset).Find(&list).Error
+	err := r.DB().WithContext(ctx).Preload("Supervisor").Preload("Department").Order("username ASC").Limit(limit).Offset(offset).Find(&list).Error
 	return list, err
+}
+
+// FindByIDWithAssociations loads a user by ID with Supervisor and Department preloaded (e.g. for /me).
+func (r *UserRepository) FindByIDWithAssociations(ctx context.Context, id string) (*model.User, error) {
+	var u model.User
+	if err := r.DB().WithContext(ctx).Preload("Supervisor").Preload("Department").First(&u, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	return &u, nil
 }
 
 // FindDirectSubordinateIDs returns user IDs whose supervisor_id is the given user (direct reports).
@@ -151,7 +160,7 @@ func (r *UserRepository) GetRoleIDsForUser(ctx context.Context, userID uuid.UUID
 // SetUserRoles replaces all role assignments for the user with the given role IDs (audit fields set in service).
 func (r *UserRepository) SetUserRoles(ctx context.Context, userID uuid.UUID, roleIDs []uuid.UUID, createdBy uuid.UUID) error {
 	return r.DB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("user_id = ?", userID).Delete(&model.UserRole{}).Error; err != nil {
+		if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&model.UserRole{}).Error; err != nil {
 			return err
 		}
 		for _, roleID := range roleIDs {

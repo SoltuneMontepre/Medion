@@ -47,10 +47,18 @@ class NavMenu {
         NavItem(label: 'kho NVP', path: '/inventory'),
         NavItem(label: 'kho BTP', path: '/inventory/semi'),
         NavItem(label: 'kho TP', path: '/inventory/finished'),
+        NavItem(label: 'Phiếu xuất kho TP', path: '/inventory/finished-release'),
       ],
     ),
     NavItem(label: 'Xưởng', path: '/workshop'),
-    NavItem(label: 'Sản xuất', path: '/production'),
+    NavItem(
+      label: 'Sản xuất',
+      children: [
+        NavItem(label: 'Tổng quan', path: '/production'),
+        NavItem(label: 'Kế hoạch sản xuất', path: '/production/plan'),
+        NavItem(label: 'Lệnh sản xuất', path: '/production/orders'),
+      ],
+    ),
     NavItem(
       label: 'Sản phẩm',
       children: [
