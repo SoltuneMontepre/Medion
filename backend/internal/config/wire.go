@@ -43,11 +43,17 @@ func BuildServer() (*fuego.Server, error) {
 	if err := database.SeedRoles(db); err != nil {
 		return nil, fmt.Errorf("seed roles: %w", err)
 	}
+	if err := database.SeedDefaultUserAdminRole(db); err != nil {
+		return nil, fmt.Errorf("seed default user admin role: %w", err)
+	}
 	if err := database.SeedDefaultCompany(db); err != nil {
 		return nil, fmt.Errorf("seed default company: %w", err)
 	}
 	if err := database.SeedDepartments(db); err != nil {
 		return nil, fmt.Errorf("seed departments: %w", err)
+	}
+	if err := database.SeedDepartmentUsers(db); err != nil {
+		return nil, fmt.Errorf("seed department users: %w", err)
 	}
 	if err := database.SeedInventory(db); err != nil {
 		return nil, fmt.Errorf("seed inventory: %w", err)
@@ -79,6 +85,7 @@ func BuildServer() (*fuego.Server, error) {
 	roleRepo := repository.NewRoleRepository(db)
 	conv := converter.NewConverter()
 	authService := service.NewAuthService(userRepo, jwtManager, blacklist, conv)
+	userService := service.NewUserService(userRepo, roleRepo, departmentRepo, conv)
 	pinService := service.NewPINService(userRepo, jwtManager)
 	companyService := service.NewCompanyService(companyRepo, conv)
 	departmentService := service.NewDepartmentService(departmentRepo, companyRepo, conv, companyService)
@@ -87,7 +94,7 @@ func BuildServer() (*fuego.Server, error) {
 	ingredientService := service.NewIngredientService(ingredientRepo, conv)
 	orderService := service.NewOrderService(orderRepo, orderItemRepo, customerRepo, productRepo, userRepo, orderSummaryRepo, orderSummaryItemRepo, pinService, conv)
 	orderSummaryService := service.NewOrderSummaryService(orderSummaryRepo, orderSummaryItemRepo, userRepo, conv)
-	authController := controller.NewAuthController(authService)
+	authController := controller.NewAuthController(authService, userService)
 	pinController := controller.NewPINController(pinService)
 	companyController := controller.NewCompanyController(companyService)
 	departmentController := controller.NewDepartmentController(departmentService)
@@ -106,7 +113,6 @@ func BuildServer() (*fuego.Server, error) {
 	orderSummaryController := controller.NewOrderSummaryController(orderSummaryService, jwtManager)
 	roleService := service.NewRoleService(roleRepo, conv)
 	roleController := controller.NewRoleController(roleService)
-	userService := service.NewUserService(userRepo, roleRepo, departmentRepo, conv)
 	userController := controller.NewUserController(userService, jwtManager)
 	authGuard := middleware.AccessTokenGuard(jwtManager, blacklist)
 

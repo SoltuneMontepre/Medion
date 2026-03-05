@@ -46,15 +46,7 @@ class _InventoryBalancePageState extends ConsumerState<InventoryBalancePage> {
         ToolbarButton(
           label: 'Quay lại',
           icon: Icons.arrow_back,
-          onPressed: () {
-            if (widget.section == 'raw') {
-              context.go('/inventory');
-            } else if (widget.section == 'semi') {
-              context.go('/inventory/semi');
-            } else {
-              context.go('/inventory/finished');
-            }
-          },
+          onPressed: () => context.go('/inventory'),
         ),
       ],
       footer: balanceAsync.when(

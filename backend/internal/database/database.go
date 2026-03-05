@@ -124,6 +124,40 @@ func SeedDefaultUser(db *gorm.DB) error {
 	return nil
 }
 
+// SeedDefaultUserAdminRole assigns the admin role to the default user (admin@medion.local) if not already assigned.
+// Call after SeedRoles. Safe to call on every startup.
+func SeedDefaultUserAdminRole(db *gorm.DB) error {
+	var u model.User
+	if err := db.Where("email = ?", seedEmail).First(&u).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+		return err
+	}
+	var role model.Role
+	if err := db.Where("code = ?", "admin").First(&role).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+		return err
+	}
+	var exist int64
+	if err := db.Model(&model.UserRole{}).Where("user_id = ? AND role_id = ?", u.ID, role.ID).Count(&exist).Error; err != nil {
+		return err
+	}
+	if exist > 0 {
+		return nil
+	}
+	ur := model.UserRole{UserID: u.ID, RoleID: role.ID}
+	ur.CreatedBy = u.ID
+	ur.UpdatedBy = u.ID
+	if err := db.Create(&ur).Error; err != nil {
+		return fmt.Errorf("assign admin role to default user: %w", err)
+	}
+	log.Println("database: assigned admin role to default user (admin@medion.local)")
+	return nil
+}
+
 // SeedProducts creates sample products when the products table is empty.
 func SeedProducts(db *gorm.DB) error {
 	var count int64
@@ -262,6 +296,71 @@ func SeedDepartments(db *gorm.DB) error {
 		}
 	}
 	log.Println("database: seeded default departments")
+	return nil
+}
+
+// Seed department users: Phòng kinh doanh (sale, sale admin), Phòng kế hoạch (nhân viên, trưởng phòng).
+// Creates users only when missing (by email). Safe to call on every startup.
+func SeedDepartmentUsers(db *gorm.DB) error {
+	hashed, err := security.HashPassword(seedPassword)
+	if err != nil {
+		return fmt.Errorf("seed department users: hash password: %w", err)
+	}
+
+	var company model.Company
+	if err := db.Where("active = ?", true).First(&company).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+		return err
+	}
+
+	type deptRole struct {
+		email, username, deptCode, roleCode string
+	}
+	seeds := []deptRole{
+		{"sale@medion.local", "sale", "KINH_DOANH", "sale_person"},
+		{"saleadmin@medion.local", "saleadmin", "KINH_DOANH", "sale_admin"},
+		{"kehoach@medion.local", "kehoach", "KE_HOACH", "ke_hoach_vien"},
+		{"truongphong_kehoach@medion.local", "truongphong_kehoach", "KE_HOACH", "truong_phong_ke_hoach"},
+	}
+
+	for _, s := range seeds {
+		var existing model.User
+		err := db.Where("email = ?", s.email).First(&existing).Error
+		if err == nil {
+			continue
+		}
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+
+		var dept model.Department
+		if err := db.Where("company_id = ? AND code = ?", company.ID, s.deptCode).First(&dept).Error; err != nil {
+			return fmt.Errorf("seed department users: department %s: %w", s.deptCode, err)
+		}
+		var role model.Role
+		if err := db.Where("code = ?", s.roleCode).First(&role).Error; err != nil {
+			return fmt.Errorf("seed department users: role %s: %w", s.roleCode, err)
+		}
+
+		u := model.User{
+			Username:     s.username,
+			Email:        s.email,
+			Password:     hashed,
+			DepartmentID: &dept.ID,
+		}
+		if err := db.Create(&u).Error; err != nil {
+			return fmt.Errorf("seed department users: create user %s: %w", s.email, err)
+		}
+		ur := model.UserRole{UserID: u.ID, RoleID: role.ID}
+		ur.CreatedBy = u.ID
+		ur.UpdatedBy = u.ID
+		if err := db.Create(&ur).Error; err != nil {
+			return fmt.Errorf("seed department users: assign role to %s: %w", s.email, err)
+		}
+		log.Printf("database: seeded department user %s (%s, %s)", s.email, s.deptCode, s.roleCode)
+	}
 	return nil
 }
 

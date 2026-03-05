@@ -263,11 +263,13 @@ class _NewOrderPageState extends ConsumerState<NewOrderPage> {
         SnackBar(
           content: const Text('Lưu và ký đơn hàng thành công'),
           backgroundColor: Colors.green,
-          action: SnackBarAction(
-            label: 'Xem đơn',
-            textColor: Colors.white,
-            onPressed: () => context.go('/customers/orders/${order.id}'),
-          ),
+          action: order.id.isNotEmpty
+              ? SnackBarAction(
+                  label: 'Xem đơn',
+                  textColor: Colors.white,
+                  onPressed: () => context.go('/customers/orders/${order.id}'),
+                )
+              : null,
         ),
       );
       context.go('/customers/orders');

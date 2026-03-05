@@ -65,14 +65,29 @@ func (s *OrderSummaryService) List(ctx context.Context, userID uuid.UUID, page, 
 	}
 	offset := (page - 1) * pageSize
 
-	allowedOwnerIDs := []uuid.UUID{userID}
-	if orderSummaryHasAccess(roleCodes) {
-		subIDs, err := s.users.FindDirectSubordinateIDs(ctx, userID)
+	if constant.HasAdminRole(roleCodes) {
+		list, err := s.summaries.FindAll(ctx, pageSize, offset)
 		if err != nil {
 			return nil, 0, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2601, Message: constant.MsgOrderSummaryServerError, Err: err}
 		}
-		allowedOwnerIDs = append(allowedOwnerIDs, subIDs...)
+		total, err := s.summaries.Count(ctx)
+		if err != nil {
+			return nil, 0, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2602, Message: constant.MsgOrderSummaryServerError, Err: err}
+		}
+		payloads := make([]dto.OrderSummaryPayload, len(list))
+		for i, os := range list {
+			itemCount, _ := s.items.CountByOrderSummaryID(ctx, os.ID)
+			payloads[i] = s.converter.OrderSummaryToPayload(os, int(itemCount))
+		}
+		return payloads, total, nil
 	}
+
+	allowedOwnerIDs := []uuid.UUID{userID}
+	subIDs, err := s.users.FindDirectSubordinateIDs(ctx, userID)
+	if err != nil {
+		return nil, 0, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2601, Message: constant.MsgOrderSummaryServerError, Err: err}
+	}
+	allowedOwnerIDs = append(allowedOwnerIDs, subIDs...)
 
 	list, err := s.summaries.FindAllByOwnerIDIn(ctx, allowedOwnerIDs, pageSize, offset)
 	if err != nil {
@@ -91,12 +106,7 @@ func (s *OrderSummaryService) List(ctx context.Context, userID uuid.UUID, page, 
 }
 
 func orderSummaryHasAccess(roleCodes []string) bool {
-	for _, c := range roleCodes {
-		if c == constant.RoleCodeSaleAdmin {
-			return true
-		}
-	}
-	return false
+	return constant.HasRoleOrAdmin(roleCodes, constant.RoleCodeSaleAdmin)
 }
 
 // allowedOwnerIDs returns the list of owner IDs the user may access (self + direct subordinates for sale_admin).
@@ -141,12 +151,14 @@ func (s *OrderSummaryService) GetByID(ctx context.Context, id uuid.UUID, userID 
 		}
 		return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2604, Message: constant.MsgOrderSummaryServerError, Err: err}
 	}
-	allowed, err := s.allowedOwnerIDs(ctx, userID)
-	if err != nil {
-		return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2604, Message: constant.MsgOrderSummaryServerError, Err: err}
-	}
-	if !ownerIDIn(os.OwnerID, allowed) {
-		return nil, &dto.AppError{HTTPStatus: http.StatusNotFound, Code: 2603, Message: constant.MsgOrderSummaryNotFound}
+	if !constant.HasAdminRole(roleCodes) {
+		allowed, err := s.allowedOwnerIDs(ctx, userID)
+		if err != nil {
+			return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2604, Message: constant.MsgOrderSummaryServerError, Err: err}
+		}
+		if !ownerIDIn(os.OwnerID, allowed) {
+			return nil, &dto.AppError{HTTPStatus: http.StatusNotFound, Code: 2603, Message: constant.MsgOrderSummaryNotFound}
+		}
 	}
 	itemDetails := make([]dto.OrderSummaryItemDetail, len(os.Items))
 	for i, osi := range os.Items {
@@ -171,12 +183,14 @@ func (s *OrderSummaryService) GetByDate(ctx context.Context, dateStr string, use
 	}
 	ownerID := userID
 	if ownerIDParam != nil {
-		allowed, err := s.allowedOwnerIDs(ctx, userID)
-		if err != nil {
-			return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2605, Message: constant.MsgOrderSummaryServerError, Err: err}
-		}
-		if !ownerIDIn(*ownerIDParam, allowed) {
-			return nil, &dto.AppError{HTTPStatus: http.StatusNotFound, Code: 2603, Message: constant.MsgOrderSummaryNotFound}
+		if !constant.HasAdminRole(roleCodes) {
+			allowed, err := s.allowedOwnerIDs(ctx, userID)
+			if err != nil {
+				return nil, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2605, Message: constant.MsgOrderSummaryServerError, Err: err}
+			}
+			if !ownerIDIn(*ownerIDParam, allowed) {
+				return nil, &dto.AppError{HTTPStatus: http.StatusNotFound, Code: 2603, Message: constant.MsgOrderSummaryNotFound}
+			}
 		}
 		ownerID = *ownerIDParam
 	}

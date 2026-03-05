@@ -38,6 +38,12 @@ func RegisterRoutes(server *fuego.Server, authController *controller.AuthControl
 		fuego.OptionMiddleware(authGuardMiddleware),
 	)
 
+	fuego.Get(authGroup, "/me/roles", authController.GetMyRoles,
+		fuego.OptionSummary("Get current user's roles"),
+		fuego.OptionTags("Authentication"),
+		fuego.OptionMiddleware(authGuardMiddleware),
+	)
+
 	// Sale: customers, products, orders (protected by auth for GMP traceability)
 	saleGroup := fuego.Group(authGroup, "/sale")
 	fuego.Get(saleGroup, "/customers", customerController.List,

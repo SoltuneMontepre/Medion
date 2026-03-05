@@ -139,11 +139,52 @@ class SalesRemoteDataSourceImpl implements SalesRemoteDataSource {
       'pin': pin,
     };
     final response = await _client.dio.post('$_salePath/orders', data: body);
+    final status = response.statusCode ?? 0;
     final json = response.data;
-    if (json is! Map<String, dynamic>) throw Exception('Invalid response');
-    final data = parseData<OrderDetailModel>(json, OrderDetailModel.fromJson);
-    if (data == null) throw Exception(apiMessage(json) ?? 'Lưu đơn thất bại');
-    return data;
+
+    // Success (2xx): treat as created even if parsing fails, so we never show error when order was created.
+    if (status >= 200 && status < 300) {
+      if (json is Map<String, dynamic>) {
+        try {
+          final data = parseData<OrderDetailModel>(json, OrderDetailModel.fromJson);
+          if (data != null) return data;
+        } catch (_) {}
+        // Fallback: extract at least id from envelope so UI can show success and navigate.
+        final raw = json['data'];
+        if (raw is Map<String, dynamic>) {
+          final id = raw['id']?.toString();
+          if (id != null && id.isNotEmpty) {
+            return OrderDetailModel(
+              id: id,
+              orderNumber: raw['orderNumber'] as String? ?? '',
+              customerId: raw['customerId']?.toString() ?? customerId,
+              customerCode: raw['customerCode'] as String? ?? '',
+              customerName: raw['customerName'] as String? ?? '',
+              orderDate: raw['orderDate']?.toString() ?? '',
+              status: raw['status'] as String? ?? '',
+              items: [],
+            );
+          }
+        }
+      }
+      // No parseable body but 2xx: still treat as success with minimal model so user sees success.
+      return OrderDetailModel(
+        id: '',
+        orderNumber: '',
+        customerId: customerId,
+        customerCode: '',
+        customerName: '',
+        orderDate: '',
+        status: '',
+        items: [],
+      );
+    }
+
+    throw Exception(
+      json is Map<String, dynamic>
+          ? (apiMessage(json) ?? 'Lưu đơn thất bại')
+          : 'Lưu đơn thất bại',
+    );
   }
 
   @override

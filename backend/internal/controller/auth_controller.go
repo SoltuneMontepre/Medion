@@ -12,11 +12,12 @@ import (
 )
 
 type AuthController struct {
-	authService *service.AuthService
+	authService  *service.AuthService
+	userService  *service.UserService
 }
 
-func NewAuthController(authService *service.AuthService) *AuthController {
-	return &AuthController{authService: authService}
+func NewAuthController(authService *service.AuthService, userService *service.UserService) *AuthController {
+	return &AuthController{authService: authService, userService: userService}
 }
 
 func (a *AuthController) Register(c fuego.ContextWithBody[dto.RegisterRequest]) (*dto.Envelope[dto.AuthData], error) {
@@ -91,4 +92,21 @@ func (a *AuthController) Me(c fuego.ContextNoBody) (*dto.Envelope[dto.UserPayloa
 	}
 
 	return dto.Ok(user, "success", http.StatusOK), nil
+}
+
+// GetMyRoles returns roles assigned to the current authenticated user.
+func (a *AuthController) GetMyRoles(c fuego.ContextNoBody) (*dto.Envelope[[]dto.RolePayload], error) {
+	accessToken, ok := middleware.GetAccessTokenFromContext(c.Context())
+	if !ok {
+		return nil, &dto.AppError{HTTPStatus: http.StatusUnauthorized, Code: 1011, Message: "access token is missing"}
+	}
+	user, err := a.authService.Me(c.Context(), accessToken)
+	if err != nil {
+		return nil, err
+	}
+	roles, err := a.userService.GetUserRoles(c.Context(), user.ID)
+	if err != nil {
+		return nil, err
+	}
+	return dto.Ok(roles, "success", http.StatusOK), nil
 }

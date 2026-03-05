@@ -20,6 +20,20 @@ func NewOrderSummaryRepository(db *gorm.DB) *OrderSummaryRepository {
 	return &OrderSummaryRepository{Repository: NewRepository[model.OrderSummary](db), db: db}
 }
 
+// FindAll returns all order summaries with pagination (no owner filter; used for admin).
+func (r *OrderSummaryRepository) FindAll(ctx context.Context, limit, offset int) ([]model.OrderSummary, error) {
+	var list []model.OrderSummary
+	err := r.DB().WithContext(ctx).Order("summary_date DESC").Limit(limit).Offset(offset).Find(&list).Error
+	return list, err
+}
+
+// Count returns total order summaries (no owner filter; used for admin).
+func (r *OrderSummaryRepository) Count(ctx context.Context) (int64, error) {
+	var count int64
+	err := r.DB().WithContext(ctx).Model(&model.OrderSummary{}).Count(&count).Error
+	return count, err
+}
+
 // FindAllByOwnerID returns summaries for the given sale admin (owner), paginated.
 func (r *OrderSummaryRepository) FindAllByOwnerID(ctx context.Context, ownerID uuid.UUID, limit, offset int) ([]model.OrderSummary, error) {
 	var list []model.OrderSummary

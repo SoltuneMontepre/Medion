@@ -13,7 +13,6 @@ import '../../modules/inventory/presentation/pages/finished_product_release_crea
 import '../../modules/inventory/presentation/pages/finished_product_release_edit_page.dart';
 import '../../modules/inventory/presentation/pages/inventory_balance_page.dart';
 import '../../modules/inventory/presentation/pages/inventory_page.dart';
-import '../../modules/inventory/presentation/pages/inventory_section_page.dart';
 import '../../modules/payroll/presentation/pages/payroll_page.dart';
 import '../../modules/production/presentation/pages/production_page.dart';
 import '../../modules/production/presentation/pages/production_plan_page.dart';
@@ -91,7 +90,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/inventory',
-            builder: (_, _) => const InventorySectionPage(sub: 'raw'),
+            redirect: (_, __) => '/inventory/list',
           ),
           GoRoute(
             path: '/inventory/list',
@@ -103,7 +102,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/inventory/semi',
-            builder: (_, _) => const InventorySectionPage(sub: 'semi'),
+            redirect: (_, __) => '/inventory/semi/balance',
           ),
           GoRoute(
             path: '/inventory/semi/balance',
@@ -111,7 +110,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/inventory/finished',
-            builder: (_, _) => const InventorySectionPage(sub: 'finished'),
+            redirect: (_, __) => '/inventory/finished/balance',
           ),
           GoRoute(
             path: '/inventory/finished/balance',
@@ -178,7 +177,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/ingredients', builder: (_, _) => const IngredientsPage()),
           GoRoute(
             path: '/sales',
-            redirect: (_, __) => '/customers/orders',
+            builder: (_, __) => const SalesPage(),
           ),
           GoRoute(
             path: '/sales/new-order',

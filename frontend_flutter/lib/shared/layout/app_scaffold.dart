@@ -33,14 +33,22 @@ class AppScaffold extends StatelessWidget {
             color: theme.colorScheme.surface,
             border: Border(bottom: BorderSide(color: theme.dividerColor)),
           ),
-          child: Text(title, style: theme.textTheme.titleLarge),
+          child: Text(
+            title,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
         ),
         if (toolbarActions?.isNotEmpty == true)
           Toolbar(buttons: toolbarActions!),
         if (filterSection != null) filterSection!,
         Expanded(
-          child: RepaintBoundary(
-            child: child,
+          child: Container(
+            color: theme.colorScheme.surface,
+            child: RepaintBoundary(
+              child: child,
+            ),
           ),
         ),
         if (footer != null) footer!,

@@ -226,6 +226,13 @@ class _SupervisorPanel extends StatelessWidget {
               labelText: 'Chọn cấp trên',
               border: OutlineInputBorder(),
             ),
+            selectedItemBuilder: (context) => [
+              const Text('— Không có cấp trên', overflow: TextOverflow.ellipsis),
+              ...supervisorOptions.map((u) => Text(
+                    '${u.username} (${u.email})',
+                    overflow: TextOverflow.ellipsis,
+                  )),
+            ],
             items: [
               const DropdownMenuItem<String?>(
                 value: null,

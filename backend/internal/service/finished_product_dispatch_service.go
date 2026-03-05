@@ -52,12 +52,7 @@ func (s *FinishedProductDispatchService) hasRole(ctx context.Context, userID uui
 	if err != nil {
 		return false, err
 	}
-	for _, c := range codes {
-		if c == code {
-			return true, nil
-		}
-	}
-	return false, nil
+	return constant.HasRoleOrAdmin(codes, code), nil
 }
 
 func parseDate(s string) (*time.Time, bool) {

@@ -230,12 +230,7 @@ func (s *ProductionPlanService) hasRole(ctx context.Context, userID uuid.UUID, c
 	if err != nil {
 		return false, err
 	}
-	for _, c := range codes {
-		if c == code {
-			return true, nil
-		}
-	}
-	return false, nil
+	return constant.HasRoleOrAdmin(codes, code), nil
 }
 
 // Submit moves a plan from draft to submitted. Only planning staff or head of planning can submit.

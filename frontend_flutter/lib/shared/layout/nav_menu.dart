@@ -14,7 +14,7 @@ class NavItem {
 }
 
 /// Full nav bar content: top-level items with nested sub-items (indentation = child).
-/// Matches the hierarchy: Yêu cầu, Công việc, Tài liệu, Kho, Xưởng, Sản xuất, Sản phẩm, Tài chính, Nhân sự, Khách hàng, Đối tác, Rủi ro.
+/// Matches the hierarchy: Yêu cầu, Công việc, Tài liệu, Kho, Xưởng, Sản xuất, Sản phẩm, Tài chính, Nhân sự, Khách hàng, Đối tác, Rủi ro, Cài đặt.
 class NavMenu {
   NavMenu._();
 
@@ -71,9 +71,6 @@ class NavMenu {
     NavItem(
       label: 'Nhân sự',
       children: [
-        NavItem(label: 'Vai trò & phân cấp', path: '/roles'),
-        NavItem(label: 'Gán vai trò user', path: '/roles/assign'),
-        NavItem(label: 'Gán cấp trên', path: '/roles/assign-supervisor'),
         NavItem(label: 'Phòng ban', path: '/departments'),
       ],
     ),
@@ -89,6 +86,15 @@ class NavMenu {
     ),
     NavItem(label: 'Đối tác', path: '/partners'),
     NavItem(label: 'Rủi ro', path: '/risk'),
+    NavItem(
+      label: 'Cài đặt',
+      children: [
+        NavItem(label: 'Bảo mật', path: '/security'),
+        NavItem(label: 'Vai trò & phân cấp', path: '/roles'),
+        NavItem(label: 'Gán vai trò user', path: '/roles/assign'),
+        NavItem(label: 'Gán cấp trên', path: '/roles/assign-supervisor'),
+      ],
+    ),
   ];
 
   /// First path to navigate when user taps a parent that has children (e.g. Kho -> first child path).

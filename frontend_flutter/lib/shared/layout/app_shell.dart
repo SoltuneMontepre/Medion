@@ -5,9 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../core/auth/auth_provider.dart';
 import 'nav_menu.dart';
 
-/// Light purple highlight for selected nav (match reference UI).
-const _selectedTabColor = Color(0xFFE8E0F0);
-
 class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.currentPath, required this.child});
 
@@ -28,6 +25,7 @@ class AppShell extends ConsumerWidget {
     final section = _activeSection(currentPath);
 
     return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
       body: Column(
         children: [
           _MainTopBar(currentPath: currentPath, theme: theme),
@@ -107,6 +105,7 @@ class _MainTopBar extends ConsumerWidget {
                     return _MainTabTile(
                       label: item.label,
                       active: active,
+                      theme: theme,
                       onTap: () {
                         final path = NavMenu.firstPathOf(item);
                         if (path != null) context.go(path);
@@ -132,11 +131,11 @@ class _MainTopBar extends ConsumerWidget {
               tooltip: auth.username ?? 'Tài khoản',
               child: CircleAvatar(
                 radius: 16,
-                backgroundColor: const Color(0xFF1565C0),
+                backgroundColor: theme.colorScheme.primary,
                 child: Text(
                   _initials(auth.username),
                   style: theme.textTheme.labelMedium?.copyWith(
-                    color: Colors.white,
+                    color: theme.colorScheme.onPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -180,17 +179,20 @@ class _MainTabTile extends StatelessWidget {
   const _MainTabTile({
     required this.label,
     required this.active,
+    required this.theme,
     required this.onTap,
   });
 
   final String label;
   final bool active;
+  final ThemeData theme;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
     return Material(
-      color: active ? _selectedTabColor : Colors.transparent,
+      color: active ? colorScheme.primaryContainer : Colors.transparent,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onTap,
@@ -199,10 +201,12 @@ class _MainTabTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           child: Text(
             label,
-            style: TextStyle(
-              fontSize: 18,
+            style: (theme.textTheme.titleMedium ?? const TextStyle(fontSize: 18))
+                .copyWith(
               fontWeight: active ? FontWeight.w600 : FontWeight.normal,
-              color: active ? const Color(0xFF5E35B1) : const Color(0xFF424242),
+              color: active
+                  ? colorScheme.onPrimaryContainer
+                  : colorScheme.onSurface,
             ),
           ),
         ),
@@ -218,7 +222,8 @@ class _SubTabBar extends StatelessWidget {
   final String currentPath;
   final NavItem? section;
 
-  static bool _isSubPathActive(NavItem child, String currentPath) {
+  /// True if [currentPath] matches this child's path (exact or prefix).
+  static bool _pathMatches(NavItem child, String currentPath) {
     final p = child.path;
     if (p == null || p.isEmpty) return false;
     if (currentPath == p) return true;
@@ -227,32 +232,53 @@ class _SubTabBar extends StatelessWidget {
         (currentPath.length == p.length || currentPath[p.length] == '/');
   }
 
+  /// Among [children], only the one with the longest matching path is active (fixes multiple tabs highlighting).
+  static NavItem? _activeSubChild(List<NavItem> children, String currentPath) {
+    NavItem? best;
+    int bestLen = 0;
+    for (final child in children) {
+      final p = child.path;
+      if (p == null || p.isEmpty) continue;
+      if (!_pathMatches(child, currentPath)) continue;
+      if (p.length > bestLen) {
+        bestLen = p.length;
+        best = child;
+      }
+    }
+    return best;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (section == null || !section!.hasChildren) {
       return const SizedBox.shrink();
     }
 
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final children = section!.children;
+    final activeChild = _activeSubChild(children, currentPath);
 
     return Material(
-      color: Colors.white,
+      color: colorScheme.surface,
       elevation: 0,
       child: Container(
         height: 52,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+          color: colorScheme.surface,
+          border: Border(bottom: BorderSide(color: theme.dividerColor)),
         ),
         child: Row(
           children: children.map((child) {
             final path = child.path ?? '/';
-            final active = _isSubPathActive(child, currentPath);
+            final active = activeChild != null &&
+                activeChild.path != null &&
+                activeChild.path == child.path;
             return Padding(
               padding: const EdgeInsets.only(right: 4),
               child: Material(
-                color: active ? _selectedTabColor : Colors.transparent,
+                color: active ? colorScheme.primaryContainer : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
                 child: InkWell(
                   onTap: () => context.go(path),
@@ -264,14 +290,14 @@ class _SubTabBar extends StatelessWidget {
                     ),
                     child: Text(
                       child.label,
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 16))
+                          .copyWith(
                         fontWeight: active
                             ? FontWeight.w600
                             : FontWeight.normal,
                         color: active
-                            ? const Color(0xFF5E35B1)
-                            : const Color(0xFF424242),
+                            ? colorScheme.onPrimaryContainer
+                            : colorScheme.onSurface,
                       ),
                     ),
                   ),

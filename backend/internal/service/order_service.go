@@ -226,7 +226,17 @@ func (s *OrderService) List(ctx context.Context, accessToken string, page, pageS
 
 	var list []model.Order
 	var total int64
-	if containsRole(roleCodes, constant.RoleCodeSaleAdmin) {
+	if constant.HasAdminRole(roleCodes) {
+		// Admin: all orders
+		list, err = s.orders.FindAll(ctx, pageSize, offset)
+		if err != nil {
+			return nil, 0, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2508, Message: constant.MsgOrderServerError, Err: err}
+		}
+		total, err = s.orders.Count(ctx)
+		if err != nil {
+			return nil, 0, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2509, Message: constant.MsgOrderServerError, Err: err}
+		}
+	} else if containsRole(roleCodes, constant.RoleCodeSaleAdmin) {
 		// Sale admin: orders from all users with role sale_person + own
 		salePersonIDs, err := s.users.FindUserIDsByRoleCode(ctx, constant.RoleCodeSalePerson)
 		if err != nil {
