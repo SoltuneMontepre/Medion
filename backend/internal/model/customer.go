@@ -8,13 +8,14 @@ import (
 	"gorm.io/gorm"
 )
 
-// Customer holds customer info for sales/orders. Code is auto-generated (e.g. cus-123-456).
+// Customer holds customer info for sales/orders. Code is provided by Sales (NV phòng KD) when creating; fallback auto-generated if empty.
 type Customer struct {
-	Base    `gorm:"embedded"`
-	Code    string `gorm:"size:32;not null;uniqueIndex:idx_customer_code"`
-	Name    string `gorm:"size:255;not null"`
-	Address string `gorm:"size:512;not null"`
-	Phone   string `gorm:"size:20;not null;uniqueIndex:idx_customer_phone"`
+	Base          `gorm:"embedded"`
+	Code          string `gorm:"size:32;not null;uniqueIndex:idx_customer_code"`
+	Name          string `gorm:"size:255;not null"`
+	Address       string `gorm:"size:512;not null"`
+	Phone         string `gorm:"size:20;not null;uniqueIndex:idx_customer_phone"`
+	ContactPerson string `gorm:"size:128;not null;default:''"`
 }
 
 func (Customer) TableName() string {

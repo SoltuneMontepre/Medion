@@ -9,6 +9,7 @@ class SaleOrderModel {
     required this.date,
     required this.totalAmount,
     required this.status,
+    this.responsiblePerson,
   });
 
   final String id;
@@ -17,6 +18,7 @@ class SaleOrderModel {
   final String date;
   final double totalAmount;
   final String status;
+  final String? responsiblePerson;
 
   factory SaleOrderModel.fromJson(Map<String, dynamic> json) {
     final orderDate = json['orderDate'];
@@ -28,6 +30,7 @@ class SaleOrderModel {
       date: dateStr,
       totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0,
       status: json['status'] as String? ?? '',
+      responsiblePerson: json['responsiblePerson'] as String?,
     );
   }
 
@@ -38,5 +41,6 @@ class SaleOrderModel {
         date: date,
         totalAmount: totalAmount,
         status: status,
+        responsiblePerson: responsiblePerson,
       );
 }

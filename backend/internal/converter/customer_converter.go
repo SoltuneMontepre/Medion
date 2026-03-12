@@ -12,7 +12,7 @@ func (c *Converter) CustomerToPayload(customer model.Customer) dto.CustomerPaylo
 		Name:          customer.Name,
 		Address:       customer.Address,
 		Phone:         customer.Phone,
-		ContactPerson: "", // reserved for future
+		ContactPerson: customer.ContactPerson,
 	}
 }
 

@@ -2,10 +2,19 @@ import '../models/order_detail_model.dart';
 import '../models/product_suggest_model.dart';
 import '../models/sale_order_model.dart';
 import '../../domain/entities/order_summary.dart';
+import '../../domain/entities/sale_order.dart';
+
+/// Response from GET /api/v1/sale/orders (data layer; repo converts to domain SaleOrdersListResult).
+class OrdersListResponse {
+  const OrdersListResponse({required this.items, required this.total});
+  final List<SaleOrderModel> items;
+  final int total;
+}
 
 /// DataSource talks to API. Uses Dio from core/network via injector.
 abstract class SalesRemoteDataSource {
-  Future<List<SaleOrderModel>> fetchOrders({int page = 1, int pageSize = 20});
+  /// GET /api/v1/sale/orders with optional search, dateFilter, status, sort. Returns items and total.
+  Future<OrdersListResponse> fetchOrders(OrdersListQuery query);
 
   /// GET /api/v1/sale/order-summaries (list for current sale admin)
   Future<OrderSummaryListResult> fetchOrderSummaries({

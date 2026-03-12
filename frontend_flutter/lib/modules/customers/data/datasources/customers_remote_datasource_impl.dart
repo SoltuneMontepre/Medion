@@ -52,14 +52,19 @@ class CustomersRemoteDataSourceImpl implements CustomersRemoteDataSource {
 
   @override
   Future<CustomerModel> createCustomer({
+    required String code,
     required String name,
     required String address,
     required String phone,
+    String contactPerson = '',
   }) async {
+    assert(code.isNotEmpty, 'code is required for create');
     final body = {
+      'code': code.trim(),
       'name': name,
       'address': address,
       'phone': phone,
+      'contactPerson': contactPerson.trim(),
     };
     final response =
         await _client.dio.post('$_salePath/customers', data: body);
@@ -116,8 +121,14 @@ class CustomersRemoteDataSourceImpl implements CustomersRemoteDataSource {
     required String name,
     required String address,
     required String phone,
+    String contactPerson = '',
   }) async {
-    final body = {'name': name, 'address': address, 'phone': phone};
+    final body = {
+      'name': name,
+      'address': address,
+      'phone': phone,
+      'contactPerson': contactPerson.trim(),
+    };
     final response = await _client.dio.put('$_salePath/customers/$id', data: body);
     final raw = response.data;
     final Map<String, dynamic>? json = raw is Map<String, dynamic>

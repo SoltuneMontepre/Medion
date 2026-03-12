@@ -86,6 +86,9 @@ const (
 
 // Customer (Sale)
 const (
+	MsgCustomerCodeRequired    = "mã khách hàng là bắt buộc"
+	MsgCustomerCodeTooLong     = "mã khách hàng tối đa 32 ký tự"
+	MsgCustomerCodeExists      = "mã khách hàng đã tồn tại trong hệ thống. Vui lòng nhập mã khác."
 	MsgCustomerNameRequired    = "tên khách hàng là bắt buộc"
 	MsgCustomerAddressRequired = "địa chỉ là bắt buộc"
 	MsgCustomerPhoneRequired   = "số điện thoại là bắt buộc"

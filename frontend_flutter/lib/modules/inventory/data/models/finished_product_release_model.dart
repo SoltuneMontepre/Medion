@@ -95,6 +95,14 @@ class FinishedProductReleaseLineModel {
   final String? manufacturingDate;
   final String? expiryDate;
 
+  /// Take date only from ISO string (e.g. "2000-01-01T00:00:00 Z" → "2000-01-01").
+  static String? _dateOnly(String? value) {
+    if (value == null || value.isEmpty) return null;
+    final t = value.indexOf('T');
+    if (t > 0) return value.substring(0, t).trim();
+    return value.trim();
+  }
+
   factory FinishedProductReleaseLineModel.fromJson(Map<String, dynamic> json) {
     final mfg = json['manufacturingDate'] as String?;
     final exp = json['expiryDate'] as String?;
@@ -108,8 +116,8 @@ class FinishedProductReleaseLineModel {
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
       productId: json['productId']?.toString(),
       lotNumber: json['lotNumber'] as String?,
-      manufacturingDate: mfg?.isNotEmpty == true ? mfg : null,
-      expiryDate: exp?.isNotEmpty == true ? exp : null,
+      manufacturingDate: _dateOnly(mfg),
+      expiryDate: _dateOnly(exp),
     );
   }
 

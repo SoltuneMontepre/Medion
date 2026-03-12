@@ -24,6 +24,14 @@ class _FinishedProductReleasePageState
   String? _statusFilter;
   String _searchText = '';
 
+  /// Show date only (YYYY-MM-DD), stripping time e.g. "2000-01-01T00:00:00 Z" → "2000-01-01".
+  static String _dateOnly(String? value) {
+    if (value == null || value.isEmpty) return '—';
+    final t = value.indexOf('T');
+    if (t > 0) return value.substring(0, t).trim();
+    return value.trim();
+  }
+
   void _invalidateList() {
     ref.invalidate(finishedProductReleasesProvider(_statusFilter));
   }
@@ -428,8 +436,8 @@ class _FinishedProductReleasePageState
                               DataCell(Text(line.productForm)),
                               DataCell(Text('${line.quantity}')),
                               DataCell(Text(line.batchNumber ?? '—')),
-                              DataCell(Text(line.manufacturingDate ?? '—')),
-                              DataCell(Text(line.expiryDate ?? '—')),
+                              DataCell(Text(_dateOnly(line.manufacturingDate))),
+                              DataCell(Text(_dateOnly(line.expiryDate))),
                             ],
                           );
                         }).toList(),

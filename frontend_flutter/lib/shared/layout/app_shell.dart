@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:syncfusion_flutter_core/theme.dart';
 
 import '../../core/auth/auth_provider.dart';
 import 'nav_menu.dart';
@@ -52,14 +53,26 @@ class _MainTopBar extends ConsumerWidget {
     return username.length >= 2 ? username.substring(0, 2).toUpperCase() : username.toUpperCase();
   }
 
+  static const Color _activeBg = Color(0xFFE8E0F0);
+  static const Color _activeText = Color(0xFF5E35B1);
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authProvider);
+    final sfTheme = SfTheme.of(context);
+    final isDark = sfTheme.brightness == Brightness.dark;
     return Material(
-      elevation: 1,
+      elevation: 0,
       child: Container(
         height: 56,
-        color: theme.colorScheme.surface,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          border: Border(
+            bottom: BorderSide(
+              color: isDark ? theme.dividerColor.withOpacity(0.5) : theme.dividerColor,
+            ),
+          ),
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Row(
           children: [
@@ -75,9 +88,9 @@ class _MainTopBar extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        Icons.apps,
-                        color: theme.colorScheme.primary,
-                        size: 26,
+                        Icons.menu,
+                        color: theme.colorScheme.onSurface,
+                        size: 24,
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -106,6 +119,8 @@ class _MainTopBar extends ConsumerWidget {
                       label: item.label,
                       active: active,
                       theme: theme,
+                      activeBg: _activeBg,
+                      activeText: _activeText,
                       onTap: () {
                         final path = NavMenu.firstPathOf(item);
                         if (path != null) context.go(path);
@@ -116,12 +131,12 @@ class _MainTopBar extends ConsumerWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.notifications_outlined),
+              icon: Icon(Icons.notifications_outlined, color: theme.colorScheme.onSurface),
               onPressed: () {},
               tooltip: 'Thông báo',
             ),
             IconButton(
-              icon: const Icon(Icons.settings_outlined),
+              icon: Icon(Icons.settings_outlined, color: theme.colorScheme.onSurface),
               onPressed: () => context.go('/security'),
               tooltip: 'Cài đặt',
             ),
@@ -131,11 +146,11 @@ class _MainTopBar extends ConsumerWidget {
               tooltip: auth.username ?? 'Tài khoản',
               child: CircleAvatar(
                 radius: 16,
-                backgroundColor: theme.colorScheme.primary,
+                backgroundColor: const Color(0xFF1976D2),
                 child: Text(
                   _initials(auth.username),
                   style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onPrimary,
+                    color: Colors.white,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -180,33 +195,38 @@ class _MainTabTile extends StatelessWidget {
     required this.label,
     required this.active,
     required this.theme,
+    required this.activeBg,
+    required this.activeText,
     required this.onTap,
   });
 
   final String label;
   final bool active;
   final ThemeData theme;
+  final Color activeBg;
+  final Color activeText;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = theme.colorScheme;
-    return Material(
-      color: active ? colorScheme.primaryContainer : Colors.transparent,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-          child: Text(
-            label,
-            style: (theme.textTheme.titleMedium ?? const TextStyle(fontSize: 18))
-                .copyWith(
-              fontWeight: active ? FontWeight.w600 : FontWeight.normal,
-              color: active
-                  ? colorScheme.onPrimaryContainer
-                  : colorScheme.onSurface,
+    return Padding(
+      padding: const EdgeInsets.only(right: 4),
+      child: Material(
+        color: active ? activeBg : Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            child: Text(
+              label,
+              style: (theme.textTheme.titleMedium ?? const TextStyle(fontSize: 18))
+                  .copyWith(
+                fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+                color: active ? activeText : colorScheme.onSurface,
+              ),
             ),
           ),
         ),
@@ -248,6 +268,9 @@ class _SubTabBar extends StatelessWidget {
     return best;
   }
 
+  static const Color _activeBg = Color(0xFFE8E0F0);
+  static const Color _activeText = Color(0xFF5E35B1);
+
   @override
   Widget build(BuildContext context) {
     if (section == null || !section!.hasChildren) {
@@ -256,8 +279,13 @@ class _SubTabBar extends StatelessWidget {
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final sfTheme = SfTheme.of(context);
     final children = section!.children;
     final activeChild = _activeSubChild(children, currentPath);
+    final isDark = sfTheme.brightness == Brightness.dark;
+    final dividerColor = isDark
+        ? theme.dividerColor.withOpacity(0.5)
+        : theme.dividerColor;
 
     return Material(
       color: colorScheme.surface,
@@ -267,44 +295,55 @@ class _SubTabBar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          border: Border(bottom: BorderSide(color: theme.dividerColor)),
+          border: Border(bottom: BorderSide(color: dividerColor)),
         ),
         child: Row(
-          children: children.map((child) {
-            final path = child.path ?? '/';
-            final active = activeChild != null &&
-                activeChild.path != null &&
-                activeChild.path == child.path;
-            return Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: Material(
-                color: active ? colorScheme.primaryContainer : Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
-                child: InkWell(
-                  onTap: () => context.go(path),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 8,
-                    ),
-                    child: Text(
-                      child.label,
-                      style: (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 16))
-                          .copyWith(
-                        fontWeight: active
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                        color: active
-                            ? colorScheme.onPrimaryContainer
-                            : colorScheme.onSurface,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Text(
+                section!.label,
+                style: (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 16))
+                    .copyWith(
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+            ),
+            ...children.map((child) {
+              final path = child.path ?? '/';
+              final active = activeChild != null &&
+                  activeChild.path != null &&
+                  activeChild.path == child.path;
+              return Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Material(
+                  color: active ? _activeBg : Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                  child: InkWell(
+                    onTap: () => context.go(path),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: Text(
+                        child.label,
+                        style: (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 16))
+                            .copyWith(
+                          fontWeight: active
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                          color: active ? _activeText : colorScheme.onSurface,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            );
-          }).toList(),
+              );
+            }),
+          ],
         ),
       ),
     );

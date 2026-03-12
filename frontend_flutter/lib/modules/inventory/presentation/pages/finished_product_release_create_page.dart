@@ -6,6 +6,8 @@ import '../../../../shared/layout/app_scaffold.dart';
 import '../../../../shared/widgets/toolbar.dart';
 import '../../data/datasources/finished_product_dispatch_remote_datasource_impl.dart';
 import '../providers/finished_product_release_provider.dart';
+import '../../../sales/data/datasources/sales_remote_datasource.dart';
+import '../../../sales/data/datasources/sales_remote_datasource_impl.dart';
 
 class _LineInput {
   String productId = '';
@@ -33,17 +35,26 @@ class _FinishedProductReleaseCreatePageState
   String? _customerId;
   String _customerDisplay = '';
   bool _isSaving = false;
+  final List<TextEditingController> _quantityControllers = [];
   final List<TextEditingController> _lotControllers = [];
   final List<TextEditingController> _mfgControllers = [];
   final List<TextEditingController> _expControllers = [];
+  late final SalesRemoteDataSource _salesDs;
 
   @override
   void initState() {
     super.initState();
     _lines.add(_LineInput());
+    _quantityControllers.add(TextEditingController());
     _lotControllers.add(TextEditingController());
     _mfgControllers.add(TextEditingController());
     _expControllers.add(TextEditingController());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _salesDs = ref.read(salesRemoteDataSourceProvider);
   }
 
   @override
@@ -51,6 +62,9 @@ class _FinishedProductReleaseCreatePageState
     _orderNumberController.dispose();
     _addressController.dispose();
     _phoneController.dispose();
+    for (final c in _quantityControllers) {
+      c.dispose();
+    }
     for (final c in _lotControllers) {
       c.dispose();
     }
@@ -123,6 +137,90 @@ class _FinishedProductReleaseCreatePageState
       _addressController.text = c.address ?? '';
       _phoneController.text = c.phone ?? '';
     });
+    await _loadTodayOrderForCustomer(c.id);
+  }
+
+  Future<void> _loadTodayOrderForCustomer(String customerId) async {
+    try {
+      final check = await _salesDs.checkCustomerOrderToday(customerId);
+      if (!mounted) return;
+      final hasOrder =
+          check.hasOrderToday && check.existingOrderId != null && check.existingOrderId!.isNotEmpty;
+      if (!hasOrder) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Khách hàng này chưa có đơn đặt hàng hôm nay'),
+          ),
+        );
+        setState(() {
+          _customerId = null;
+          _customerDisplay = '';
+          _orderNumberController.clear();
+          _addressController.clear();
+          _phoneController.clear();
+          for (final c in _quantityControllers) {
+            c.dispose();
+          }
+          for (final c in _lotControllers) {
+            c.dispose();
+          }
+          for (final c in _mfgControllers) {
+            c.dispose();
+          }
+          for (final c in _expControllers) {
+            c.dispose();
+          }
+          _lines.clear();
+          _quantityControllers.clear();
+          _lotControllers.clear();
+          _mfgControllers.clear();
+          _expControllers.clear();
+        });
+        return;
+      }
+      final order = await _salesDs.getOrderById(check.existingOrderId!);
+      if (!mounted) return;
+      setState(() {
+        _orderNumberController.text = order.orderNumber;
+        for (final c in _quantityControllers) {
+          c.dispose();
+        }
+        for (final c in _lotControllers) {
+          c.dispose();
+        }
+        for (final c in _mfgControllers) {
+          c.dispose();
+        }
+        for (final c in _expControllers) {
+          c.dispose();
+        }
+        _lines.clear();
+        _quantityControllers.clear();
+        _lotControllers.clear();
+        _mfgControllers.clear();
+        _expControllers.clear();
+        for (final item in order.items) {
+          final line = _LineInput()
+            ..productId = item.productId
+            ..productDisplay =
+                '${item.productCode} - ${item.productName} - ${item.specification} - ${item.productType} - ${item.packagingType}'
+            ..quantity = item.quantity;
+          _lines.add(line);
+          _quantityControllers.add(TextEditingController(text: item.quantity.toString()));
+          _lotControllers.add(TextEditingController());
+          _mfgControllers.add(TextEditingController());
+          _expControllers.add(TextEditingController());
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Không tải được đơn hàng hôm nay: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   static String _formatDate(DateTime d) {
@@ -427,6 +525,10 @@ class _FinishedProductReleaseCreatePageState
                               : () {
                                   setState(() {
                                     _lines.removeAt(index);
+                                    if (index < _quantityControllers.length) {
+                                      _quantityControllers[index].dispose();
+                                      _quantityControllers.removeAt(index);
+                                    }
                                     if (index < _lotControllers.length) {
                                       _lotControllers[index].dispose();
                                       _lotControllers.removeAt(index);
@@ -448,6 +550,9 @@ class _FinishedProductReleaseCreatePageState
                         SizedBox(
                           width: 120,
                           child: TextField(
+                            controller: index < _quantityControllers.length
+                                ? _quantityControllers[index]
+                                : null,
                             decoration: const InputDecoration(
                               labelText: 'Số lượng',
                               isDense: true,
@@ -536,6 +641,7 @@ class _FinishedProductReleaseCreatePageState
                 onPressed: () {
                   setState(() {
                     _lines.add(_LineInput());
+                    _quantityControllers.add(TextEditingController());
                     _lotControllers.add(TextEditingController());
                     _mfgControllers.add(TextEditingController());
                     _expControllers.add(TextEditingController());

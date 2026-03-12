@@ -41,6 +41,7 @@ class _CustomerFormDialogState extends State<_CustomerFormDialog> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _addressCtrl;
   late final TextEditingController _phoneCtrl;
+  late final TextEditingController _contactPersonCtrl;
   bool _saving = false;
   String? _errorMessage;
 
@@ -50,6 +51,7 @@ class _CustomerFormDialogState extends State<_CustomerFormDialog> {
     _nameCtrl = TextEditingController(text: widget.customer.name);
     _addressCtrl = TextEditingController(text: widget.customer.address);
     _phoneCtrl = TextEditingController(text: widget.customer.phone);
+    _contactPersonCtrl = TextEditingController(text: widget.customer.contactPerson);
   }
 
   @override
@@ -57,6 +59,7 @@ class _CustomerFormDialogState extends State<_CustomerFormDialog> {
     _nameCtrl.dispose();
     _addressCtrl.dispose();
     _phoneCtrl.dispose();
+    _contactPersonCtrl.dispose();
     super.dispose();
   }
 
@@ -65,6 +68,7 @@ class _CustomerFormDialogState extends State<_CustomerFormDialog> {
     final name = _nameCtrl.text.trim();
     final address = _addressCtrl.text.trim();
     final phone = _phoneCtrl.text.trim();
+    final contactPerson = _contactPersonCtrl.text.trim();
 
     if (name.isEmpty) {
       setState(() => _errorMessage = 'Vui lòng nhập tên khách hàng.');
@@ -87,7 +91,12 @@ class _CustomerFormDialogState extends State<_CustomerFormDialog> {
     try {
       final updated = await widget.repository.updateCustomer(
         widget.customer.id,
-        CreateCustomerParams(name: name, address: address, phone: phone),
+        CreateCustomerParams(
+          name: name,
+          address: address,
+          phone: phone,
+          contactPerson: contactPerson,
+        ),
       );
       if (!mounted) return;
       Navigator.of(context).pop(updated);
@@ -146,6 +155,15 @@ class _CustomerFormDialogState extends State<_CustomerFormDialog> {
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _contactPersonCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Người liên hệ',
+                    hintText: 'VD: Chị Huệ, Anh Nam',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 if (_errorMessage != null) ...[
                   const SizedBox(height: 12),

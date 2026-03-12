@@ -1,9 +1,20 @@
 package dto
 
 import (
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 )
+
+// ListOrdersQuery holds optional query params for GET /sale/orders (search, date, status, sort).
+type ListOrdersQuery struct {
+	Search    string     // search in customer name or order code
+	StartDate *time.Time // inclusive start of day (optional)
+	EndDate   *time.Time // inclusive end of day (optional)
+	Status    string     // filter by status (optional)
+	SortBy    string     // "created_at" | "order_date" | "order_number", default created_at
+	SortOrder string     // "asc" | "desc", default desc (newest first)
+}
 
 // OrderItemPayload for create request.
 type OrderItemPayload struct {

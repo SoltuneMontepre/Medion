@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"backend/internal/constant"
@@ -204,9 +205,9 @@ func (s *OrderService) Create(ctx context.Context, req dto.CreateOrderRequest, a
 	return &payload, nil
 }
 
-// List returns paginated orders scoped by current user: sale person sees own orders, sale admin sees team + own.
+// List returns paginated orders scoped by current user, with optional search, date, status filters and sort.
 // accessToken is used to resolve the current user ID.
-func (s *OrderService) List(ctx context.Context, accessToken string, page, pageSize int) ([]dto.OrderPayload, int64, error) {
+func (s *OrderService) List(ctx context.Context, accessToken string, page, pageSize int, query dto.ListOrdersQuery) ([]dto.OrderPayload, int64, error) {
 	userID, err := s.pins.UserIDFromToken(accessToken)
 	if err != nil {
 		return nil, 0, err
@@ -224,45 +225,43 @@ func (s *OrderService) List(ctx context.Context, accessToken string, page, pageS
 		return nil, 0, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2508, Message: constant.MsgOrderServerError, Err: err}
 	}
 
-	var list []model.Order
-	var total int64
+	filter := repository.ListOrdersFilter{
+		Search:        strings.TrimSpace(query.Search),
+		OrderDateFrom: query.StartDate,
+		OrderDateTo:   query.EndDate,
+		Status:        strings.TrimSpace(query.Status),
+		SortBy:        query.SortBy,
+		SortOrder:     query.SortOrder,
+	}
+	if filter.SortBy == "" {
+		filter.SortBy = "created_at"
+	}
+	if filter.SortOrder == "" {
+		filter.SortOrder = "desc"
+	}
+
+	var creatorIDs []uuid.UUID
 	if constant.HasAdminRole(roleCodes) {
-		// Admin: all orders
-		list, err = s.orders.FindAll(ctx, pageSize, offset)
-		if err != nil {
-			return nil, 0, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2508, Message: constant.MsgOrderServerError, Err: err}
-		}
-		total, err = s.orders.Count(ctx)
-		if err != nil {
-			return nil, 0, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2509, Message: constant.MsgOrderServerError, Err: err}
-		}
+		creatorIDs = nil // all orders
 	} else if containsRole(roleCodes, constant.RoleCodeSaleAdmin) {
-		// Sale admin: orders from all users with role sale_person + own
 		salePersonIDs, err := s.users.FindUserIDsByRoleCode(ctx, constant.RoleCodeSalePerson)
 		if err != nil {
 			return nil, 0, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2508, Message: constant.MsgOrderServerError, Err: err}
 		}
-		creatorIDs := make([]uuid.UUID, 0, len(salePersonIDs)+1)
+		creatorIDs = make([]uuid.UUID, 0, len(salePersonIDs)+1)
 		creatorIDs = append(creatorIDs, userID)
 		creatorIDs = append(creatorIDs, salePersonIDs...)
-		list, err = s.orders.FindAllByCreatedByIn(ctx, creatorIDs, pageSize, offset)
-		if err != nil {
-			return nil, 0, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2508, Message: constant.MsgOrderServerError, Err: err}
-		}
-		total, err = s.orders.CountByCreatedByIn(ctx, creatorIDs)
-		if err != nil {
-			return nil, 0, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2509, Message: constant.MsgOrderServerError, Err: err}
-		}
 	} else {
-		// Sale person or other: only orders they created
-		list, err = s.orders.FindAllByCreatedBy(ctx, userID, pageSize, offset)
-		if err != nil {
-			return nil, 0, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2508, Message: constant.MsgOrderServerError, Err: err}
-		}
-		total, err = s.orders.CountByCreatedBy(ctx, userID)
-		if err != nil {
-			return nil, 0, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2509, Message: constant.MsgOrderServerError, Err: err}
-		}
+		creatorIDs = []uuid.UUID{userID}
+	}
+
+	list, err := s.orders.FindWithFilters(ctx, filter, creatorIDs, pageSize, offset)
+	if err != nil {
+		return nil, 0, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2508, Message: constant.MsgOrderServerError, Err: err}
+	}
+	total, err := s.orders.CountWithFilters(ctx, filter, creatorIDs)
+	if err != nil {
+		return nil, 0, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2509, Message: constant.MsgOrderServerError, Err: err}
 	}
 
 	payloads := make([]dto.OrderPayload, len(list))

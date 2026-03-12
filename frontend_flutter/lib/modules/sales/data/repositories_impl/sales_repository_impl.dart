@@ -12,9 +12,10 @@ class SalesRepositoryImpl implements SalesRepository {
   final SalesRemoteDataSource _dataSource;
 
   @override
-  Future<List<SaleOrder>> getOrders({int page = 1, int pageSize = 20}) async {
-    final models = await _dataSource.fetchOrders(page: page, pageSize: pageSize);
-    return models.map((m) => m.toEntity()).toList();
+  Future<SaleOrdersListResult> getOrders(OrdersListQuery query) async {
+    final response = await _dataSource.fetchOrders(query);
+    final items = response.items.map((m) => m.toEntity()).toList();
+    return SaleOrdersListResult(items: items, total: response.total);
   }
 
   @override

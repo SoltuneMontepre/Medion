@@ -22,16 +22,24 @@ class CreateCustomerPage extends ConsumerStatefulWidget {
   ConsumerState<CreateCustomerPage> createState() => _CreateCustomerPageState();
 }
 
+/// Max length for customer code (matches backend).
+const _codeMaxLength = 32;
+
 class _CreateCustomerPageState extends ConsumerState<CreateCustomerPage> {
   final _formKey = GlobalKey<FormState>();
+  final _codeCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  final _contactPersonCtrl = TextEditingController();
 
+  final _codeFocus = FocusNode();
   final _nameFocus = FocusNode();
   final _addressFocus = FocusNode();
   final _phoneFocus = FocusNode();
+  final _contactPersonFocus = FocusNode();
 
+  String? _codeError;
   String? _nameError;
   String? _addressError;
   String? _phoneError;
@@ -42,23 +50,28 @@ class _CreateCustomerPageState extends ConsumerState<CreateCustomerPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _nameFocus.requestFocus();
+      _codeFocus.requestFocus();
     });
   }
 
   @override
   void dispose() {
+    _codeCtrl.dispose();
     _nameCtrl.dispose();
     _addressCtrl.dispose();
     _phoneCtrl.dispose();
+    _contactPersonCtrl.dispose();
+    _codeFocus.dispose();
     _nameFocus.dispose();
     _addressFocus.dispose();
     _phoneFocus.dispose();
+    _contactPersonFocus.dispose();
     super.dispose();
   }
 
   void _clearFieldErrors() {
     setState(() {
+      _codeError = null;
       _nameError = null;
       _addressError = null;
       _phoneError = null;
@@ -68,10 +81,18 @@ class _CreateCustomerPageState extends ConsumerState<CreateCustomerPage> {
   bool _validate() {
     _clearFieldErrors();
     var valid = true;
+    final code = _codeCtrl.text.trim();
     final name = _nameCtrl.text.trim();
     final address = _addressCtrl.text.trim();
     final phone = _phoneCtrl.text.trim();
 
+    if (code.isEmpty) {
+      setState(() => _codeError = 'Vui lòng nhập mã khách hàng.');
+      valid = false;
+    } else if (code.length > _codeMaxLength) {
+      setState(() => _codeError = 'Mã khách hàng tối đa $_codeMaxLength ký tự.');
+      valid = false;
+    }
     if (name.isEmpty) {
       setState(() => _nameError = 'Vui lòng nhập tên khách hàng.');
       valid = false;
@@ -97,9 +118,11 @@ class _CreateCustomerPageState extends ConsumerState<CreateCustomerPage> {
       final repository = ref.read(customersRepositoryProvider);
       final useCase = CreateCustomer(repository);
       await useCase(CreateCustomerParams(
+        code: _codeCtrl.text.trim(),
         name: _nameCtrl.text.trim(),
         address: _addressCtrl.text.trim(),
         phone: _phoneCtrl.text.trim(),
+        contactPerson: _contactPersonCtrl.text.trim(),
       ));
       if (!mounted) return;
       ref.invalidate(customersProvider(1));
@@ -107,6 +130,12 @@ class _CreateCustomerPageState extends ConsumerState<CreateCustomerPage> {
         const SnackBar(content: Text('Tạo khách hàng thành công')),
       );
       context.pop();
+    } on CustomerDuplicateCodeException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _codeError = e.message ?? 'Mã khách hàng đã tồn tại. Vui lòng nhập mã khác.';
+      });
     } on CustomerDuplicatePhoneException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -120,19 +149,36 @@ class _CreateCustomerPageState extends ConsumerState<CreateCustomerPage> {
           ? (e.response!.data as Map<String, dynamic>)['message'] as String? ?? ''
           : '';
       if (e.response?.statusCode == 400 && msg.isNotEmpty) {
+        String? codeErr;
         String? nameErr;
         String? addressErr;
         String? phoneErr;
-        if (msg.toLowerCase().contains('tên')) nameErr = msg;
-        else if (msg.toLowerCase().contains('địa chỉ')) addressErr = msg;
-        else if (msg.toLowerCase().contains('điện thoại') || msg.toLowerCase().contains('số điện thoại')) phoneErr = msg;
+        if (msg.toLowerCase().contains('mã khách hàng')) {
+          codeErr = msg;
+        } else if (msg.toLowerCase().contains('tên')) {
+          nameErr = msg;
+        } else if (msg.toLowerCase().contains('địa chỉ')) {
+          addressErr = msg;
+        } else if (msg.toLowerCase().contains('điện thoại') ||
+            msg.toLowerCase().contains('số điện thoại')) {
+          phoneErr = msg;
+        }
         setState(() {
           _saving = false;
-          if (nameErr != null) _nameError = nameErr;
-          if (addressErr != null) _addressError = addressErr;
-          if (phoneErr != null) _phoneError = phoneErr;
+          if (codeErr != null) {
+            _codeError = codeErr;
+          }
+          if (nameErr != null) {
+            _nameError = nameErr;
+          }
+          if (addressErr != null) {
+            _addressError = addressErr;
+          }
+          if (phoneErr != null) {
+            _phoneError = phoneErr;
+          }
         });
-        if (nameErr == null && addressErr == null && phoneErr == null) {
+        if (codeErr == null && nameErr == null && addressErr == null && phoneErr == null) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
         }
       } else {
@@ -190,6 +236,21 @@ class _CreateCustomerPageState extends ConsumerState<CreateCustomerPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 TextFormField(
+                  controller: _codeCtrl,
+                  focusNode: _codeFocus,
+                  decoration: InputDecoration(
+                    labelText: 'Mã khách hàng',
+                    hintText: 'VD: 1111, 2222',
+                    errorText: _codeError,
+                    border: const OutlineInputBorder(),
+                    counterText: '',
+                  ),
+                  maxLength: _codeMaxLength,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (_) => _nameFocus.requestFocus(),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
                   controller: _nameCtrl,
                   focusNode: _nameFocus,
                   decoration: InputDecoration(
@@ -223,6 +284,18 @@ class _CreateCustomerPageState extends ConsumerState<CreateCustomerPage> {
                     border: const OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.phone,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (_) => _contactPersonFocus.requestFocus(),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _contactPersonCtrl,
+                  focusNode: _contactPersonFocus,
+                  decoration: const InputDecoration(
+                    labelText: 'Người liên hệ',
+                    hintText: 'VD: Chị Huệ, Anh Nam',
+                    border: OutlineInputBorder(),
+                  ),
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) => _onSave(),
                 ),

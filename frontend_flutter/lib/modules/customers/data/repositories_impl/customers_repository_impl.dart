@@ -30,14 +30,18 @@ class CustomersRepositoryImpl implements CustomersRepository {
   @override
   Future<Customer> createCustomer(CreateCustomerParams params) async {
     try {
+      final code = params.code?.trim() ?? '';
       final model = await _dataSource.createCustomer(
+        code: code,
         name: params.name,
         address: params.address,
         phone: params.phone,
+        contactPerson: params.contactPerson,
       );
       return model.toEntity();
     } on DioException catch (e) {
       _throwIfDuplicatePhone(e);
+      _throwIfDuplicateCode(e);
       rethrow;
     }
   }
@@ -61,6 +65,7 @@ class CustomersRepositoryImpl implements CustomersRepository {
         name: params.name,
         address: params.address,
         phone: params.phone,
+        contactPerson: params.contactPerson,
       );
       return model.toEntity();
     } on DioException catch (e) {
@@ -76,16 +81,27 @@ class CustomersRepositoryImpl implements CustomersRepository {
 
   void _throwIfDuplicatePhone(DioException e) {
     final msg = _extractMessage(e);
-    final code = e.response?.statusCode;
-    if (code == 409 ||
-        (code == 400 &&
-            (msg.toLowerCase().contains('đã tồn tại') ||
-                msg.toLowerCase().contains('duplicate') ||
-                msg.toLowerCase().contains('already exists')))) {
+    final statusCode = e.response?.statusCode;
+    if (statusCode == 409 ||
+        (statusCode == 400 &&
+            (msg.toLowerCase().contains('điện thoại') ||
+                msg.toLowerCase().contains('số điện thoại')))) {
       throw CustomerDuplicatePhoneException(
         msg.isNotEmpty
             ? msg
             : 'Số điện thoại này đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.',
+      );
+    }
+  }
+
+  void _throwIfDuplicateCode(DioException e) {
+    final msg = _extractMessage(e);
+    final statusCode = e.response?.statusCode;
+    if (statusCode == 409 ||
+        (statusCode == 400 &&
+            msg.toLowerCase().contains('mã khách hàng'))) {
+      throw CustomerDuplicateCodeException(
+        msg.isNotEmpty ? msg : null,
       );
     }
   }

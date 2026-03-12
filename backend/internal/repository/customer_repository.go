@@ -16,6 +16,18 @@ func NewCustomerRepository(db *gorm.DB) *CustomerRepository {
 	return &CustomerRepository{Repository: NewRepository[model.Customer](db)}
 }
 
+func (r *CustomerRepository) ExistsByCode(ctx context.Context, code string) (bool, error) {
+	if code == "" {
+		return false, nil
+	}
+	var count int64
+	err := r.DB().WithContext(ctx).Model(&model.Customer{}).Where("code = ?", code).Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func (r *CustomerRepository) ExistsByPhone(ctx context.Context, phone string) (bool, error) {
 	var count int64
 	err := r.DB().WithContext(ctx).Model(&model.Customer{}).Where("phone = ?", phone).Count(&count).Error

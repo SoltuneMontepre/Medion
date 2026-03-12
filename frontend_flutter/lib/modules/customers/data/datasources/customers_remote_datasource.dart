@@ -11,9 +11,11 @@ abstract class CustomersRemoteDataSource {
   Future<CustomersListResponse> fetchCustomers({int page = 1, int pageSize = 20});
 
   Future<CustomerModel> createCustomer({
+    required String code,
     required String name,
     required String address,
     required String phone,
+    String contactPerson = '',
   });
 
   /// GET /api/v1/sale/customers/suggest?q=...
@@ -27,6 +29,7 @@ abstract class CustomersRemoteDataSource {
     required String name,
     required String address,
     required String phone,
+    String contactPerson = '',
   });
 
   Future<void> deleteCustomer(String id);

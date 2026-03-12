@@ -7,7 +7,7 @@ class GetSalesOrders {
 
   final SalesRepository _repository;
 
-  Future<List<SaleOrder>> call({int page = 1, int pageSize = 20}) {
-    return _repository.getOrders(page: page, pageSize: pageSize);
+  Future<SaleOrdersListResult> call(OrdersListQuery query) {
+    return _repository.getOrders(query);
   }
 }

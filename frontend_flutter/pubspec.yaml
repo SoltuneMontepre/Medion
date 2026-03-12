@@ -43,6 +43,9 @@ dependencies:
   # ——— Data grid (sortable, resizable, pagination — MDC data grid rules)
   data_table_2: ^2.5.15
 
+  # ——— Syncfusion (theme + future widgets: DataGrid, Calendar, etc.)
+  syncfusion_flutter_core: ^32.2.9
+
   # ——— App version in UI / about
   package_info_plus: ^8.1.2
 

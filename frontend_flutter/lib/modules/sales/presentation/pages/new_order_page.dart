@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../shared/layout/app_scaffold.dart';
+import '../../../../shared/widgets/breadcrumb.dart';
 import '../../data/datasources/sales_remote_datasource.dart';
 import '../../data/datasources/sales_remote_datasource_impl.dart';
 import '../../data/models/product_suggest_model.dart';
 import '../../../customers/data/datasources/customers_remote_datasource.dart';
 import '../../../customers/data/datasources/customers_remote_datasource_impl.dart';
 import '../../../customers/data/models/customer_model.dart';
+import '../../domain/entities/sale_order.dart';
 import '../providers/sales_provider.dart';
 
 /// One product row in the order (local state).
@@ -258,7 +260,7 @@ class _NewOrderPageState extends ConsumerState<NewOrderPage> {
         pin: pin,
       );
       if (!mounted) return;
-      ref.invalidate(salesOrdersProvider(1));
+      ref.invalidate(salesOrdersProvider(const OrdersListQuery(page: 1, pageSize: 20)));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Lưu và ký đơn hàng thành công'),
@@ -318,6 +320,14 @@ class _NewOrderPageState extends ConsumerState<NewOrderPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const Breadcrumb(
+              items: [
+                'Bán hàng',
+                'Đơn đặt hàng',
+                'Đơn đặt hàng mới',
+              ],
+            ),
+            const SizedBox(height: 16),
             _buildStepIndicator(step1Done: step1Done, step2Done: step2Done),
             const SizedBox(height: 16),
             const Text(

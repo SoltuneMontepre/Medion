@@ -48,10 +48,21 @@ func (s *CustomerService) List(ctx context.Context, page, pageSize int) ([]dto.C
 }
 
 func (s *CustomerService) Create(ctx context.Context, req dto.CreateCustomerRequest) (dto.CustomerPayload, error) {
+	code := strings.TrimSpace(req.Code)
 	name := strings.TrimSpace(req.Name)
 	address := strings.TrimSpace(req.Address)
 	phone := strings.TrimSpace(req.Phone)
+	contactPerson := strings.TrimSpace(req.ContactPerson)
+	if len(contactPerson) > 128 {
+		contactPerson = contactPerson[:128]
+	}
 
+	if code == "" {
+		return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusBadRequest, Code: 2000, Message: constant.MsgCustomerCodeRequired}
+	}
+	if len(code) > 32 {
+		return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusBadRequest, Code: 2012, Message: constant.MsgCustomerCodeTooLong}
+	}
 	if name == "" {
 		return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusBadRequest, Code: 2001, Message: constant.MsgCustomerNameRequired}
 	}
@@ -65,6 +76,14 @@ func (s *CustomerService) Create(ctx context.Context, req dto.CreateCustomerRequ
 		return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusBadRequest, Code: 2004, Message: constant.MsgCustomerPhoneInvalid}
 	}
 
+	existsCode, err := s.customers.ExistsByCode(ctx, code)
+	if err != nil {
+		return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2503, Message: "failed to check code", Err: err}
+	}
+	if existsCode {
+		return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusConflict, Code: 2011, Message: constant.MsgCustomerCodeExists}
+	}
+
 	exists, err := s.customers.ExistsByPhone(ctx, phone)
 	if err != nil {
 		return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2503, Message: "failed to check phone", Err: err}
@@ -75,9 +94,11 @@ func (s *CustomerService) Create(ctx context.Context, req dto.CreateCustomerRequ
 
 	// CreatedBy/UpdatedBy: zero value (uuid.Nil) until auth user is set from context
 	customer := model.Customer{
-		Name:    name,
-		Address: address,
-		Phone:   phone,
+		Code:          code,
+		Name:          name,
+		Address:       address,
+		Phone:         phone,
+		ContactPerson: contactPerson,
 	}
 	if err := s.customers.Create(ctx, &customer); err != nil {
 		return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2504, Message: "failed to create customer", Err: err}
@@ -102,6 +123,10 @@ func (s *CustomerService) Update(ctx context.Context, id string, req dto.UpdateC
 	name := strings.TrimSpace(req.Name)
 	address := strings.TrimSpace(req.Address)
 	phone := strings.TrimSpace(req.Phone)
+	contactPerson := strings.TrimSpace(req.ContactPerson)
+	if len(contactPerson) > 128 {
+		contactPerson = contactPerson[:128]
+	}
 
 	if name == "" {
 		return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusBadRequest, Code: 2007, Message: constant.MsgCustomerNameRequired}
@@ -137,6 +162,7 @@ func (s *CustomerService) Update(ctx context.Context, id string, req dto.UpdateC
 	existing.Name = name
 	existing.Address = address
 	existing.Phone = phone
+	existing.ContactPerson = contactPerson
 	if err := s.customers.Update(ctx, existing); err != nil {
 		return dto.CustomerPayload{}, &dto.AppError{HTTPStatus: http.StatusInternalServerError, Code: 2508, Message: "failed to update customer", Err: err}
 	}

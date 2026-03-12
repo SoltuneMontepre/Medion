@@ -48,45 +48,80 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/login',
-        builder: (_, __) => const LoginPage(),
+        pageBuilder: (_, state) => NoTransitionPage(
+          key: state.pageKey,
+          child: const LoginPage(),
+        ),
       ),
       ShellRoute(
         builder: (context, state, child) =>
             AppShell(currentPath: state.uri.path, child: child),
         routes: [
           GoRoute(path: '/', redirect: (_, __) => '/inventory'),
-          GoRoute(path: '/dashboard', builder: (_, _) => const DashboardPage()),
-          GoRoute(path: '/customers', builder: (_, _) => const CustomersPage()),
+          GoRoute(
+            path: '/dashboard',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const DashboardPage(),
+            ),
+          ),
+          GoRoute(
+            path: '/customers',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const CustomersPage(),
+            ),
+          ),
           GoRoute(
             path: '/customers/create',
-            builder: (_, _) => const CreateCustomerPage(),
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const CreateCustomerPage(),
+            ),
           ),
           GoRoute(
             path: '/customers/orders',
-            builder: (_, _) => const SalesPage(),
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const SalesPage(),
+            ),
           ),
           GoRoute(
             path: '/customers/new-order',
-            builder: (_, _) => const NewOrderPage(),
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const NewOrderPage(),
+            ),
           ),
           GoRoute(
             path: '/customers/orders/:id',
-            builder: (_, state) => OrderDetailPage(
-              orderId: state.pathParameters['id'] ?? '',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: OrderDetailPage(
+                orderId: state.pathParameters['id'] ?? '',
+              ),
             ),
           ),
           GoRoute(
             path: '/customers/order-summary',
-            builder: (_, _) => const OrderSummaryPage(),
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const OrderSummaryPage(),
+            ),
           ),
           GoRoute(
             path: '/customers/order-tracking',
-            builder: (_, _) =>
-                const PlaceholderPage(title: 'Theo dõi đơn hàng'),
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const PlaceholderPage(title: 'Theo dõi đơn hàng'),
+            ),
           ),
           GoRoute(
             path: '/customers/order-return',
-            builder: (_, _) => const PlaceholderPage(title: 'Hoàn đơn'),
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const PlaceholderPage(title: 'Hoàn đơn'),
+            ),
           ),
           GoRoute(
             path: '/inventory',
@@ -94,11 +129,17 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/inventory/list',
-            builder: (_, _) => const InventoryPage(),
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const InventoryPage(),
+            ),
           ),
           GoRoute(
             path: '/inventory/balance',
-            builder: (_, _) => const InventoryBalancePage(section: 'raw'),
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const InventoryBalancePage(section: 'raw'),
+            ),
           ),
           GoRoute(
             path: '/inventory/semi',
@@ -106,7 +147,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/inventory/semi/balance',
-            builder: (_, _) => const InventoryBalancePage(section: 'semi'),
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const InventoryBalancePage(section: 'semi'),
+            ),
           ),
           GoRoute(
             path: '/inventory/finished',
@@ -114,70 +158,115 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/inventory/finished/balance',
-            builder: (_, _) => const InventoryBalancePage(section: 'finished'),
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const InventoryBalancePage(section: 'finished'),
+            ),
           ),
           GoRoute(
             path: '/inventory/finished-release',
-            builder: (_, _) => const FinishedProductReleasePage(),
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const FinishedProductReleasePage(),
+            ),
           ),
           GoRoute(
             path: '/inventory/finished-release/create',
-            builder: (_, _) => const FinishedProductReleaseCreatePage(),
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const FinishedProductReleaseCreatePage(),
+            ),
           ),
           GoRoute(
             path: '/inventory/finished-release/:id/edit',
-            builder: (_, state) => FinishedProductReleaseEditPage(
-              id: state.pathParameters['id'] ?? '',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: FinishedProductReleaseEditPage(
+                id: state.pathParameters['id'] ?? '',
+              ),
             ),
           ),
           GoRoute(
             path: '/production',
-            builder: (_, _) => const ProductionPage(),
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ProductionPage(),
+            ),
           ),
           GoRoute(
             path: '/production/plan',
-            builder: (_, _) => const ProductionPlanPage(),
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ProductionPlanPage(),
+            ),
           ),
           GoRoute(
             path: '/production/plan/create',
-            builder: (_, state) {
+            pageBuilder: (_, state) {
               final date = state.uri.queryParameters['date'];
-              return ProductionPlanEditPage(initialDateYyyyMmDd: date);
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: ProductionPlanEditPage(initialDateYyyyMmDd: date),
+              );
             },
           ),
           GoRoute(
             path: '/production/plan/:id/edit',
-            builder: (_, state) {
+            pageBuilder: (_, state) {
               final id = state.pathParameters['id'] ?? '';
-              return ProductionPlanEditPage(planId: id);
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: ProductionPlanEditPage(planId: id),
+              );
             },
           ),
           GoRoute(
             path: '/production/orders',
-            builder: (_, _) => const ProductionPage(),
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ProductionPage(),
+            ),
           ),
           GoRoute(
             path: '/production/orders/create',
-            builder: (_, state) {
+            pageBuilder: (_, state) {
               final productId = state.uri.queryParameters['productId'];
               final productDisplay =
                   state.uri.queryParameters['productDisplay'];
               final plannedQty =
                   int.tryParse(state.uri.queryParameters['plannedQuantity'] ?? '');
               final planItemId = state.uri.queryParameters['planItemId'];
-              return ProductionOrderCreatePage(
-                productId: productId,
-                productDisplay: productDisplay,
-                plannedQuantity: plannedQty,
-                planItemId: planItemId,
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: ProductionOrderCreatePage(
+                  productId: productId,
+                  productDisplay: productDisplay,
+                  plannedQuantity: plannedQty,
+                  planItemId: planItemId,
+                ),
               );
             },
           ),
-          GoRoute(path: '/products', builder: (_, _) => const ProductsPage()),
-          GoRoute(path: '/ingredients', builder: (_, _) => const IngredientsPage()),
+          GoRoute(
+            path: '/products',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ProductsPage(),
+            ),
+          ),
+          GoRoute(
+            path: '/ingredients',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const IngredientsPage(),
+            ),
+          ),
           GoRoute(
             path: '/sales',
-            builder: (_, __) => const SalesPage(),
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const SalesPage(),
+            ),
           ),
           GoRoute(
             path: '/sales/new-order',
@@ -192,34 +281,154 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/sales/order-summary',
             redirect: (_, __) => '/customers/order-summary',
           ),
-          GoRoute(path: '/qc', builder: (_, _) => const QcPage()),
-          GoRoute(path: '/audit', builder: (_, _) => const AuditPage()),
-          GoRoute(path: '/payroll', builder: (_, _) => const PayrollPage()),
-          GoRoute(path: '/approval', builder: (_, _) => const ApprovalPage()),
-          GoRoute(path: '/roles', builder: (_, _) => const RolesPage()),
+          GoRoute(
+            path: '/qc',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const QcPage(),
+            ),
+          ),
+          GoRoute(
+            path: '/audit',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const AuditPage(),
+            ),
+          ),
+          GoRoute(
+            path: '/payroll',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const PayrollPage(),
+            ),
+          ),
+          GoRoute(
+            path: '/approval',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ApprovalPage(),
+            ),
+          ),
+          GoRoute(
+            path: '/roles',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const RolesPage(),
+            ),
+          ),
           GoRoute(
             path: '/roles/assign',
-            builder: (_, _) => const AssignRoleToUserPage(),
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const AssignRoleToUserPage(),
+            ),
           ),
           GoRoute(
             path: '/roles/assign-supervisor',
-            builder: (_, _) => const AssignSupervisorPage(),
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const AssignSupervisorPage(),
+            ),
           ),
-          GoRoute(path: '/security', builder: (_, _) => const SecurityPage()),
-          GoRoute(path: '/reports', builder: (_, _) => const ReportsPage()),
+          GoRoute(
+            path: '/security',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const SecurityPage(),
+            ),
+          ),
+          GoRoute(
+            path: '/reports',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ReportsPage(),
+            ),
+          ),
           // Placeholder routes for nav items not yet implemented
-          GoRoute(path: '/requests/personal', builder: (_, _) => const PlaceholderPage(title: 'Yêu cầu từ Cá nhân')),
-          GoRoute(path: '/requests/department', builder: (_, _) => const PlaceholderPage(title: 'Yêu cầu từ Phòng ban')),
-          GoRoute(path: '/requests/purchase', builder: (_, _) => const PlaceholderPage(title: 'Yêu cầu mua hàng')),
-          GoRoute(path: '/work/mine', builder: (_, _) => const PlaceholderPage(title: 'Công việc của tôi')),
-          GoRoute(path: '/work/plan', builder: (_, _) => const PlaceholderPage(title: 'Kế hoạch')),
-          GoRoute(path: '/work/calendar', builder: (_, _) => const PlaceholderPage(title: 'Lịch')),
-          GoRoute(path: '/documents/sop', builder: (_, _) => const PlaceholderPage(title: 'Tài liệu SOP')),
-          GoRoute(path: '/workshop', builder: (_, _) => const PlaceholderPage(title: 'Xưởng')),
-          GoRoute(path: '/products/recall', builder: (_, _) => const PlaceholderPage(title: 'Thu hồi sản phẩm')),
-          GoRoute(path: '/departments', builder: (_, _) => const PlaceholderPage(title: 'Phòng ban')),
-          GoRoute(path: '/partners', builder: (_, _) => const PlaceholderPage(title: 'Đối tác')),
-          GoRoute(path: '/risk', builder: (_, _) => const PlaceholderPage(title: 'Rủi ro')),
+          GoRoute(
+            path: '/requests/personal',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const PlaceholderPage(title: 'Yêu cầu từ Cá nhân'),
+            ),
+          ),
+          GoRoute(
+            path: '/requests/department',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const PlaceholderPage(title: 'Yêu cầu từ Phòng ban'),
+            ),
+          ),
+          GoRoute(
+            path: '/requests/purchase',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const PlaceholderPage(title: 'Yêu cầu mua hàng'),
+            ),
+          ),
+          GoRoute(
+            path: '/work/mine',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const PlaceholderPage(title: 'Công việc của tôi'),
+            ),
+          ),
+          GoRoute(
+            path: '/work/plan',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const PlaceholderPage(title: 'Kế hoạch'),
+            ),
+          ),
+          GoRoute(
+            path: '/work/calendar',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const PlaceholderPage(title: 'Lịch'),
+            ),
+          ),
+          GoRoute(
+            path: '/documents/sop',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const PlaceholderPage(title: 'Tài liệu SOP'),
+            ),
+          ),
+          GoRoute(
+            path: '/workshop',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const PlaceholderPage(title: 'Xưởng'),
+            ),
+          ),
+          GoRoute(
+            path: '/products/recall',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const PlaceholderPage(title: 'Thu hồi sản phẩm'),
+            ),
+          ),
+          GoRoute(
+            path: '/departments',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const PlaceholderPage(title: 'Phòng ban'),
+            ),
+          ),
+          GoRoute(
+            path: '/partners',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const PlaceholderPage(title: 'Đối tác'),
+            ),
+          ),
+          GoRoute(
+            path: '/risk',
+            pageBuilder: (_, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const PlaceholderPage(title: 'Rủi ro'),
+            ),
+          ),
         ],
       ),
     ],

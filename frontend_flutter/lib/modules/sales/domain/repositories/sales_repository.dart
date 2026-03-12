@@ -3,7 +3,8 @@ import '../entities/sale_order.dart';
 
 /// Repository interface in domain. Implementation lives in data.
 abstract class SalesRepository {
-  Future<List<SaleOrder>> getOrders({int page = 1, int pageSize = 20});
+  /// List orders with pagination, search, date/status filters and sort. Returns items and total.
+  Future<SaleOrdersListResult> getOrders(OrdersListQuery query);
 
   /// List order summaries for current sale admin (read-only).
   Future<OrderSummaryListResult> getOrderSummaries({

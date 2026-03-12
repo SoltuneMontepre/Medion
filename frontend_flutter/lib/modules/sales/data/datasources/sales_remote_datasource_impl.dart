@@ -4,6 +4,7 @@ import '../../../../core/network/api_client_provider.dart';
 import '../../../../core/network/api_result.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../domain/entities/order_summary.dart';
+import '../../domain/entities/sale_order.dart';
 import '../models/order_detail_model.dart';
 import '../models/product_suggest_model.dart';
 import '../models/sale_order_model.dart';
@@ -18,24 +19,41 @@ class SalesRemoteDataSourceImpl implements SalesRemoteDataSource {
   static const _salePath = '/api/v1/sale';
 
   @override
-  Future<List<SaleOrderModel>> fetchOrders({
-    int page = 1,
-    int pageSize = 20,
-  }) async {
+  Future<OrdersListResponse> fetchOrders(OrdersListQuery query) async {
+    final params = <String, dynamic>{
+      'page': query.page,
+      'pageSize': query.pageSize,
+    };
+    if (query.search.trim().isNotEmpty) params['search'] = query.search.trim();
+    if (query.dateFilter != null && query.dateFilter!.isNotEmpty) {
+      params['dateFilter'] = query.dateFilter!.toLowerCase();
+    }
+    if (query.status.trim().isNotEmpty) params['status'] = query.status.trim();
+    if (query.sortBy.trim().isNotEmpty) params['sortBy'] = query.sortBy.trim();
+    if (query.sortOrder.trim().isNotEmpty) params['sortOrder'] = query.sortOrder.trim();
+
     final response = await _client.dio.get(
       '$_salePath/orders',
-      queryParameters: {'page': page, 'pageSize': pageSize},
+      queryParameters: params,
     );
     final json = response.data;
-    if (json is! Map<String, dynamic>) return [];
+    if (json is! Map<String, dynamic>) {
+      return const OrdersListResponse(items: [], total: 0);
+    }
     final data = json['data'];
-    if (data is! Map<String, dynamic>) return [];
-    final items = data['items'];
-    if (items is! List) return [];
-    return items
+    if (data is! Map<String, dynamic>) {
+      return const OrdersListResponse(items: [], total: 0);
+    }
+    final itemsList = data['items'];
+    final total = (data['total'] as num?)?.toInt() ?? 0;
+    if (itemsList is! List) {
+      return OrdersListResponse(items: [], total: total);
+    }
+    final items = itemsList
         .whereType<Map<String, dynamic>>()
         .map(SaleOrderModel.fromJson)
         .toList();
+    return OrdersListResponse(items: items, total: total);
   }
 
   @override
